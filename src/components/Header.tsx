@@ -8,7 +8,7 @@ export const Header = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
             <img 
-              src="/lovable-uploads/d57bb117-1d86-4e7e-abfa-9ee338ec74a4.png" 
+              src="/lovable-uploads/fe72b475-c203-4999-8384-be417f456711.png" 
               alt="EasyTaxProtest.com" 
               className="h-8"
             />

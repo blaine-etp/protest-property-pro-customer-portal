@@ -9,9 +9,9 @@ export const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-6">
               <img 
-                src="/lovable-uploads/fe72b475-c203-4999-8384-be417f456711.png" 
-                alt="EasyTaxProtest.com" 
-                className="h-8"
+                src="/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png" 
+                alt="Tax Logo" 
+                className="h-12"
               />
             </div>
             <p className="text-background/80 mb-6 max-w-md">

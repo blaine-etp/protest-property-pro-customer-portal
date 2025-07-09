@@ -37,6 +37,9 @@ export const Header = () => {
               <Mail className="h-4 w-4 mr-2" />
               Contact Us
             </Button>
+            <Button variant="default" size="sm">
+              Sign In
+            </Button>
           </div>
         </div>
       </div>

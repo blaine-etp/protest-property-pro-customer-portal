@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { useState } from "react";
+import austinSkyline from "@/assets/austin-skyline.jpg";
 
 export const HeroSection = () => {
   const [address, setAddress] = useState("");
@@ -18,6 +19,16 @@ export const HeroSection = () => {
 
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-hero overflow-hidden">
+      {/* Austin Skyline Background */}
+      <div className="absolute inset-0">
+        <img 
+          src={austinSkyline} 
+          alt="Austin Texas skyline" 
+          className="w-full h-full object-cover opacity-20"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/60"></div>
+      </div>
+      
       {/* Wave Background Pattern */}
       <div className="absolute inset-0">
         <svg
@@ -30,21 +41,21 @@ export const HeroSection = () => {
           <path
             d="M0,64 C240,80 480,96 720,80 C960,64 1200,48 1200,48 L1200,800 L0,800 Z"
             fill="var(--wave-primary)"
-            className="animate-pulse"
+            className="animate-pulse opacity-30"
             style={{ animationDuration: '8s' }}
           />
           {/* Secondary Wave Layer */}
           <path
             d="M0,96 C300,112 600,128 900,112 C1050,104 1200,96 1200,96 L1200,800 L0,800 Z"
             fill="var(--wave-secondary)"
-            className="animate-pulse"
+            className="animate-pulse opacity-25"
             style={{ animationDuration: '12s', animationDelay: '2s' }}
           />
           {/* Tertiary Wave Layer */}
           <path
             d="M0,128 C200,144 400,160 600,144 C800,128 1000,112 1200,112 L1200,800 L0,800 Z"
             fill="var(--wave-tertiary)"
-            className="animate-pulse"
+            className="animate-pulse opacity-20"
             style={{ animationDuration: '16s', animationDelay: '4s' }}
           />
         </svg>
@@ -62,21 +73,21 @@ export const HeroSection = () => {
           <path
             d="M0,160 L0,96 C240,80 480,64 720,80 C960,96 1200,112 1200,112 L1200,160 Z"
             fill="var(--wave-primary)"
-            className="animate-pulse"
+            className="animate-pulse opacity-35"
             style={{ animationDuration: '10s', animationDelay: '1s' }}
           />
           {/* Bottom Secondary Wave */}
           <path
             d="M0,160 L0,112 C300,96 600,80 900,96 C1050,104 1200,112 1200,112 L1200,160 Z"
             fill="var(--wave-secondary)"
-            className="animate-pulse"
+            className="animate-pulse opacity-30"
             style={{ animationDuration: '14s', animationDelay: '3s' }}
           />
           {/* Bottom Tertiary Wave */}
           <path
             d="M0,160 L0,128 C200,112 400,96 600,112 C800,128 1000,144 1200,144 L1200,160 Z"
             fill="var(--wave-tertiary)"
-            className="animate-pulse"
+            className="animate-pulse opacity-25"
             style={{ animationDuration: '18s', animationDelay: '5s' }}
           />
         </svg>

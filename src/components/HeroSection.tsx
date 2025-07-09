@@ -17,8 +17,38 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-hero">
-      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+    <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-hero overflow-hidden">
+      {/* Wave Background Pattern */}
+      <div className="absolute inset-0">
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 1200 800"
+          preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Primary Wave Layer */}
+          <path
+            d="M0,64 C240,80 480,96 720,80 C960,64 1200,48 1200,48 L1200,800 L0,800 Z"
+            fill="var(--wave-primary)"
+            className="animate-pulse"
+            style={{ animationDuration: '8s' }}
+          />
+          {/* Secondary Wave Layer */}
+          <path
+            d="M0,96 C300,112 600,128 900,112 C1050,104 1200,96 1200,96 L1200,800 L0,800 Z"
+            fill="var(--wave-secondary)"
+            className="animate-pulse"
+            style={{ animationDuration: '12s', animationDelay: '2s' }}
+          />
+          {/* Tertiary Wave Layer */}
+          <path
+            d="M0,128 C200,144 400,160 600,144 C800,128 1000,112 1200,112 L1200,800 L0,800 Z"
+            fill="var(--wave-tertiary)"
+            className="animate-pulse"
+            style={{ animationDuration: '16s', animationDelay: '4s' }}
+          />
+        </svg>
+      </div>
       <div className="container px-4 mx-auto text-center relative z-10">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">

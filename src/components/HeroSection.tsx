@@ -156,7 +156,7 @@ export const HeroSection = () => {
                 <div className="text-lg text-muted-foreground font-medium">Success Rate</div>
               </div>
               <div className="p-6 rounded-xl bg-background/30 backdrop-blur-sm border border-primary/10 hover:bg-background/40 transition-all duration-300">
-                <div className="text-5xl md:text-6xl font-bold text-primary mb-3 animate-fade-in">
+                <div className="text-4xl md:text-5xl font-bold text-primary mb-3 animate-fade-in">
                   <AnimatedCounter end={10000} suffix="+" className="tabular-nums" />
                 </div>
                 <div className="text-lg text-muted-foreground font-medium">Properties Protested</div>

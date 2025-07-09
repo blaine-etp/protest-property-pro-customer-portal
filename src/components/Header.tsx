@@ -7,10 +7,11 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
-            <div className="p-2 bg-gradient-primary rounded-lg">
-              <Scale className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">TaxProtest Pro</span>
+            <img 
+              src="/lovable-uploads/d57bb117-1d86-4e7e-abfa-9ee338ec74a4.png" 
+              alt="EasyTaxProtest.com" 
+              className="h-8"
+            />
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">

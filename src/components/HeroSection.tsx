@@ -49,6 +49,38 @@ export const HeroSection = () => {
           />
         </svg>
       </div>
+      
+      {/* Bottom Wave Pattern */}
+      <div className="absolute bottom-0 left-0 w-full">
+        <svg
+          className="w-full h-32 md:h-40"
+          viewBox="0 0 1200 160"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Bottom Primary Wave */}
+          <path
+            d="M0,160 L0,96 C240,80 480,64 720,80 C960,96 1200,112 1200,112 L1200,160 Z"
+            fill="var(--wave-primary)"
+            className="animate-pulse"
+            style={{ animationDuration: '10s', animationDelay: '1s' }}
+          />
+          {/* Bottom Secondary Wave */}
+          <path
+            d="M0,160 L0,112 C300,96 600,80 900,96 C1050,104 1200,112 1200,112 L1200,160 Z"
+            fill="var(--wave-secondary)"
+            className="animate-pulse"
+            style={{ animationDuration: '14s', animationDelay: '3s' }}
+          />
+          {/* Bottom Tertiary Wave */}
+          <path
+            d="M0,160 L0,128 C200,112 400,96 600,112 C800,128 1000,144 1200,144 L1200,160 Z"
+            fill="var(--wave-tertiary)"
+            className="animate-pulse"
+            style={{ animationDuration: '18s', animationDelay: '5s' }}
+          />
+        </svg>
+      </div>
       <div className="container px-4 mx-auto text-center relative z-10">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">

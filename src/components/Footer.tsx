@@ -8,10 +8,11 @@ export const Footer = () => {
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-6">
-              <div className="p-2 bg-primary rounded-lg">
-                <Scale className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <span className="text-2xl font-bold">TaxProtest Pro</span>
+              <img 
+                src="/lovable-uploads/fe72b475-c203-4999-8384-be417f456711.png" 
+                alt="EasyTaxProtest.com" 
+                className="h-8"
+              />
             </div>
             <p className="text-background/80 mb-6 max-w-md">
               Professional property tax protest services helping homeowners save thousands on their annual tax bills. No upfront fees, guaranteed results.
@@ -51,7 +52,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center">
                 <Mail className="h-4 w-4 mr-3 flex-shrink-0" />
-                <span>info@taxprotestpro.com</span>
+                <span>info@easytaxprotest.com</span>
               </div>
               <div className="flex items-start">
                 <MapPin className="h-4 w-4 mr-3 flex-shrink-0 mt-1" />
@@ -67,7 +68,7 @@ export const Footer = () => {
         <div className="border-t border-background/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-background/60">
             <div className="text-sm">
-              © 2024 TaxProtest Pro. All rights reserved.
+              © 2024 EasyTaxProtest.com. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm mt-4 md:mt-0">
               <a href="#" className="hover:text-background transition-colors">Privacy Policy</a>

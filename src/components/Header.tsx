@@ -10,7 +10,7 @@ export const Header = () => {
             <img 
               src="/lovable-uploads/fe72b475-c203-4999-8384-be417f456711.png" 
               alt="EasyTaxProtest.com" 
-              className="h-8"
+              className="h-12"
             />
           </div>
 

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { useState } from "react";
 import austinSkyline from "@/assets/austin-skyline.jpg";
+import { AnimatedCounter } from "./AnimatedCounter";
 
 export const HeroSection = () => {
   const [address, setAddress] = useState("");
@@ -140,18 +141,26 @@ export const HeroSection = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="p-6">
-              <div className="text-4xl font-bold text-primary mb-2">$2,500</div>
-              <div className="text-muted-foreground">Average Savings</div>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-primary mb-2">95%</div>
-              <div className="text-muted-foreground">Success Rate</div>
-            </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-primary mb-2">10,000+</div>
-              <div className="text-muted-foreground">Properties Protested</div>
+          <div className="bg-card/20 backdrop-blur-sm rounded-2xl p-8 mx-auto max-w-5xl border border-primary/20 shadow-xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div className="p-6 rounded-xl bg-background/30 backdrop-blur-sm border border-primary/10 hover:bg-background/40 transition-all duration-300">
+                <div className="text-5xl md:text-6xl font-bold text-primary mb-3 animate-fade-in">
+                  <AnimatedCounter end={2500} prefix="$" className="tabular-nums" />
+                </div>
+                <div className="text-lg text-muted-foreground font-medium">Average Savings</div>
+              </div>
+              <div className="p-6 rounded-xl bg-background/30 backdrop-blur-sm border border-primary/10 hover:bg-background/40 transition-all duration-300">
+                <div className="text-5xl md:text-6xl font-bold text-primary mb-3 animate-fade-in">
+                  <AnimatedCounter end={95} suffix="%" className="tabular-nums" />
+                </div>
+                <div className="text-lg text-muted-foreground font-medium">Success Rate</div>
+              </div>
+              <div className="p-6 rounded-xl bg-background/30 backdrop-blur-sm border border-primary/10 hover:bg-background/40 transition-all duration-300">
+                <div className="text-5xl md:text-6xl font-bold text-primary mb-3 animate-fade-in">
+                  <AnimatedCounter end={10000} suffix="+" className="tabular-nums" />
+                </div>
+                <div className="text-lg text-muted-foreground font-medium">Properties Protested</div>
+              </div>
             </div>
           </div>
         </div>

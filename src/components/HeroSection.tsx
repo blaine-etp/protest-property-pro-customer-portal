@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Building2 } from "lucide-react";
 import { useState } from "react";
 
 export const HeroSection = () => {
@@ -113,10 +113,21 @@ export const HeroSection = () => {
                 className="h-14 px-8 text-lg font-semibold"
               >
                 <Search className="mr-2 h-5 w-5" />
-                Get Started
+                Check Savings
               </Button>
             </div>
           </form>
+
+          <div className="flex justify-center mb-12">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Building2 className="mr-2 h-4 w-4" />
+              I have multiple properties
+            </Button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="p-6">

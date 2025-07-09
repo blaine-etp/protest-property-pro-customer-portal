@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Phone } from "lucide-react";
+import { Search, MapPin, Phone, Building2 } from "lucide-react";
 import { useState } from "react";
 
 export const CTASection = () => {
@@ -46,10 +46,21 @@ export const CTASection = () => {
                 className="h-14 px-8 text-lg font-semibold"
               >
                 <Search className="mr-2 h-5 w-5" />
-                Get Free Quote
+                Check Savings
               </Button>
             </div>
           </form>
+
+          <div className="flex justify-center mb-8">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-primary-foreground/70 hover:text-primary-foreground"
+            >
+              <Building2 className="mr-2 h-4 w-4" />
+              I have multiple properties
+            </Button>
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-primary-foreground/90">
             <div className="flex items-center">

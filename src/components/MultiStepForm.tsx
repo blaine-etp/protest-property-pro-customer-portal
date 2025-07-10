@@ -100,7 +100,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
         </p>
       </div>
       
-      <Card>
+      <Card key={currentStep} className="animate-slide-in-right">
         <CardContent className="p-8">
           {renderStep()}
         </CardContent>

@@ -64,7 +64,7 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
   };
 
   return (
-    <div className="space-y-8 animate-slide-in-right">
+    <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-foreground mb-6">
           Good News! We Can Help!

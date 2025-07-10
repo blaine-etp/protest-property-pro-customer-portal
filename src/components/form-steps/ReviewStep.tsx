@@ -101,7 +101,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-slide-in-right">
+    <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground mb-2">
           Last step before <span className="text-primary">${(formData.estimatedSavings || 1000).toLocaleString()}</span> in potential savings!

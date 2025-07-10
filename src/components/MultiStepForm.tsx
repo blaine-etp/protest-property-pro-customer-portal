@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { SavingsStep } from './form-steps/SavingsStep';
+import { SavingsStepContainer } from './form-steps/SavingsStepContainer';
 import { ContactStep } from './form-steps/ContactStep';
 import { ReviewStep } from './form-steps/ReviewStep';
 
@@ -16,6 +16,7 @@ export interface FormData {
   email: string;
   phone: string;
   agreeToUpdates: boolean;
+  isOwnerVerified?: boolean;
   signature?: string;
 }
 
@@ -60,7 +61,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
     switch (currentStep) {
       case 1:
         return (
-          <SavingsStep
+          <SavingsStepContainer
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}

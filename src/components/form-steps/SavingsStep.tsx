@@ -23,6 +23,8 @@ interface SavingsStepProps {
   updateFormData: (data: Partial<FormData>) => void;
   onNext: () => void;
   onPrev: () => void;
+  showVerification: boolean;
+  setShowVerification: (show: boolean) => void;
 }
 
 export const SavingsStep: React.FC<SavingsStepProps> = ({
@@ -30,6 +32,8 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
   updateFormData,
   onNext,
   onPrev,
+  showVerification,
+  setShowVerification,
 }) => {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -43,7 +47,7 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
 
   const onSubmit = (values: z.infer<typeof schema>) => {
     updateFormData(values);
-    onNext();
+    setShowVerification(true);
   };
 
   const getRoleLabel = (role: string) => {

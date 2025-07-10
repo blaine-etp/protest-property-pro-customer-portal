@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { FormData } from '../MultiStepForm';
 import { DollarSign } from 'lucide-react';
+import { AnimatedCounter } from '../AnimatedCounter';
 
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -61,18 +62,30 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-foreground mb-4">
+        <h2 className="text-3xl font-bold text-foreground mb-6">
           Good News! We Can Help!
         </h2>
         
-        <div className="bg-gradient-accent/10 rounded-lg p-6 mb-6">
-          <div className="flex items-center justify-center gap-2 text-3xl font-bold text-accent">
-            <DollarSign className="w-8 h-8" />
-            {formData.estimatedSavings?.toLocaleString() || '0'}
+        <div className="relative bg-gradient-to-br from-primary/10 via-accent/10 to-primary/5 rounded-2xl p-8 mb-8 border border-primary/20 shadow-xl">
+          {/* Decorative background pattern */}
+          <div className="absolute inset-0 rounded-2xl opacity-10">
+            <div className="absolute top-4 right-4 w-16 h-16 bg-primary rounded-full"></div>
+            <div className="absolute bottom-4 left-4 w-12 h-12 bg-accent rounded-full"></div>
+            <div className="absolute top-1/2 left-1/4 w-8 h-8 bg-primary/30 rounded-full"></div>
           </div>
-          <p className="text-muted-foreground mt-2">
-            Estimated annual tax savings
-          </p>
+          
+          <div className="relative z-10">
+            <p className="text-lg text-muted-foreground mb-3 font-medium">
+              Estimated Annual Tax Savings
+            </p>
+            <div className="flex items-center justify-center gap-2 text-5xl md:text-6xl font-bold text-primary mb-2">
+              <DollarSign className="w-12 h-12 md:w-16 md:h-16" />
+              <AnimatedCounter end={1000} className="tabular-nums" />
+            </div>
+            <p className="text-sm text-muted-foreground/80 italic">
+              *Based on similar properties in your area
+            </p>
+          </div>
         </div>
       </div>
 

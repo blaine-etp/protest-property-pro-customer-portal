@@ -6,9 +6,13 @@ import austinSkyline from "@/assets/austin-skyline.jpg";
 import { AnimatedCounter } from "./AnimatedCounter";
 import MultiStepForm from "./MultiStepForm";
 
-export const HeroSection = () => {
+interface HeroSectionProps {
+  showForm: boolean;
+  setShowForm: (show: boolean) => void;
+}
+
+export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm }) => {
   const [address, setAddress] = useState("");
-  const [showForm, setShowForm] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

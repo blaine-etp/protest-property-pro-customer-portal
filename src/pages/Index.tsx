@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
 import { BenefitsSection } from "@/components/BenefitsSection";
@@ -7,17 +8,23 @@ import { CTASection } from "@/components/CTASection";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
+  const [showForm, setShowForm] = useState(false);
+
   return (
     <div className="min-h-screen">
-      <Header />
+      {!showForm && <Header />}
       <main>
-        <HeroSection />
-        <BenefitsSection />
-        <ProcessSection />
-        <TestimonialsSection />
-        <CTASection />
+        <HeroSection showForm={showForm} setShowForm={setShowForm} />
+        {!showForm && (
+          <>
+            <BenefitsSection />
+            <ProcessSection />
+            <TestimonialsSection />
+            <CTASection />
+          </>
+        )}
       </main>
-      <Footer />
+      {!showForm && <Footer />}
     </div>
   );
 };

@@ -166,7 +166,7 @@ export const HeroSection = () => {
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <MultiStepForm onComplete={() => setShowForm(false)} />
+            <MultiStepForm address={address} onComplete={() => setShowForm(false)} />
           </div>
         )}
       </div>

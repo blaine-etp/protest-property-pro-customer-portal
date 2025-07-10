@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { AddressStep } from './form-steps/AddressStep';
 import { SavingsStep } from './form-steps/SavingsStep';
 import { ContactStep } from './form-steps/ContactStep';
 import { ReviewStep } from './form-steps/ReviewStep';
@@ -20,13 +19,14 @@ export interface FormData {
 }
 
 interface MultiStepFormProps {
+  address: string;
   onComplete?: () => void;
 }
 
-const MultiStepForm: React.FC<MultiStepFormProps> = ({ onComplete }) => {
+const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
-    address: '',
+    address: address,
     firstName: '',
     lastName: '',
     isTrustEntity: false,
@@ -35,7 +35,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ onComplete }) => {
     phone: '',
   });
 
-  const totalSteps = 4;
+  const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
 
   const updateFormData = (data: Partial<FormData>) => {
@@ -58,14 +58,6 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ onComplete }) => {
     switch (currentStep) {
       case 1:
         return (
-          <AddressStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={nextStep}
-          />
-        );
-      case 2:
-        return (
           <SavingsStep
             formData={formData}
             updateFormData={updateFormData}
@@ -73,7 +65,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ onComplete }) => {
             onPrev={prevStep}
           />
         );
-      case 3:
+      case 2:
         return (
           <ContactStep
             formData={formData}
@@ -82,7 +74,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ onComplete }) => {
             onPrev={prevStep}
           />
         );
-      case 4:
+      case 3:
         return (
           <ReviewStep
             formData={formData}

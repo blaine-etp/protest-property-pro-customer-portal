@@ -27,6 +27,8 @@ interface MultiStepFormProps {
 
 const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [animationDirection, setAnimationDirection] = useState<'in' | 'out'>('in');
   const [formData, setFormData] = useState<FormData>({
     address: address,
     firstName: '',
@@ -46,14 +48,28 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
   };
 
   const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+    if (currentStep < totalSteps && !isTransitioning) {
+      setIsTransitioning(true);
+      setAnimationDirection('out');
+      
+      setTimeout(() => {
+        setCurrentStep(currentStep + 1);
+        setAnimationDirection('in');
+        setTimeout(() => setIsTransitioning(false), 300);
+      }, 300);
     }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+    if (currentStep > 1 && !isTransitioning) {
+      setIsTransitioning(true);
+      setAnimationDirection('out');
+      
+      setTimeout(() => {
+        setCurrentStep(currentStep - 1);
+        setAnimationDirection('in');
+        setTimeout(() => setIsTransitioning(false), 300);
+      }, 300);
     }
   };
 
@@ -91,6 +107,13 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
     }
   };
 
+  const getAnimationClass = () => {
+    if (animationDirection === 'out') {
+      return 'animate-slide-out-left';
+    }
+    return 'animate-slide-in-right';
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto p-6">
       <div className="mb-8">
@@ -100,7 +123,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
         </p>
       </div>
       
-      <Card key={currentStep} className="animate-slide-in-right">
+      <Card key={currentStep} className={getAnimationClass()}>
         <CardContent className="p-8">
           {renderStep()}
         </CardContent>

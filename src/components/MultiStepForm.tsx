@@ -19,7 +19,11 @@ export interface FormData {
   signature?: string;
 }
 
-const MultiStepForm = () => {
+interface MultiStepFormProps {
+  onComplete?: () => void;
+}
+
+const MultiStepForm: React.FC<MultiStepFormProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     address: '',
@@ -84,6 +88,7 @@ const MultiStepForm = () => {
             formData={formData}
             updateFormData={updateFormData}
             onPrev={prevStep}
+            onComplete={() => onComplete?.()}
           />
         );
       default:

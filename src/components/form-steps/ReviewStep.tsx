@@ -9,12 +9,14 @@ interface ReviewStepProps {
   formData: FormData;
   updateFormData: (data: Partial<FormData>) => void;
   onPrev: () => void;
+  onComplete: () => void;
 }
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({
   formData,
   updateFormData,
   onPrev,
+  onComplete,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -80,6 +82,9 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       title: "Application Submitted!",
       description: "We'll be in touch soon with next steps.",
     });
+
+    // Return to home screen
+    onComplete();
   };
 
   const getRoleLabel = (role: string) => {

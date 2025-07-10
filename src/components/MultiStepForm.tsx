@@ -62,7 +62,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}
-            onPrev={prevStep}
+            onPrev={() => onComplete?.()}
           />
         );
       case 2:

@@ -4,12 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { FormData } from '../MultiStepForm';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
+  agreeToUpdates: z.boolean(),
 });
 
 interface ContactStepProps {
@@ -30,6 +32,7 @@ export const ContactStep: React.FC<ContactStepProps> = ({
     defaultValues: {
       email: formData.email,
       phone: formData.phone,
+      agreeToUpdates: formData.agreeToUpdates,
     },
   });
 
@@ -83,6 +86,26 @@ export const ContactStep: React.FC<ContactStepProps> = ({
                   />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="agreeToUpdates"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm leading-relaxed">
+                    I agree to receive property tax updates and notifications via email and text. Msg & data rates may apply.
+                  </FormLabel>
+                </div>
               </FormItem>
             )}
           />

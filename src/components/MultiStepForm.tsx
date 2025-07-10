@@ -15,6 +15,7 @@ export interface FormData {
   role: 'homeowner' | 'property_manager' | 'authorized_person';
   email: string;
   phone: string;
+  agreeToUpdates: boolean;
   signature?: string;
 }
 
@@ -33,6 +34,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
     role: 'homeowner',
     email: '',
     phone: '',
+    agreeToUpdates: true,
   });
 
   const totalSteps = 3;

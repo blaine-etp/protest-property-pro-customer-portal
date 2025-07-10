@@ -104,8 +104,9 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground mb-2">
-          Last step before ${(formData.estimatedSavings || 1000).toLocaleString()} in potential savings!
+          Last step before <span className="text-primary">${(formData.estimatedSavings || 1000).toLocaleString()}</span> in potential savings!
         </h2>
+        {/* TODO: This savings amount should come from database and match the amount shown in step 1 */}
       </div>
 
       <Card>

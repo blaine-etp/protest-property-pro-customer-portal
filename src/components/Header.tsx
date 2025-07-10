@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Scale, Phone, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Header = () => {
   return (
@@ -7,11 +8,13 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/fe72b475-c203-4999-8384-be417f456711.png" 
-              alt="EasyTaxProtest.com" 
-              className="h-12"
-            />
+            <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+              <img 
+                src="/lovable-uploads/fe72b475-c203-4999-8384-be417f456711.png" 
+                alt="EasyTaxProtest.com" 
+                className="h-12"
+              />
+            </Link>
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">

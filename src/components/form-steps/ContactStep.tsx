@@ -42,7 +42,7 @@ export const ContactStep: React.FC<ContactStepProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-slide-in-right">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-foreground mb-2">
           Contact Details

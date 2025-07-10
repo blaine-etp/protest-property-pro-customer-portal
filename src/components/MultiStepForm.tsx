@@ -27,8 +27,8 @@ interface MultiStepFormProps {
 
 const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [previousStep, setPreviousStep] = useState<number | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [animationDirection, setAnimationDirection] = useState<'in' | 'out'>('in');
   const [formData, setFormData] = useState<FormData>({
     address: address,
     firstName: '',
@@ -50,31 +50,35 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
   const nextStep = () => {
     if (currentStep < totalSteps && !isTransitioning) {
       setIsTransitioning(true);
-      setAnimationDirection('out');
+      setPreviousStep(currentStep);
       
       setTimeout(() => {
         setCurrentStep(currentStep + 1);
-        setAnimationDirection('in');
-        setTimeout(() => setIsTransitioning(false), 300);
-      }, 300);
+        setTimeout(() => {
+          setPreviousStep(null);
+          setIsTransitioning(false);
+        }, 300);
+      }, 50);
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1 && !isTransitioning) {
       setIsTransitioning(true);
-      setAnimationDirection('out');
+      setPreviousStep(currentStep);
       
       setTimeout(() => {
         setCurrentStep(currentStep - 1);
-        setAnimationDirection('in');
-        setTimeout(() => setIsTransitioning(false), 300);
-      }, 300);
+        setTimeout(() => {
+          setPreviousStep(null);
+          setIsTransitioning(false);
+        }, 300);
+      }, 50);
     }
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
+  const renderStepContent = (step: number) => {
+    switch (step) {
       case 1:
         return (
           <SavingsStepContainer
@@ -107,13 +111,6 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
     }
   };
 
-  const getAnimationClass = () => {
-    if (animationDirection === 'out') {
-      return 'animate-slide-out-left';
-    }
-    return 'animate-slide-in-right';
-  };
-
   return (
     <div className="w-full max-w-2xl mx-auto p-6">
       <div className="mb-8">
@@ -123,11 +120,23 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
         </p>
       </div>
       
-      <Card key={currentStep} className={getAnimationClass()}>
-        <CardContent className="p-8">
-          {renderStep()}
-        </CardContent>
-      </Card>
+      <div className="relative">
+        {/* Previous step sliding out */}
+        {previousStep && (
+          <Card key={`prev-${previousStep}`} className="absolute inset-0 animate-slide-out-left">
+            <CardContent className="p-8">
+              {renderStepContent(previousStep)}
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Current step sliding in */}
+        <Card key={`current-${currentStep}`} className="animate-slide-in-right">
+          <CardContent className="p-8">
+            {renderStepContent(currentStep)}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

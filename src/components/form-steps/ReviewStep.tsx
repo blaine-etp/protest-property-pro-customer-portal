@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
+import { useFormSubmission } from '@/hooks/useFormSubmission';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ReviewStepProps {
   formData: FormData;
@@ -22,6 +24,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
+  const { submitFormData, isSubmitting } = useFormSubmission();
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -65,7 +68,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!hasSignature) {
       toast({
         title: "Signature Required",
@@ -75,16 +78,57 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       return;
     }
 
-    // TODO: Backend integration needed here
-    // This would submit the form data to your backend
-    
-    toast({
-      title: "Application Submitted!",
-      description: "We'll be in touch soon with next steps.",
-    });
+    // Save signature to form data
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const signatureDataURL = canvas.toDataURL();
+      const updatedFormData = { 
+        ...formData, 
+        signature: signatureDataURL, 
+        isOwnerVerified: true 
+      };
+      updateFormData(updatedFormData);
 
-    // Return to home screen
-    onComplete();
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        // Create anonymous user for demo purposes
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: Math.random().toString(36).substring(2, 15), // Random password
+          options: {
+            data: {
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+            }
+          }
+        });
+
+        if (error) {
+          toast({
+            title: "Submission Error",
+            description: "Failed to create user account",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.user) {
+          // Submit form data
+          const result = await submitFormData(updatedFormData, data.user.id);
+          if (result.success) {
+            onComplete();
+          }
+        }
+      } else {
+        // Submit form data with existing user
+        const result = await submitFormData(updatedFormData, session.user.id);
+        if (result.success) {
+          onComplete();
+        }
+      }
+    }
   };
 
   const getRoleLabel = (role: string) => {
@@ -228,9 +272,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           type="button"
           variant="accent"
           onClick={handleSubmit}
+          disabled={isSubmitting}
           className="flex-1"
         >
-          Submit Application
+          {isSubmitting ? "Submitting..." : "Submit Application"}
         </Button>
       </div>
     </div>

@@ -2,196 +2,292 @@ import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { 
-  FileText, 
-  DollarSign, 
-  Calendar, 
-  Mail, 
-  Phone, 
-  MapPin,
-  Download,
-  Eye,
-  Clock,
-  CheckCircle2
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
+  User,
+  Plus,
+  CreditCard,
+  FileText,
+  UserPlus,
+  ChevronDown,
+  ExternalLink,
+  DollarSign,
+  HelpCircle,
+  Home,
+  ToggleLeft,
+  ToggleRight
 } from "lucide-react";
 
 const CustomerPortal = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || '';
 
-  // Mock data - in a real app this would come from your backend
-  const applicationData = {
-    applicationId: "PTX-2024-001234",
-    status: "Under Review",
-    submittedDate: "March 15, 2024",
-    estimatedCompletion: "April 15, 2024",
-    property: {
-      address: "123 Main St, Austin, TX 78701",
-      currentValue: 485000,
-      estimatedSavings: 2500
-    },
-    contact: {
-      name: "John Doe",
-      email: email || "john.doe@example.com",
-      phone: "(555) 123-4567"
-    }
+  // DYNAMIC: This will be fetched from database based on user email/account
+  const userData = {
+    email: email || "user@example.com",
+    lifetimeSavings: 1052, // DYNAMIC: Calculate from all property savings
+    name: "John Smith", // DYNAMIC: From user account data
   };
 
-  const statusColor = {
-    "Under Review": "bg-yellow-100 text-yellow-800",
-    "Approved": "bg-green-100 text-green-800",
-    "Completed": "bg-blue-100 text-blue-800",
-    "Requires Action": "bg-red-100 text-red-800"
+  // DYNAMIC: This will be fetched from database - all properties for this user
+  // Initial property data may come from form submission, then enhanced from database
+  const propertiesData = [
+    {
+      id: "prop-001",
+      address: "3112 Garwood St", // DYNAMIC: From form data initially
+      city: "Austin", // DYNAMIC: From form data initially
+      state: "TX", // DYNAMIC: From form data initially
+      zipCode: "78702", // DYNAMIC: From form data initially
+      image: "/placeholder.svg", // DYNAMIC: Property aerial photo from database
+      appeal: {
+        status: "Canceled",
+        statusColor: "destructive",
+        autoAppeal: false, // DYNAMIC: User preference setting
+        contingencyFee: 25, // DYNAMIC: From contract/database
+        canActivate: true, // DYNAMIC: Based on business rules
+      },
+      exemptions: {
+        status: "Inactive", // DYNAMIC: Current exemption status
+        statusColor: "secondary",
+      }
+    },
+    {
+      id: "prop-002", 
+      address: "5605 Sunshine Dr Unit 3", // DYNAMIC: From form/database
+      city: "Austin", // DYNAMIC: From form/database
+      state: "TX", // DYNAMIC: From form/database
+      zipCode: "78756", // DYNAMIC: From form/database
+      image: "/placeholder.svg", // DYNAMIC: Property aerial photo
+      appeal: {
+        status: "Active",
+        statusColor: "default",
+        autoAppeal: true, // DYNAMIC: User preference
+        contingencyFee: 25, // DYNAMIC: From contract
+        canActivate: false,
+      },
+      exemptions: {
+        status: "Active", // DYNAMIC: Current exemption status
+        statusColor: "default",
+      }
+    }
+  ];
+
+  const handleAccountAction = (action: string) => {
+    // DYNAMIC: Handle navigation/actions based on user selection
+    console.log(`Account action: ${action}`);
+  };
+
+  const toggleAutoAppeal = (propertyId: string) => {
+    // DYNAMIC: Update auto-appeal setting in database
+    console.log(`Toggle auto-appeal for property: ${propertyId}`);
+  };
+
+  const activateAutoAppeal = (propertyId: string) => {
+    // DYNAMIC: Activate auto-appeal for property in database
+    console.log(`Activate auto-appeal for property: ${propertyId}`);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="container mx-auto p-6 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Customer Portal</h1>
-          <p className="text-muted-foreground">Track your property tax protest application</p>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Lifetime Savings */}
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              <span className="text-sm text-muted-foreground">Lifetime Savings:</span>
+              <span className="font-semibold text-green-600">
+                ${userData.lifetimeSavings.toLocaleString()} {/* DYNAMIC: Total savings across all properties */}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Help Center */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4" />
+                Help Center
+              </Button>
+
+              {/* Account Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Account
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleAccountAction('account')}>
+                    <User className="h-4 w-4 mr-2" />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('add-property')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Property
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('billing')}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('documents')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    All Documents
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('refer')}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Refer-a-Friend
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
+      </header>
 
-        <div className="grid gap-6">
-          {/* Application Status Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Application Status
-                </CardTitle>
-                <Badge className={statusColor[applicationData.status as keyof typeof statusColor]}>
-                  {applicationData.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Application ID</p>
-                  <p className="font-semibold">{applicationData.applicationId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Submitted</p>
-                  <p className="font-semibold">{applicationData.submittedDate}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Est. Completion</p>
-                  <p className="font-semibold">{applicationData.estimatedCompletion}</p>
-                </div>
-              </div>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Properties Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">All Properties</h1>
+              <p className="text-muted-foreground">
+                Properties ({propertiesData.length}) {/* DYNAMIC: Count from database */}
+              </p>
+            </div>
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add Another Property
+            </Button>
+          </div>
 
-              <Separator />
-
-              <div className="space-y-3">
-                <h3 className="font-semibold">Progress Timeline</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <span className="text-sm">Application Submitted</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{applicationData.submittedDate}</span>
+          {/* Properties Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {propertiesData.map((property) => (
+              <Card key={property.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Property Image */}
+                  <div className="aspect-video bg-muted relative">
+                    <img 
+                      src={property.image} 
+                      alt={`Property at ${property.address}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* DYNAMIC: Real property aerial photo will replace placeholder */}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-yellow-500" />
-                    <span className="text-sm">Under Review</span>
-                    <span className="text-xs text-muted-foreground ml-auto">In Progress</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">County Response</span>
-                    <span className="text-xs text-muted-foreground ml-auto">Pending</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Final Results</span>
-                    <span className="text-xs text-muted-foreground ml-auto">Pending</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Property Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Property Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Property Address</p>
-                <p className="font-semibold">{applicationData.property.address}</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Current Assessed Value</p>
-                  <p className="font-semibold text-2xl">${applicationData.property.currentValue.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Estimated Annual Savings</p>
-                  <p className="font-semibold text-2xl text-green-600">${applicationData.property.estimatedSavings.toLocaleString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  {/* Property Info */}
+                  <div className="p-6 space-y-4">
+                    {/* Address and View Link */}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {property.address} {/* DYNAMIC: From form/database */}
+                        </h3>
+                        <p className="text-muted-foreground">
+                          {property.city}, {property.state} {property.zipCode} {/* DYNAMIC: From form/database */}
+                        </p>
+                      </div>
+                      <Button variant="link" size="sm" className="flex items-center gap-1 text-blue-600">
+                        View Property
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
 
-          {/* Contact Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{applicationData.contact.email}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{applicationData.contact.phone}</span>
-              </div>
-            </CardContent>
-          </Card>
+                    {/* Expandable Sections */}
+                    <Accordion type="multiple" className="w-full">
+                      {/* Appeal Section */}
+                      <AccordionItem value="appeal">
+                        <AccordionTrigger className="text-left">
+                          <div className="flex items-center gap-2">
+                            <span>Appeal</span>
+                            <Badge variant={property.appeal.statusColor as any}>
+                              {property.appeal.status} {/* DYNAMIC: Current appeal status */}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4">
+                          {/* Auto-Appeal Status */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Auto-Appeal</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">
+                                {property.appeal.autoAppeal ? 'Active' : 'Inactive'} {/* DYNAMIC: User setting */}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleAutoAppeal(property.id)}
+                                className="h-6 w-6 p-0"
+                              >
+                                {property.appeal.autoAppeal ? (
+                                  <ToggleRight className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <ToggleLeft className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
 
-          {/* Documents & Actions Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Documents & Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Button variant="outline" className="justify-start">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Application
-                </Button>
-                <Button variant="outline" className="justify-start">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Documents
-                </Button>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Need help?</p>
-                <Button variant="default">
-                  Contact Support
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                          {/* Contingency Fee */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Contingency Fee</span>
+                            <span className="text-sm font-medium">
+                              {property.appeal.contingencyFee}% {/* DYNAMIC: From contract */}
+                            </span>
+                          </div>
+
+                          {/* Action Button */}
+                          {property.appeal.canActivate && (
+                            <Button 
+                              size="sm" 
+                              className="w-full"
+                              onClick={() => activateAutoAppeal(property.id)}
+                            >
+                              Activate Auto-Appeal
+                            </Button>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+
+                      {/* Exemptions Section */}
+                      <AccordionItem value="exemptions">
+                        <AccordionTrigger className="text-left">
+                          <div className="flex items-center gap-2">
+                            <span>Exemptions</span>
+                            <Badge variant={property.exemptions.statusColor as any}>
+                              {property.exemptions.status} {/* DYNAMIC: Current exemption status */}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <p className="text-sm text-muted-foreground">
+                            Current exemption status and details will be displayed here.
+                            {/* DYNAMIC: Detailed exemption information from database */}
+                          </p>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

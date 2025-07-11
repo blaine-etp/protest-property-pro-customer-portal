@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin, Building2 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import austinSkyline from "@/assets/austin-skyline.jpg";
 import { AnimatedCounter } from "./AnimatedCounter";
 import MultiStepForm from "./MultiStepForm";
@@ -13,6 +14,7 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm }) => {
   const [address, setAddress] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,7 +172,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm 
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <MultiStepForm address={address} onComplete={() => setShowForm(false)} />
+            <MultiStepForm 
+              address={address} 
+              onComplete={(formData) => {
+                // Navigate to email verification with the email from form data
+                navigate(`/email-verification?email=${encodeURIComponent(formData.email)}`);
+              }} 
+            />
           </div>
         )}
       </div>

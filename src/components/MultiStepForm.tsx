@@ -23,7 +23,7 @@ export interface FormData {
 
 interface MultiStepFormProps {
   address: string;
-  onComplete?: () => void;
+  onComplete?: (formData: FormData) => void;
 }
 
 const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) => {
@@ -83,7 +83,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}
-            onPrev={() => onComplete?.()}
+            onPrev={() => onComplete?.(formData)}
           />
         );
       case 2:
@@ -101,7 +101,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
             formData={formData}
             updateFormData={updateFormData}
             onPrev={prevStep}
-            onComplete={() => onComplete?.()}
+            onComplete={() => onComplete?.(formData)}
           />
         );
       default:

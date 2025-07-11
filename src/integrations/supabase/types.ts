@@ -197,7 +197,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_create_profile: {
+        Args: { profile_user_id: string; profile_email: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

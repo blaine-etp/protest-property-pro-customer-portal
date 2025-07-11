@@ -16,6 +16,7 @@ export interface FormData {
   email: string;
   phone: string;
   agreeToUpdates: boolean;
+  includeAllProperties: boolean;
   isOwnerVerified?: boolean;
   signature?: string;
 }
@@ -38,6 +39,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
     email: '',
     phone: '',
     agreeToUpdates: true,
+    includeAllProperties: false,
   });
 
   const totalSteps = 3;

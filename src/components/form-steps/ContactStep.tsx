@@ -12,6 +12,7 @@ const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
   agreeToUpdates: z.boolean(),
+  includeAllProperties: z.boolean(),
 });
 
 interface ContactStepProps {
@@ -33,6 +34,7 @@ export const ContactStep: React.FC<ContactStepProps> = ({
       email: formData.email,
       phone: formData.phone,
       agreeToUpdates: formData.agreeToUpdates,
+      includeAllProperties: formData.includeAllProperties,
     },
   });
 
@@ -104,6 +106,26 @@ export const ContactStep: React.FC<ContactStepProps> = ({
                 <div className="space-y-1 leading-none">
                   <FormLabel className="text-sm leading-relaxed">
                     I agree to receive property tax updates and notifications via email and text. Msg & data rates may apply.
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="includeAllProperties"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm leading-relaxed">
+                    Please include all properties listed under this address.
                   </FormLabel>
                 </div>
               </FormItem>

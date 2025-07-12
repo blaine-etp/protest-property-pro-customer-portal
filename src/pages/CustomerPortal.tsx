@@ -33,7 +33,8 @@ import {
   User,
   LogOut,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  MoreVertical
 } from 'lucide-react';
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useTokenCustomerData } from '@/hooks/useTokenCustomerData';
@@ -156,7 +157,10 @@ const CustomerPortal = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Your Properties</h2>
+            <div>
+              <h2 className="text-2xl font-bold">All Properties</h2>
+              <p className="text-muted-foreground">Properties ({properties.length})</p>
+            </div>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Add Another Property
@@ -165,118 +169,128 @@ const CustomerPortal = () => {
 
           <div className="space-y-4">
             {properties.map((property) => (
-              <Collapsible key={property.id} defaultOpen={properties.length === 1}>
-                <Card className="overflow-hidden">
-                  <CollapsibleTrigger asChild>
-                    <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg flex items-start gap-2">
-                          <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="leading-tight">{property.address}</span>
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={property.appeal_status?.appeal_status === 'filed' ? 'default' : 'secondary'}>
-                            {property.appeal_status?.appeal_status || 'Pending'}
-                          </Badge>
-                          <ChevronDown className="h-4 w-4 transition-transform" />
+              <Card key={property.id} className="overflow-hidden">
+                <div className="p-6">
+                  <div className="flex items-start gap-4">
+                    {/* Property Image */}
+                    <div className="w-32 h-24 bg-muted rounded-lg overflow-hidden flex-shrink-0">
+                      <img 
+                        src="/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png" 
+                        alt={`Property at ${property.address}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    
+                    {/* Property Info */}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">{property.address}</h3>
+                          <p className="text-sm text-muted-foreground">Austin, TX</p>
+                          <Button variant="link" className="p-0 h-auto text-blue-600 text-sm">
+                            View Property <ExternalLink className="h-3 w-3 ml-1" />
+                          </Button>
                         </div>
-                      </div>
-                    </CardHeader>
-                  </CollapsibleTrigger>
-                  
-                  <CollapsibleContent>
-                    <CardContent className="pt-0 space-y-4">
-                      <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
-                        <img 
-                          src="/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png" 
-                          alt={`Property at ${property.address}`}
-                          className="w-full h-full object-cover"
-                        />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>Edit Property</DropdownMenuItem>
+                            <DropdownMenuItem>Remove Property</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                       
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Exemption Status:</span>
-                          <Badge variant={property.appeal_status?.exemption_status === 'approved' ? 'default' : 'secondary'}>
-                            {property.appeal_status?.exemption_status || 'Pending'}
-                          </Badge>
-                        </div>
-
-                        <div className="space-y-3">
-                          <h4 className="font-medium text-sm">Current Year Savings</h4>
-                          <div className="flex items-center justify-between text-sm">
-                            <span>Tax Savings:</span>
-                            <span className="font-semibold text-green-600">
-                              ${(property.appeal_status?.savings_amount || property.estimated_savings || 0).toLocaleString()}
-                            </span>
+                      {/* Property Taxes Section */}
+                      <div className="pt-4">
+                        <Collapsible defaultOpen={properties.length === 1}>
+                          <div className="flex items-center justify-between py-2 border-t">
+                            <h4 className="font-medium">PROPERTY TAXES</h4>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </CollapsibleTrigger>
                           </div>
-                        </div>
-
-                        <Accordion type="single" collapsible className="w-full">
-                          <AccordionItem value="appeal-details">
-                            <AccordionTrigger className="text-sm">Appeal Details</AccordionTrigger>
-                            <AccordionContent>
-                              <div className="space-y-2 text-sm">
-                                {property.parcel_number && (
-                                  <div className="flex justify-between">
-                                    <span>Parcel Number:</span>
-                                    <span>{property.parcel_number}</span>
-                                  </div>
-                                )}
-                                <div className="flex justify-between">
-                                  <span>Estimated Savings:</span>
-                                  <span>${property.estimated_savings?.toLocaleString() || 'TBD'}</span>
-                                </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
                           
-                          <AccordionItem value="exemptions">
-                            <AccordionTrigger className="text-sm">Auto-Appeal Settings</AccordionTrigger>
-                            <AccordionContent>
+                          <CollapsibleContent className="space-y-4">
+                            {/* Appeal Section */}
+                            <Collapsible defaultOpen>
                               <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm">Auto-Appeal Enabled:</span>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleToggleAutoAppeal(property.id)}
-                                    className="p-0 h-auto"
-                                  >
-                                    {property.appeal_status?.auto_appeal_enabled ? (
-                                      <ToggleRight className="h-6 w-6 text-green-600" />
-                                    ) : (
-                                      <ToggleLeft className="h-6 w-6 text-muted-foreground" />
-                                    )}
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                                    <span className="font-medium">Appeal</span>
+                                    <ChevronDown className="h-4 w-4" />
                                   </Button>
-                                </div>
+                                </CollapsibleTrigger>
+                                
+                                <CollapsibleContent className="space-y-4">
+                                  <div className="grid grid-cols-3 gap-4 text-sm">
+                                    <div>
+                                      <div className="text-xs text-muted-foreground uppercase tracking-wide">CURRENT STATUS</div>
+                                      <div className="mt-1">
+                                        <Badge variant={property.appeal_status?.appeal_status === 'filed' ? 'default' : 'secondary'}>
+                                          {property.appeal_status?.appeal_status || 'Pending'}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    
+                                    <div>
+                                      <div className="text-xs text-muted-foreground uppercase tracking-wide">AUTO-APPEAL</div>
+                                      <div className="mt-1">
+                                        <Badge variant={property.appeal_status?.auto_appeal_enabled ? 'default' : 'secondary'}>
+                                          {property.appeal_status?.auto_appeal_enabled ? 'Active' : 'Inactive'}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    
+                                    <div>
+                                      <div className="text-xs text-muted-foreground uppercase tracking-wide">CONTINGENCY FEE</div>
+                                      <div className="mt-1">
+                                        25%
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  {!property.appeal_status?.auto_appeal_enabled && (
+                                    <div className="flex justify-end">
+                                      <Button
+                                        onClick={() => activateAutoAppeal(property.id)}
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                      >
+                                        Activate Auto-Appeal
+                                      </Button>
+                                    </div>
+                                  )}
+                                </CollapsibleContent>
                               </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-
-                        <div className="flex gap-2 pt-4">
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <Building className="h-4 w-4 mr-2" />
-                            View Details
-                          </Button>
-                          
-                          {!property.appeal_status?.auto_appeal_enabled && (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => activateAutoAppeal(property.id)}
-                              className="px-3 py-1 text-xs h-8"
-                            >
-                              Activate Auto-Appeal
-                            </Button>
-                          )}
-                        </div>
+                            </Collapsible>
+                            
+                            {/* Exemptions Section */}
+                            <Collapsible>
+                              <CollapsibleTrigger asChild>
+                                <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                                  <span className="font-medium">Exemptions</span>
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                              </CollapsibleTrigger>
+                              
+                              <CollapsibleContent className="pt-3">
+                                <div className="text-sm text-muted-foreground">
+                                  No exemptions currently active for this property.
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          </CollapsibleContent>
+                        </Collapsible>
                       </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
+                    </div>
+                  </div>
+                </div>
+              </Card>
             ))}
           </div>
         </div>

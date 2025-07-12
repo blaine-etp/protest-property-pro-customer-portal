@@ -20,6 +20,7 @@ interface ContactStepProps {
   updateFormData: (data: Partial<FormData>) => void;
   onNext: () => void;
   onPrev: () => void;
+  readOnlyFields?: string[];
 }
 
 export const ContactStep: React.FC<ContactStepProps> = ({
@@ -27,6 +28,7 @@ export const ContactStep: React.FC<ContactStepProps> = ({
   updateFormData,
   onNext,
   onPrev,
+  readOnlyFields = [],
 }) => {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -66,6 +68,7 @@ export const ContactStep: React.FC<ContactStepProps> = ({
                   <Input
                     type="email"
                     placeholder="your.email@example.com"
+                    disabled={readOnlyFields.includes('email')}
                     {...field}
                   />
                 </FormControl>
@@ -84,6 +87,7 @@ export const ContactStep: React.FC<ContactStepProps> = ({
                   <Input
                     type="tel"
                     placeholder="(555) 123-4567"
+                    disabled={readOnlyFields.includes('phone')}
                     {...field}
                   />
                 </FormControl>

@@ -8,6 +8,7 @@ import EmailVerification from "./pages/EmailVerification";
 import CustomerPortal from "./pages/CustomerPortal";
 import SetupAccount from "./pages/SetupAccount";
 import Account from "./pages/Account";
+import AddProperty from "./pages/AddProperty";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/customer-portal" element={<CustomerPortal />} />
           <Route path="/setup-account" element={<SetupAccount />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/add-property" element={<AddProperty />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

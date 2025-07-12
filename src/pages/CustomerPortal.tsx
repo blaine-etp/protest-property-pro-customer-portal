@@ -62,6 +62,12 @@ const CustomerPortal = () => {
       if (token) params.set('token', token);
       const queryString = params.toString();
       navigate(`/account${queryString ? `?${queryString}` : ''}`);
+    } else if (action === "add-property") {
+      const params = new URLSearchParams();
+      if (email) params.set('email', email);
+      if (token) params.set('token', token);
+      const queryString = params.toString();
+      navigate(`/add-property${queryString ? `?${queryString}` : ''}`);
     } else {
       console.log(`Account action: ${action}`);
       // TODO: Implement other account actions
@@ -186,7 +192,7 @@ const CustomerPortal = () => {
               <h2 className="text-2xl font-bold">All Properties</h2>
               <p className="text-muted-foreground">Properties ({properties.length})</p>
             </div>
-            <Button>
+            <Button onClick={() => handleAccountAction('add-property')}>
               <Plus className="h-4 w-4 mr-2" />
               Add Another Property
             </Button>

@@ -8,6 +8,7 @@ interface SavingsStepContainerProps {
   updateFormData: (data: Partial<FormData>) => void;
   onNext: () => void;
   onPrev: () => void;
+  readOnlyFields?: string[];
 }
 
 export const SavingsStepContainer: React.FC<SavingsStepContainerProps> = ({
@@ -15,6 +16,7 @@ export const SavingsStepContainer: React.FC<SavingsStepContainerProps> = ({
   updateFormData,
   onNext,
   onPrev,
+  readOnlyFields = []
 }) => {
   const [showVerification, setShowVerification] = useState(false);
 
@@ -37,6 +39,7 @@ export const SavingsStepContainer: React.FC<SavingsStepContainerProps> = ({
         updateFormData={updateFormData}
         onNext={handleVerificationNext}
         onPrev={handleVerificationPrev}
+        readOnlyFields={readOnlyFields}
       />
     );
   }
@@ -45,10 +48,11 @@ export const SavingsStepContainer: React.FC<SavingsStepContainerProps> = ({
     <SavingsStep
       formData={formData}
       updateFormData={updateFormData}
-      onNext={onNext}
+      onNext={handleShowVerification}
       onPrev={onPrev}
       showVerification={showVerification}
       setShowVerification={handleShowVerification}
+      readOnlyFields={readOnlyFields}
     />
   );
 };

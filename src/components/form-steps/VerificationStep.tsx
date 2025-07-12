@@ -19,6 +19,7 @@ interface VerificationStepProps {
   updateFormData: (data: Partial<FormData>) => void;
   onNext: () => void;
   onPrev: () => void;
+  readOnlyFields?: string[];
 }
 
 export const VerificationStep: React.FC<VerificationStepProps> = ({
@@ -26,6 +27,7 @@ export const VerificationStep: React.FC<VerificationStepProps> = ({
   updateFormData,
   onNext,
   onPrev,
+  readOnlyFields = [],
 }) => {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),

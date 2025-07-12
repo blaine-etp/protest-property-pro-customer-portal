@@ -12,6 +12,8 @@ interface ReviewStepProps {
   updateFormData: (data: Partial<FormData>) => void;
   onPrev: () => void;
   onComplete: () => void;
+  readOnlyFields?: string[];
+  isAddPropertyMode?: boolean;
 }
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({
@@ -19,12 +21,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   updateFormData,
   onPrev,
   onComplete,
+  readOnlyFields = [],
+  isAddPropertyMode = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
   const { submitFormData, isSubmitting } = useFormSubmission();
+  // TODO: Add useAddPropertySubmission hook for add property mode
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);

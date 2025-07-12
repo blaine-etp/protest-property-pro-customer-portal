@@ -25,6 +25,7 @@ interface SavingsStepProps {
   onPrev: () => void;
   showVerification: boolean;
   setShowVerification: (show: boolean) => void;
+  readOnlyFields?: string[];
 }
 
 export const SavingsStep: React.FC<SavingsStepProps> = ({
@@ -34,6 +35,7 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
   onPrev,
   showVerification,
   setShowVerification,
+  readOnlyFields = [],
 }) => {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),

@@ -130,8 +130,96 @@ serve(async (req) => {
 
       console.log('=== END DIAGNOSTIC ===\n')
 
-      // Step 6: Generate minimal PDF first (no field filling yet)
-      console.log('Step 6: Generating basic PDF...')
+      // Step 6: Fill form fields with actual data
+      console.log('Step 6: Filling form fields with data...')
+      
+      let fieldsFilledCount = 0
+      
+      // Helper function to try multiple field name variations
+      const tryFillField = (fieldNames: string[], value: string | boolean, isCheckbox = false) => {
+        for (const fieldName of fieldNames) {
+          try {
+            const field = form.getFieldMaybe(fieldName)
+            if (field) {
+              if (isCheckbox && typeof value === 'boolean') {
+                const checkbox = form.getCheckBox(fieldName)
+                if (value) {
+                  checkbox.check()
+                } else {
+                  checkbox.uncheck()
+                }
+                console.log(`✓ Checkbox field "${fieldName}" set to: ${value}`)
+              } else if (!isCheckbox && typeof value === 'string' && value.trim()) {
+                const textField = form.getTextField(fieldName)
+                textField.setText(value)
+                console.log(`✓ Text field "${fieldName}" filled with: "${value}"`)
+              }
+              fieldsFilledCount++
+              return true
+            }
+          } catch (e) {
+            console.log(`⚠️ Failed to fill field "${fieldName}": ${e.message}`)
+          }
+        }
+        return false
+      }
+
+      // Fill phone number
+      const phone = customerData.phone || ''
+      if (phone) {
+        tryFillField(['phone', 'telephone', 'tel', 'Phone', 'Telephone', 'phone_number'], phone)
+      }
+
+      // Fill current date
+      const currentDate = new Date().toLocaleDateString('en-US')
+      tryFillField(['date', 'Date', 'today', 'current_date', 'Date_af_date'], currentDate)
+
+      // Fill full name
+      const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim()
+      if (fullName) {
+        tryFillField(['name', 'print_name', 'full_name', 'Name', 'Print_Name', 'applicant_name'], fullName)
+      }
+
+      // Fill property checkbox based on include_all_properties
+      const includeAllProperties = propertyData.include_all_properties || false
+      tryFillField(['all_properties', 'include_all', 'property_type', 'All_Properties'], includeAllProperties, true)
+
+      // Fill role/relationship checkbox
+      const role = customerData.role || ''
+      if (role === 'homeowner') {
+        tryFillField(['owner', 'homeowner', 'property_owner', 'Owner'], true, true)
+      } else if (role === 'agent') {
+        tryFillField(['agent', 'authorized_agent', 'Agent'], true, true)
+      }
+
+      // Handle signature if available
+      if (applicationData?.signature) {
+        console.log('Processing signature...')
+        try {
+          // Remove data URL prefix if present
+          const base64Data = applicationData.signature.replace(/^data:image\/[a-z]+;base64,/, '')
+          const signatureBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+          
+          const signatureImage = await pdfDoc.embedPng(signatureBytes)
+          const pages = pdfDoc.getPages()
+          const firstPage = pages[0]
+          
+          // Place signature in approximate location (adjust coordinates as needed)
+          firstPage.drawImage(signatureImage, {
+            x: 400, // Adjust based on your form
+            y: 100, // Adjust based on your form
+            width: 150,
+            height: 50,
+          })
+          console.log('✓ Signature embedded successfully')
+          fieldsFilledCount++
+        } catch (sigError) {
+          console.log(`⚠️ Could not embed signature: ${sigError.message}`)
+        }
+      }
+
+      console.log(`✓ Form filling complete. ${fieldsFilledCount} fields/elements processed.`)
+      
       const pdfBytes = await pdfDoc.save()
       console.log('✓ PDF generated successfully, size:', pdfBytes.length, 'bytes')
 

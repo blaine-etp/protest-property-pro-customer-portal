@@ -138,13 +138,29 @@ const CustomerPortal = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleAccountAction('settings')}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                  <DropdownMenuItem onClick={() => handleAccountAction('account')}>
+                    <User className="h-4 w-4 mr-2" />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('add-property')}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Property
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('billing')}>
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('documents')}>
+                    <Building className="h-4 w-4 mr-2" />
+                    All Documents
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAccountAction('refer-friend')}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Refer-a-Friend
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleAccountAction('logout')}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                    Log Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

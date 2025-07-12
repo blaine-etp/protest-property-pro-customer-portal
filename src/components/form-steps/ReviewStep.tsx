@@ -29,7 +29,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
   const { submitFormData, isSubmitting } = useFormSubmission();
-  // TODO: Add useAddPropertySubmission hook for add property mode
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -94,45 +93,50 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       };
       updateFormData(updatedFormData);
 
-      // Get current user session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        // Create anonymous user for demo purposes
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: Math.random().toString(36).substring(2, 15), // Random password
-          options: {
-            data: {
-              first_name: formData.firstName,
-              last_name: formData.lastName,
+      if (isAddPropertyMode) {
+        // For add property mode, use the onComplete callback which will handle the submission
+        onComplete();
+      } else {
+        // Original signup flow logic
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+          // Create anonymous user for demo purposes
+          const { data, error } = await supabase.auth.signUp({
+            email: formData.email,
+            password: Math.random().toString(36).substring(2, 15), // Random password
+            options: {
+              data: {
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+              }
+            }
+          });
+
+          if (error) {
+            toast({
+              title: "Submission Error",
+              description: "Failed to create user account",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (data.user) {
+            // Submit form data
+            const result = await submitFormData(updatedFormData);
+            if (result.success && result.token) {
+              // Redirect to customer portal with token
+              window.location.href = `/customer-portal?token=${result.token}`;
             }
           }
-        });
-
-        if (error) {
-          toast({
-            title: "Submission Error",
-            description: "Failed to create user account",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (data.user) {
-          // Submit form data
+        } else {
+          // Submit form data for existing user
           const result = await submitFormData(updatedFormData);
           if (result.success && result.token) {
-            // Redirect to customer portal with token
+            // Redirect to customer portal with token  
             window.location.href = `/customer-portal?token=${result.token}`;
           }
-        }
-      } else {
-        // Submit form data for existing user
-        const result = await submitFormData(updatedFormData);
-        if (result.success && result.token) {
-          // Redirect to customer portal with token  
-          window.location.href = `/customer-portal?token=${result.token}`;
         }
       }
     }

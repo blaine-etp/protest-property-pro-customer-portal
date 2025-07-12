@@ -16,6 +16,11 @@ import {
   AccordionTrigger 
 } from '@/components/ui/accordion';
 import { 
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
+} from '@/components/ui/collapsible';
+import { 
   ChevronDown,
   Home,
   MapPin,
@@ -158,112 +163,120 @@ const CustomerPortal = () => {
             </Button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-4">
             {properties.map((property) => (
-              <Card key={property.id} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="w-full h-48 bg-muted rounded-lg mb-4 overflow-hidden">
-                    <img 
-                      src="/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png" 
-                      alt={`Property at ${property.address}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardTitle className="text-lg flex items-start gap-2">
-                    <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="leading-tight">{property.address}</span>
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Appeal Status:</span>
-                      <Badge variant={property.appeal_status?.appeal_status === 'filed' ? 'default' : 'secondary'}>
-                        {property.appeal_status?.appeal_status || 'Pending'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Exemption Status:</span>
-                      <Badge variant={property.appeal_status?.exemption_status === 'approved' ? 'default' : 'secondary'}>
-                        {property.appeal_status?.exemption_status || 'Pending'}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Current Year Savings</h4>
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Tax Savings:</span>
-                        <span className="font-semibold text-green-600">
-                          ${(property.appeal_status?.savings_amount || property.estimated_savings || 0).toLocaleString()}
-                        </span>
+              <Collapsible key={property.id} defaultOpen={properties.length === 1}>
+                <Card className="overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-start gap-2">
+                          <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="leading-tight">{property.address}</span>
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={property.appeal_status?.appeal_status === 'filed' ? 'default' : 'secondary'}>
+                            {property.appeal_status?.appeal_status || 'Pending'}
+                          </Badge>
+                          <ChevronDown className="h-4 w-4 transition-transform" />
+                        </div>
                       </div>
-                    </div>
-
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="appeal-details">
-                        <AccordionTrigger className="text-sm">Appeal Details</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-2 text-sm">
-                            {property.parcel_number && (
-                              <div className="flex justify-between">
-                                <span>Parcel Number:</span>
-                                <span>{property.parcel_number}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span>Estimated Savings:</span>
-                              <span>${property.estimated_savings?.toLocaleString() || 'TBD'}</span>
-                            </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent className="pt-0 space-y-4">
+                      <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png" 
+                          alt={`Property at ${property.address}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                       
-                      <AccordionItem value="exemptions">
-                        <AccordionTrigger className="text-sm">Auto-Appeal Settings</AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">Auto-Appeal Enabled:</span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToggleAutoAppeal(property.id)}
-                                className="p-0 h-auto"
-                              >
-                                {property.appeal_status?.auto_appeal_enabled ? (
-                                  <ToggleRight className="h-6 w-6 text-green-600" />
-                                ) : (
-                                  <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Exemption Status:</span>
+                          <Badge variant={property.appeal_status?.exemption_status === 'approved' ? 'default' : 'secondary'}>
+                            {property.appeal_status?.exemption_status || 'Pending'}
+                          </Badge>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h4 className="font-medium text-sm">Current Year Savings</h4>
+                          <div className="flex items-center justify-between text-sm">
+                            <span>Tax Savings:</span>
+                            <span className="font-semibold text-green-600">
+                              ${(property.appeal_status?.savings_amount || property.estimated_savings || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="appeal-details">
+                            <AccordionTrigger className="text-sm">Appeal Details</AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-2 text-sm">
+                                {property.parcel_number && (
+                                  <div className="flex justify-between">
+                                    <span>Parcel Number:</span>
+                                    <span>{property.parcel_number}</span>
+                                  </div>
                                 )}
-                              </Button>
-                            </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
+                                <div className="flex justify-between">
+                                  <span>Estimated Savings:</span>
+                                  <span>${property.estimated_savings?.toLocaleString() || 'TBD'}</span>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                          
+                          <AccordionItem value="exemptions">
+                            <AccordionTrigger className="text-sm">Auto-Appeal Settings</AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">Auto-Appeal Enabled:</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleAutoAppeal(property.id)}
+                                    className="p-0 h-auto"
+                                  >
+                                    {property.appeal_status?.auto_appeal_enabled ? (
+                                      <ToggleRight className="h-6 w-6 text-green-600" />
+                                    ) : (
+                                      <ToggleLeft className="h-6 w-6 text-muted-foreground" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
 
-                    <div className="flex gap-2 pt-4">
-                      <Button size="sm" variant="outline" className="flex-1">
-                        <Building className="h-4 w-4 mr-2" />
-                        View Details
-                      </Button>
-                      
-                      {!property.appeal_status?.auto_appeal_enabled && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => activateAutoAppeal(property.id)}
-                          className="flex-1"
-                        >
-                          Activate Auto-Appeal
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                        <div className="flex gap-2 pt-4">
+                          <Button size="sm" variant="outline" className="flex-1">
+                            <Building className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
+                          
+                          {!property.appeal_status?.auto_appeal_enabled && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => activateAutoAppeal(property.id)}
+                              className="px-3 py-1 text-xs h-8"
+                            >
+                              Activate Auto-Appeal
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             ))}
           </div>
         </div>

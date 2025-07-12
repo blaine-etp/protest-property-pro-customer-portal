@@ -81,6 +81,25 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
         throw new Error(`Appeal status creation failed: ${appealError.message}`);
       }
 
+      // Generate Form 50-162 automatically
+      try {
+        const { error: pdfError } = await supabase.functions.invoke('generate-form-50-162', {
+          body: { 
+            propertyId: property.id, 
+            userId: existingUserId 
+          }
+        });
+        
+        if (pdfError) {
+          console.error('PDF generation failed:', pdfError);
+        } else {
+          console.log('Form 50-162 generated successfully');
+        }
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError);
+        // Don't fail the submission if PDF generation fails
+      }
+
       toast({
         title: "Property Added Successfully",
         description: "Your new property has been added to your account!",

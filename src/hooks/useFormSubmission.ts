@@ -87,6 +87,25 @@ export const useFormSubmission = () => {
         throw new Error(`Appeal status creation failed: ${appealError.message}`);
       }
 
+      // Generate Form 50-162 automatically
+      try {
+        const { error: pdfError } = await supabase.functions.invoke('generate-form-50-162', {
+          body: { 
+            propertyId: property.id, 
+            userId: tempUserId 
+          }
+        });
+        
+        if (pdfError) {
+          console.error('PDF generation failed:', pdfError);
+        } else {
+          console.log('Form 50-162 generated successfully');
+        }
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError);
+        // Don't fail the submission if PDF generation fails
+      }
+
       toast({
         title: "Application Submitted Successfully",
         description: "Your application has been submitted! You'll receive an email to create your account.",

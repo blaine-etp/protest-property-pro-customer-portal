@@ -39,6 +39,7 @@ import {
 import { useCustomerData } from '@/hooks/useCustomerData';
 import { useTokenCustomerData } from '@/hooks/useTokenCustomerData';
 import { useToast } from '@/hooks/use-toast';
+import DocumentsSection from '@/components/DocumentsSection';
 
 const CustomerPortal = () => {
   const [searchParams] = useSearchParams();
@@ -316,7 +317,7 @@ const CustomerPortal = () => {
                                 </div>
                               </Collapsible>
                               
-                              {/* Exemptions Section */}
+                               {/* Exemptions Section */}
                               <Collapsible>
                                 <CollapsibleTrigger asChild>
                                   <Button variant="ghost" className="w-full justify-between p-0 h-auto">
@@ -329,6 +330,20 @@ const CustomerPortal = () => {
                                   <div className="text-sm text-muted-foreground">
                                     No exemptions currently active for this property.
                                   </div>
+                                </CollapsibleContent>
+                              </Collapsible>
+
+                              {/* Documents Section */}
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                                    <span className="font-medium">Documents</span>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                                
+                                <CollapsibleContent className="pt-3">
+                                  <DocumentsSection propertyId={property.id} />
                                 </CollapsibleContent>
                               </Collapsible>
                             </CollapsibleContent>

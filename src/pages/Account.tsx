@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Clock } from "lucide-react";
+import { useCustomerData } from "@/hooks/useCustomerData";
+import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
 
 const accountInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -54,11 +56,24 @@ interface VerificationCode {
 
 const Account = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [verificationCode, setVerificationCode] = useState<VerificationCode | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  // Get URL parameters for token-based access
+  const email = searchParams.get('email');
+  const token = searchParams.get('token');
+  
+  // Use appropriate data hook based on access method
+  const tokenData = useTokenCustomerData(token || '');
+  const emailData = useCustomerData(email || '');
+  
+  // Determine which data source to use
+  const customerData = token ? tokenData : emailData;
+  const { profile: customerProfile, loading: customerLoading, error: customerError } = customerData;
 
   const accountForm = useForm<AccountInfoForm>({
     resolver: zodResolver(accountInfoSchema),
@@ -89,9 +104,30 @@ const Account = () => {
   });
 
   useEffect(() => {
-    fetchProfile();
-    fetchActiveVerificationCode();
-  }, []);
+    if (token || email) {
+      // Use token/email based access - profile data comes from customerData
+      if (customerProfile && !customerLoading) {
+        setProfile({
+          first_name: customerProfile.first_name || '',
+          last_name: customerProfile.last_name || '',
+          mailing_address: '',
+          mailing_address_2: '',
+          mailing_city: '',
+          mailing_state: '',
+          mailing_zip: '',
+        });
+        
+        accountForm.reset({
+          firstName: customerProfile.first_name || '',
+          lastName: customerProfile.last_name || '',
+        });
+      }
+    } else {
+      // Use standard auth-based access
+      fetchProfile();
+      fetchActiveVerificationCode();
+    }
+  }, [customerProfile, customerLoading, token, email]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -113,7 +149,11 @@ const Account = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/");
+        // Only redirect if we don't have token/email access
+        if (!token && !email) {
+          navigate("/");
+          return;
+        }
         return;
       }
 
@@ -179,8 +219,18 @@ const Account = () => {
   const onAccountInfoSubmit = async (data: AccountInfoForm) => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      let userId: string;
+      
+      if (token || email) {
+        // Use customer profile user_id for token/email access
+        if (!customerProfile) throw new Error("No customer profile found");
+        userId = customerProfile.user_id;
+      } else {
+        // Use auth user for standard access
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No user found");
+        userId = user.id;
+      }
 
       const { error } = await supabase
         .from("profiles")
@@ -188,7 +238,7 @@ const Account = () => {
           first_name: data.firstName,
           last_name: data.lastName,
         })
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       if (error) throw error;
 
@@ -197,7 +247,9 @@ const Account = () => {
         description: "Account information updated successfully",
       });
 
-      fetchProfile();
+      if (!token && !email) {
+        fetchProfile();
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast({
@@ -240,8 +292,18 @@ const Account = () => {
   const onAddressSubmit = async (data: AddressForm) => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      let userId: string;
+      
+      if (token || email) {
+        // Use customer profile user_id for token/email access
+        if (!customerProfile) throw new Error("No customer profile found");
+        userId = customerProfile.user_id;
+      } else {
+        // Use auth user for standard access
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No user found");
+        userId = user.id;
+      }
 
       const { error } = await supabase
         .from("profiles")
@@ -252,7 +314,7 @@ const Account = () => {
           mailing_state: data.mailingState,
           mailing_zip: data.mailingZip,
         })
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       if (error) throw error;
 
@@ -261,7 +323,9 @@ const Account = () => {
         description: "Mailing address updated successfully",
       });
 
-      fetchProfile();
+      if (!token && !email) {
+        fetchProfile();
+      }
     } catch (error) {
       console.error("Error updating address:", error);
       toast({
@@ -322,7 +386,13 @@ const Account = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate("/customer-portal")}
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (email) params.set('email', email);
+              if (token) params.set('token', token);
+              const queryString = params.toString();
+              navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
+            }}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

@@ -56,8 +56,16 @@ const CustomerPortal = () => {
   const { profile, properties, loading, error, toggleAutoAppeal } = isTokenAccess ? tokenData : emailData;
 
   const handleAccountAction = (action: string) => {
-    console.log(`Account action: ${action}`);
-    // TODO: Implement account actions
+    if (action === "account") {
+      const params = new URLSearchParams();
+      if (email) params.set('email', email);
+      if (token) params.set('token', token);
+      const queryString = params.toString();
+      navigate(`/account${queryString ? `?${queryString}` : ''}`);
+    } else {
+      console.log(`Account action: ${action}`);
+      // TODO: Implement other account actions
+    }
   };
 
   const handleToggleAutoAppeal = async (propertyId: string) => {
@@ -139,7 +147,7 @@ const CustomerPortal = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate('/account')}>
+                  <DropdownMenuItem onClick={() => handleAccountAction('account')}>
                     <User className="h-4 w-4 mr-2" />
                     Account
                   </DropdownMenuItem>

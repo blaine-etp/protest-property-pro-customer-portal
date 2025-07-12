@@ -93,102 +93,146 @@ serve(async (req) => {
     const pages = pdfDoc.getPages()
     const firstPage = pages[0]
 
-    // Fill form fields based on the requirements
-    try {
-      // 1. Phone number - try to find telephone field
-      if (customerData.phone) {
+    // DIAGNOSTIC: Log all available form fields
+    console.log('=== DIAGNOSTIC: PDF Form Field Analysis ===')
+    const fields = form.getFields()
+    console.log(`Total form fields found: ${fields.length}`)
+    
+    fields.forEach((field, index) => {
+      const fieldName = field.getName()
+      const fieldType = field.constructor.name
+      console.log(`Field ${index + 1}: "${fieldName}" (${fieldType})`)
+    })
+
+    // Try to get text fields specifically
+    const textFields = form.getTextFields()
+    console.log(`\nText fields found: ${textFields.length}`)
+    textFields.forEach((field, index) => {
+      console.log(`Text Field ${index + 1}: "${field.getName()}"`)
+    })
+
+    // Try to get checkbox fields specifically
+    const checkBoxes = form.getCheckBoxes()
+    console.log(`\nCheckbox fields found: ${checkBoxes.length}`)
+    checkBoxes.forEach((field, index) => {
+      console.log(`Checkbox Field ${index + 1}: "${field.getName()}"`)
+    })
+
+    console.log('=== END DIAGNOSTIC ===\n')
+
+    // Helper function to safely fill text field
+    const fillTextField = (fieldNameOptions: string[], value: string, fallbackCoords?: { x: number, y: number }) => {
+      for (const fieldName of fieldNameOptions) {
         try {
-          const phoneField = form.getTextField('telephone')
-          phoneField.setText(customerData.phone)
+          const field = form.getTextField(fieldName)
+          field.setText(value)
+          console.log(`Successfully filled text field "${fieldName}" with value: ${value}`)
+          return true
         } catch (e) {
-          console.log('Telephone field not found as text field, trying checkbox approach')
-          // If no form field, we'll add text directly to the page
-          firstPage.drawText(customerData.phone, {
-            x: 400, // Adjust coordinates based on your template
-            y: 720,
-            size: 10,
-            color: rgb(0, 0, 0),
-          })
+          console.log(`Text field "${fieldName}" not found`)
         }
+      }
+      
+      // If no form field found and fallback coordinates provided, draw text directly
+      if (fallbackCoords) {
+        firstPage.drawText(value, {
+          x: fallbackCoords.x,
+          y: fallbackCoords.y,
+          size: 10,
+          color: rgb(0, 0, 0),
+        })
+        console.log(`Drew text "${value}" directly at coordinates (${fallbackCoords.x}, ${fallbackCoords.y})`)
+        return true
+      }
+      
+      return false
+    }
+
+    // Helper function to safely check checkbox
+    const checkBoxField = (fieldNameOptions: string[]) => {
+      for (const fieldName of fieldNameOptions) {
+        try {
+          const field = form.getCheckBox(fieldName)
+          field.check()
+          console.log(`Successfully checked checkbox "${fieldName}"`)
+          return true
+        } catch (e) {
+          console.log(`Checkbox field "${fieldName}" not found`)
+        }
+      }
+      return false
+    }
+
+    // Fill form fields with comprehensive field name attempts
+    try {
+      // 1. Phone number
+      if (customerData.phone) {
+        const phoneFieldNames = ['telephone', 'phone', 'Phone', 'Telephone', 'TELEPHONE', 'PHONE', 'tel', 'Tel']
+        fillTextField(phoneFieldNames, customerData.phone, { x: 400, y: 720 })
       }
 
       // 2. Property checkboxes
       if (propertyData.include_all_properties) {
-        try {
-          const allPropertiesField = form.getCheckBox('all_properties')
-          allPropertiesField.check()
-        } catch (e) {
-          console.log('All properties checkbox not found')
-        }
+        const allPropertiesFieldNames = [
+          'all_properties', 'all properties', 'All Properties', 'ALL PROPERTIES',
+          'allproperties', 'AllProperties', 'all_prop', 'all-properties',
+          'checkbox_all', 'chk_all', 'includeAll', 'include_all'
+        ]
+        checkBoxField(allPropertiesFieldNames)
       } else {
-        try {
-          const listedPropertiesField = form.getCheckBox('listed_properties')
-          listedPropertiesField.check()
-        } catch (e) {
-          console.log('Listed properties checkbox not found')
-        }
+        const listedPropertiesFieldNames = [
+          'listed_properties', 'listed properties', 'Listed Properties', 'LISTED PROPERTIES',
+          'listedproperties', 'ListedProperties', 'listed_prop', 'listed-properties',
+          'checkbox_listed', 'chk_listed', 'specificProperties', 'specific_properties'
+        ]
+        checkBoxField(listedPropertiesFieldNames)
       }
 
       // 3. Date field
       const currentDate = new Date().toLocaleDateString('en-US')
-      try {
-        const dateField = form.getTextField('date')
-        dateField.setText(currentDate)
-      } catch (e) {
-        console.log('Date field not found as text field')
-        // Add date directly to page
-        firstPage.drawText(currentDate, {
-          x: 450, // Adjust coordinates
-          y: 200,
-          size: 10,
-          color: rgb(0, 0, 0),
-        })
-      }
+      const dateFieldNames = [
+        'date', 'Date', 'DATE', 'date_signed', 'dateField', 'signDate',
+        'signature_date', 'current_date', 'today', 'Today'
+      ]
+      fillTextField(dateFieldNames, currentDate, { x: 450, y: 200 })
 
       // 4. Print name field
       const fullName = `${customerData.first_name} ${customerData.last_name}`
-      try {
-        const printNameField = form.getTextField('print_name')
-        printNameField.setText(fullName)
-      } catch (e) {
-        console.log('Print name field not found as text field')
-        // Add name directly to page
-        firstPage.drawText(fullName, {
-          x: 300, // Adjust coordinates
-          y: 180,
-          size: 10,
-          color: rgb(0, 0, 0),
-        })
-      }
+      const printNameFieldNames = [
+        'print_name', 'print name', 'Print Name', 'PRINT NAME',
+        'printname', 'PrintName', 'name', 'Name', 'NAME',
+        'full_name', 'fullname', 'FullName', 'signer_name',
+        'applicant_name', 'customer_name'
+      ]
+      fillTextField(printNameFieldNames, fullName, { x: 300, y: 180 })
 
       // 5. Relationship checkboxes
       if (customerData.role) {
-        const roleMapping: { [key: string]: string } = {
-          'homeowner': 'owner',
-          'owner': 'owner',
-          'agent': 'agent',
-          'attorney': 'attorney',
-          'trustee': 'trustee'
+        const roleMapping: { [key: string]: string[] } = {
+          'homeowner': ['owner', 'Owner', 'OWNER', 'homeowner', 'Homeowner', 'HOMEOWNER', 'property_owner'],
+          'owner': ['owner', 'Owner', 'OWNER', 'property_owner', 'PropertyOwner'],
+          'agent': ['agent', 'Agent', 'AGENT', 'real_estate_agent', 'realtor', 'Realtor'],
+          'attorney': ['attorney', 'Attorney', 'ATTORNEY', 'lawyer', 'Lawyer', 'legal_rep'],
+          'trustee': ['trustee', 'Trustee', 'TRUSTEE', 'trust_representative']
         }
         
-        const mappedRole = roleMapping[customerData.role.toLowerCase()] || 'owner'
-        try {
-          const relationshipField = form.getCheckBox(mappedRole)
-          relationshipField.check()
-        } catch (e) {
-          console.log(`Relationship checkbox for ${mappedRole} not found`)
-        }
+        const role = customerData.role.toLowerCase()
+        const fieldNames = roleMapping[role] || roleMapping['owner']
+        checkBoxField(fieldNames)
       }
 
       // 6. Signature - embed as image if provided
       if (applicationData.signature) {
         try {
           // Convert base64 signature to image
-          const signatureBase64 = applicationData.signature.split(',')[1] // Remove data:image/png;base64, prefix
+          const signatureBase64 = applicationData.signature.includes(',') 
+            ? applicationData.signature.split(',')[1] 
+            : applicationData.signature
+          
           const signatureBytes = Uint8Array.from(atob(signatureBase64), c => c.charCodeAt(0))
           
           const signatureImage = await pdfDoc.embedPng(signatureBytes)
-          const signatureDims = signatureImage.scale(0.3) // Scale down the signature
+          const signatureDims = signatureImage.scale(0.25) // Scale down the signature
           
           // Add signature to the "Sign Here" area
           firstPage.drawImage(signatureImage, {
@@ -197,6 +241,7 @@ serve(async (req) => {
             width: signatureDims.width,
             height: signatureDims.height,
           })
+          console.log('Successfully embedded signature image')
         } catch (e) {
           console.log('Failed to embed signature:', e)
         }

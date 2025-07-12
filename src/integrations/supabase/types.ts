@@ -118,6 +118,11 @@ export type Database = {
           is_trust_entity: boolean | null
           last_name: string
           lifetime_savings: number | null
+          mailing_address: string | null
+          mailing_address_2: string | null
+          mailing_city: string | null
+          mailing_state: string | null
+          mailing_zip: string | null
           phone: string | null
           role: string | null
           token_expires_at: string | null
@@ -135,6 +140,11 @@ export type Database = {
           is_trust_entity?: boolean | null
           last_name: string
           lifetime_savings?: number | null
+          mailing_address?: string | null
+          mailing_address_2?: string | null
+          mailing_city?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
           phone?: string | null
           role?: string | null
           token_expires_at?: string | null
@@ -152,6 +162,11 @@ export type Database = {
           is_trust_entity?: boolean | null
           last_name?: string
           lifetime_savings?: number | null
+          mailing_address?: string | null
+          mailing_address_2?: string | null
+          mailing_city?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
           phone?: string | null
           role?: string | null
           token_expires_at?: string | null
@@ -200,6 +215,33 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      verification_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

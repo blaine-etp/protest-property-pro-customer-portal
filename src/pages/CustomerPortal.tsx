@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const CustomerPortal = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const email = searchParams.get('email') || '';
   const token = searchParams.get('token') || '';
   const { toast } = useToast();
@@ -138,7 +139,7 @@ const CustomerPortal = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleAccountAction('account')}>
+                  <DropdownMenuItem onClick={() => navigate('/account')}>
                     <User className="h-4 w-4 mr-2" />
                     Account
                   </DropdownMenuItem>

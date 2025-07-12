@@ -109,43 +109,52 @@ export type Database = {
       profiles: {
         Row: {
           agree_to_updates: boolean | null
+          authentication_token: string | null
           created_at: string
           email: string
           first_name: string
           id: string
+          is_authenticated: boolean | null
           is_trust_entity: boolean | null
           last_name: string
           lifetime_savings: number | null
           phone: string | null
           role: string | null
+          token_expires_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           agree_to_updates?: boolean | null
+          authentication_token?: string | null
           created_at?: string
           email: string
           first_name: string
           id?: string
+          is_authenticated?: boolean | null
           is_trust_entity?: boolean | null
           last_name: string
           lifetime_savings?: number | null
           phone?: string | null
           role?: string | null
+          token_expires_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           agree_to_updates?: boolean | null
+          authentication_token?: string | null
           created_at?: string
           email?: string
           first_name?: string
           id?: string
+          is_authenticated?: boolean | null
           is_trust_entity?: boolean | null
           last_name?: string
           lifetime_savings?: number | null
           phone?: string | null
           role?: string | null
+          token_expires_at?: string | null
           updated_at?: string
           user_id?: string
         }

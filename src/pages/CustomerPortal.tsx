@@ -31,14 +31,22 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useCustomerData } from '@/hooks/useCustomerData';
+import { useTokenCustomerData } from '@/hooks/useTokenCustomerData';
 import { useToast } from '@/hooks/use-toast';
 
 const CustomerPortal = () => {
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email') || '';
+  const token = searchParams.get('token') || '';
   const { toast } = useToast();
   
-  const { profile, properties, loading, error, toggleAutoAppeal } = useCustomerData(email);
+  // Use different hooks based on whether we have a token or email
+  const emailData = useCustomerData(email);
+  const tokenData = useTokenCustomerData(token);
+  
+  // Determine which data source to use
+  const isTokenAccess = Boolean(token);
+  const { profile, properties, loading, error, toggleAutoAppeal } = isTokenAccess ? tokenData : emailData;
 
   const handleAccountAction = (action: string) => {
     console.log(`Account action: ${action}`);

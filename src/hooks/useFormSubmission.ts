@@ -7,56 +7,18 @@ export const useFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const submitFormData = async (formData: FormData, userId?: string) => {
+  const submitFormData = async (formData: FormData) => {
     setIsSubmitting(true);
     
     try {
-      // Handle user authentication and creation
-      let finalUserId = userId;
-      
-      if (!finalUserId) {
-        // Create user account if one doesn't exist
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: 'temp-password-123', // In production, this should be user-provided
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          }
-        });
+      // Generate a temporary user ID for data storage (will be linked to real auth user later)
+      const tempUserId = crypto.randomUUID();
 
-        if (authError && authError.message !== 'User already registered') {
-          throw new Error(`Authentication failed: ${authError.message}`);
-        }
-
-        // Get existing user if already registered
-        if (authError?.message === 'User already registered') {
-          const { data: userData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: formData.email,
-            password: 'temp-password-123',
-          });
-          finalUserId = userData?.user?.id;
-        } else {
-          finalUserId = authData?.user?.id;
-          
-          // Show email confirmation message for new users
-          if (authData?.user && !authData.user.email_confirmed_at) {
-            toast({
-              title: "Email Confirmation Required",
-              description: "Please check your email and click the confirmation link to complete your application.",
-            });
-          }
-        }
-      }
-
-      if (!finalUserId) {
-        throw new Error('No user ID available');
-      }
-
-      // 1. Create or update user profile
+      // 1. Create user profile with token (no authentication required)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: finalUserId,
+        .insert({
+          user_id: tempUserId, // Use temporary ID
           first_name: formData.firstName,
           last_name: formData.lastName,
           email: formData.email,
@@ -64,6 +26,7 @@ export const useFormSubmission = () => {
           is_trust_entity: formData.isTrustEntity,
           role: formData.role,
           agree_to_updates: formData.agreeToUpdates,
+          is_authenticated: false, // Mark as not yet authenticated
         })
         .select()
         .single();
@@ -72,11 +35,14 @@ export const useFormSubmission = () => {
         throw new Error(`Profile creation failed: ${profileError.message}`);
       }
 
+      // Get the generated authentication token
+      const authToken = profile.authentication_token;
+
       // 2. Create property record
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
-          user_id: finalUserId,
+          user_id: tempUserId,
           address: formData.address,
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
@@ -93,7 +59,7 @@ export const useFormSubmission = () => {
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
-          user_id: finalUserId,
+          user_id: tempUserId,
           property_id: property.id,
           signature: formData.signature,
           is_owner_verified: formData.isOwnerVerified,
@@ -123,10 +89,15 @@ export const useFormSubmission = () => {
 
       toast({
         title: "Application Submitted Successfully",
-        description: "Your property tax protest application has been submitted.",
+        description: "Your application has been submitted! You'll receive an email to create your account.",
       });
 
-      return { success: true, profileId: profile.id, propertyId: property.id };
+      return { 
+        success: true, 
+        token: authToken,
+        profileId: profile.id, 
+        propertyId: property.id 
+      };
     } catch (error: any) {
       console.error('Form submission error:', error);
       

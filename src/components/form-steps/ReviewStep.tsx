@@ -116,16 +116,18 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
 
         if (data.user) {
           // Submit form data
-          const result = await submitFormData(updatedFormData, data.user.id);
-          if (result.success) {
-            onComplete();
+          const result = await submitFormData(updatedFormData);
+          if (result.success && result.token) {
+            // Redirect to customer portal with token
+            window.location.href = `/customer-portal?token=${result.token}`;
           }
         }
       } else {
-        // Submit form data with existing user
-        const result = await submitFormData(updatedFormData, session.user.id);
-        if (result.success) {
-          onComplete();
+        // Submit form data for existing user
+        const result = await submitFormData(updatedFormData);
+        if (result.success && result.token) {
+          // Redirect to customer portal with token  
+          window.location.href = `/customer-portal?token=${result.token}`;
         }
       }
     }

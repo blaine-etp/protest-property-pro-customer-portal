@@ -164,10 +164,14 @@ serve(async (req) => {
         return false
       }
 
-      // Fill phone number
+      // Fill telephone number - expanded variations based on "Telephone Number (include area code)"
       const phone = customerData.phone || ''
       if (phone) {
-        tryFillField(['phone', 'telephone', 'tel', 'Phone', 'Telephone', 'phone_number'], phone)
+        tryFillField([
+          'phone', 'telephone', 'tel', 'Phone', 'Telephone', 'phone_number',
+          'telephone_number', 'tel_number', 'phone_num', 'area_code', 'telephone_area_code',
+          'telephone_no', 'tel_no', 'contact_phone', 'contact_number'
+        ], phone)
       }
 
       // Fill current date
@@ -180,16 +184,38 @@ serve(async (req) => {
         tryFillField(['name', 'print_name', 'full_name', 'Name', 'Print_Name', 'applicant_name'], fullName)
       }
 
-      // Fill property checkbox based on include_all_properties
+      // Fill property checkboxes - TWO separate fields based on include_all_properties
       const includeAllProperties = propertyData.include_all_properties || false
-      tryFillField(['all_properties', 'include_all', 'property_type', 'All_Properties'], includeAllProperties, true)
+      
+      if (includeAllProperties) {
+        // Check the "all property listed for me at the above address" checkbox
+        tryFillField([
+          'all_property', 'all_prop_listed', 'above_address', 'all_at_address',
+          'all_property_listed', 'property_above_address', 'all_properties_above',
+          'all_prop_above', 'listed_above', 'address_all_property'
+        ], true, true)
+      } else {
+        // Check the "the property(ies) listed below" checkbox  
+        tryFillField([
+          'listed_property', 'property_listed_below', 'below_property', 'specific_property',
+          'properties_below', 'listed_below', 'property_below', 'below_properties',
+          'specific_properties', 'individual_property'
+        ], true, true)
+      }
 
-      // Fill role/relationship checkbox
+      // Fill role/relationship checkbox - expanded variations
       const role = customerData.role || ''
       if (role === 'homeowner') {
-        tryFillField(['owner', 'homeowner', 'property_owner', 'Owner'], true, true)
+        tryFillField([
+          'owner', 'homeowner', 'property_owner', 'Owner', 'homeowner_check', 
+          'owner_check', 'property_owner_box', 'individual_owner', 'real_estate_owner',
+          'prop_owner', 'owner_individual', 'homeowner_individual'
+        ], true, true)
       } else if (role === 'agent') {
-        tryFillField(['agent', 'authorized_agent', 'Agent'], true, true)
+        tryFillField([
+          'agent', 'authorized_agent', 'Agent', 'agent_check', 'authorized_agent_check',
+          'real_estate_agent', 'property_agent', 'agent_box'
+        ], true, true)
       }
 
       // Handle signature if available

@@ -164,83 +164,71 @@ serve(async (req) => {
         return false
       }
 
-      // Fill telephone number - expanded variations based on "Telephone Number (include area code)"
+      // Fill telephone number using exact field name
       const phone = customerData.phone || ''
       if (phone) {
-        tryFillField([
-          'phone', 'telephone', 'tel', 'Phone', 'Telephone', 'phone_number',
-          'telephone_number', 'tel_number', 'phone_num', 'area_code', 'telephone_area_code',
-          'telephone_no', 'tel_no', 'contact_phone', 'contact_number'
-        ], phone)
+        tryFillField(['telephone number include area code'], phone)
       }
 
       // Fill current date
       const currentDate = new Date().toLocaleDateString('en-US')
       tryFillField(['date', 'Date', 'today', 'current_date', 'Date_af_date'], currentDate)
 
-      // Fill full name
+      // Fill name at bottom (name of property owner) - leave top name field blank
       const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim()
       if (fullName) {
-        tryFillField(['name', 'print_name', 'full_name', 'Name', 'Print_Name', 'applicant_name'], fullName)
+        tryFillField(['name of property owner'], fullName)
       }
 
-      // Fill property checkboxes - TWO separate fields based on include_all_properties
+      // Fill property checkboxes using exact field names
       const includeAllProperties = propertyData.include_all_properties || false
       
       if (includeAllProperties) {
-        // Check the "all property listed for me at the above address" checkbox
-        tryFillField([
-          'all_property', 'all_prop_listed', 'above_address', 'all_at_address',
-          'all_property_listed', 'property_above_address', 'all_properties_above',
-          'all_prop_above', 'listed_above', 'address_all_property'
-        ], true, true)
+        // Check the exact field name for all properties
+        tryFillField(['all property listed for me at the above address'], true, true)
       } else {
-        // Check the "the property(ies) listed below" checkbox  
-        tryFillField([
-          'listed_property', 'property_listed_below', 'below_property', 'specific_property',
-          'properties_below', 'listed_below', 'property_below', 'below_properties',
-          'specific_properties', 'individual_property'
-        ], true, true)
+        // Check the exact field name for specific properties
+        tryFillField(['the property(ies) listed below:'], true, true)
       }
 
-      // Fill role/relationship checkbox - expanded variations
+      // Fill role/relationship with 3 specific checkboxes based on role
       const role = customerData.role || ''
       if (role === 'homeowner') {
-        tryFillField([
-          'owner', 'homeowner', 'property_owner', 'Owner', 'homeowner_check', 
-          'owner_check', 'property_owner_box', 'individual_owner', 'real_estate_owner',
-          'prop_owner', 'owner_individual', 'homeowner_individual'
-        ], true, true)
-      } else if (role === 'agent') {
-        tryFillField([
-          'agent', 'authorized_agent', 'Agent', 'agent_check', 'authorized_agent_check',
-          'real_estate_agent', 'property_agent', 'agent_box'
-        ], true, true)
+        tryFillField(['the property owner'], true, true)
+      } else if (role === 'property_manager') {
+        tryFillField(['a property manager authorized to designate agents for the owner'], true, true)
+      } else if (role === 'authorized_person') {
+        tryFillField(['other person authorized to act on behalf of the owner other than the person being designated as agent.'], true, true)
       }
 
-      // Handle signature if available
+      // Handle signature using exact field name "signature1"
       if (applicationData?.signature) {
         console.log('Processing signature...')
         try {
-          // Remove data URL prefix if present
-          const base64Data = applicationData.signature.replace(/^data:image\/[a-z]+;base64,/, '')
-          const signatureBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+          // Try to use the signature field first
+          const signatureFieldExists = tryFillField(['signature1'], applicationData.signature)
           
-          const signatureImage = await pdfDoc.embedPng(signatureBytes)
-          const pages = pdfDoc.getPages()
-          const firstPage = pages[0]
-          
-          // Place signature in approximate location (adjust coordinates as needed)
-          firstPage.drawImage(signatureImage, {
-            x: 400, // Adjust based on your form
-            y: 100, // Adjust based on your form
-            width: 150,
-            height: 50,
-          })
-          console.log('✓ Signature embedded successfully')
-          fieldsFilledCount++
+          if (!signatureFieldExists) {
+            // Fallback to image embedding if signature field doesn't work
+            const base64Data = applicationData.signature.replace(/^data:image\/[a-z]+;base64,/, '')
+            const signatureBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+            
+            const signatureImage = await pdfDoc.embedPng(signatureBytes)
+            const pages = pdfDoc.getPages()
+            const firstPage = pages[0]
+            
+            // Place signature in approximate location
+            firstPage.drawImage(signatureImage, {
+              x: 400,
+              y: 100,
+              width: 150,
+              height: 50,
+            })
+            console.log('✓ Signature embedded as image')
+            fieldsFilledCount++
+          }
         } catch (sigError) {
-          console.log(`⚠️ Could not embed signature: ${sigError.message}`)
+          console.log(`⚠️ Could not process signature: ${sigError.message}`)
         }
       }
 

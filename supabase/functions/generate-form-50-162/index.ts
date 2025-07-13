@@ -164,10 +164,10 @@ serve(async (req) => {
         return false
       }
 
-      // Fill telephone number using exact field name
+      // Fill telephone number using exact field name with proper case
       const phone = customerData.phone || ''
       if (phone) {
-        tryFillField(['telephone number include area code'], phone)
+        tryFillField(['Telephone Number include area code'], phone)
       }
 
       // Fill current date
@@ -177,7 +177,7 @@ serve(async (req) => {
       // Fill name at bottom (name of property owner) - leave top name field blank
       const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim()
       if (fullName) {
-        tryFillField(['name of property owner'], fullName)
+        tryFillField(['Name of Property Owner'], fullName)
       }
 
       // Fill property checkboxes using exact field names
@@ -201,12 +201,12 @@ serve(async (req) => {
         tryFillField(['other person authorized to act on behalf of the owner other than the person being designated as agent.'], true, true)
       }
 
-      // Handle signature using exact field name "signature1"
+      // Handle signature using exact field name "Signature1"
       if (applicationData?.signature) {
         console.log('Processing signature...')
         try {
-          // Try to use the signature field first
-          const signatureFieldExists = tryFillField(['signature1'], applicationData.signature)
+          // Try to use the signature field first with exact case
+          const signatureFieldExists = tryFillField(['Signature1'], applicationData.signature)
           
           if (!signatureFieldExists) {
             // Fallback to image embedding if signature field doesn't work

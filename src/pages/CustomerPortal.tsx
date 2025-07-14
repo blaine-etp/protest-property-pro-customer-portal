@@ -81,6 +81,12 @@ const CustomerPortal = () => {
       if (token) params.set('token', token);
       const queryString = params.toString();
       navigate(`/documents${queryString ? `?${queryString}` : ''}`);
+    } else if (action === "refer-friend") {
+      const params = new URLSearchParams();
+      if (email) params.set('email', email);
+      if (token) params.set('token', token);
+      const queryString = params.toString();
+      navigate(`/refer-friend${queryString ? `?${queryString}` : ''}`);
     } else {
       console.log(`Account action: ${action}`);
       // TODO: Implement other account actions

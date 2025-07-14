@@ -109,6 +109,11 @@ serve(async (req) => {
 
     // Fill form fields
     console.log('Step 6: Filling form fields...')
+    
+    // Debug: Log all available form field names
+    const formFields = form.getFields()
+    console.log('🔍 Available form fields:', formFields.map(field => field.getName()))
+    
     const fieldsToFill = {
       'Date_1': currentDate,
       'Date_2': currentDate,
@@ -120,14 +125,37 @@ serve(async (req) => {
 
     console.log('✓ Fields to fill:', fieldsToFill)
 
-    // Fill each field
+    // Helper function to try field variations
+    const tryFillField = (fieldName: string, value: string): boolean => {
+      const variations = [
+        fieldName,
+        fieldName.toLowerCase(),
+        fieldName.toUpperCase(),
+        fieldName.replace('_', ''),
+        fieldName.replace('_', ' ')
+      ]
+      
+      for (const variation of variations) {
+        try {
+          const field = form.getTextField(variation)
+          if (field) {
+            field.setText(value)
+            console.log(`✓ Filled field "${variation}" (tried as "${fieldName}"): ${value}`)
+            return true
+          }
+        } catch (error) {
+          // Continue to next variation
+        }
+      }
+      return false
+    }
+
+    // Fill each field with better error handling
     Object.entries(fieldsToFill).forEach(([fieldName, value]) => {
-      try {
-        const field = form.getTextField(fieldName)
-        field.setText(value)
-        console.log(`✓ Filled field "${fieldName}": ${value}`)
-      } catch (error) {
-        console.warn(`⚠️ Could not fill field "${fieldName}":`, error.message)
+      const success = tryFillField(fieldName, value)
+      if (!success) {
+        console.warn(`⚠️ Could not fill field "${fieldName}" with any variation. Available fields:`, 
+          formFields.map(field => field.getName()).join(', '))
       }
     })
 

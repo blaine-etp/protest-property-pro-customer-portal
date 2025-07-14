@@ -247,7 +247,24 @@ serve(async (req) => {
 
       // Step 7: Upload to storage
       console.log('Step 7: Uploading to storage...')
-      const filename = `${userId}/form-50-162-${propertyId}-${Date.now()}.pdf`
+      
+      // Helper function to sanitize names for file paths
+      const sanitizeName = (name: string): string => {
+        return name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+      }
+      
+      // Create customer-level prefix and document filename
+      const sanitizedFirstName = sanitizeName(customerData.first_name || 'unknown')
+      const sanitizedLastName = sanitizeName(customerData.last_name || 'unknown')
+      const customerPrefix = `${sanitizedFirstName}-${sanitizedLastName}-${userId}`
+      const documentName = `50-162-${sanitizedFirstName}-${sanitizedLastName}-${userId}-${Date.now()}.pdf`
+      const filename = `${customerPrefix}/${documentName}`
+      
+      console.log('✓ Generated filename:', filename)
       
       const { error: uploadError } = await supabaseClient.storage
         .from('customer-documents')

@@ -152,7 +152,50 @@ export const useFormSubmission = () => {
         }
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);
-        // Don't fail the submission if PDF generation fails
+      // Don't fail the submission if PDF generation fails
+      }
+
+      // 5. Handle referral code if provided
+      if (formData.referralCode) {
+        try {
+          // Find the referrer by referral code
+          const { data: referrerProfile, error: referrerError } = await supabase
+            .from('profiles')
+            .select('user_id, email, first_name, last_name')
+            .eq('referral_code', formData.referralCode)
+            .single();
+
+          if (referrerError || !referrerProfile) {
+            console.error('Referrer not found for code:', formData.referralCode);
+          } else {
+            // Prevent self-referral
+            if (referrerProfile.email !== formData.email) {
+              // Create referral relationship
+              const { error: referralError } = await supabase
+                .from('referral_relationships')
+                .insert({
+                  referrer_id: referrerProfile.user_id,
+                  referee_id: tempUserId,
+                  referral_code: formData.referralCode,
+                  referee_email: formData.email,
+                  referee_first_name: formData.firstName,
+                  referee_last_name: formData.lastName,
+                  status: 'completed' // Set to completed since they just signed up
+                });
+
+              if (referralError) {
+                console.error('Failed to create referral relationship:', referralError);
+              } else {
+                console.log('Referral relationship created successfully');
+              }
+            } else {
+              console.log('Self-referral prevented');
+            }
+          }
+        } catch (referralError) {
+          console.error('Referral processing error:', referralError);
+          // Don't fail the main submission if referral processing fails
+        }
       }
 
       toast({

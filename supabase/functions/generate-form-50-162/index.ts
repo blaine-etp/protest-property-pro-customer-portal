@@ -215,16 +215,24 @@ serve(async (req) => {
             
             const signatureImage = await pdfDoc.embedPng(signatureBytes)
             const pages = pdfDoc.getPages()
-            const firstPage = pages[0]
             
-            // Place signature in approximate location
-            firstPage.drawImage(signatureImage, {
-              x: 400,
-              y: 100,
-              width: 150,
-              height: 50,
+            // Validate that second page exists (Signature1 field is on page 2)
+            if (pages.length < 2) {
+              console.log('⚠️ Second page not found for signature placement')
+              return
+            }
+            
+            const secondPage = pages[1]
+            console.log(`Placing signature on page 2 at coordinates: x: 68.1542, y: 242.502, width: 295.5988, height: 32`)
+            
+            // Place signature using exact field coordinates
+            secondPage.drawImage(signatureImage, {
+              x: 68.1542,
+              y: 242.502,
+              width: 295.5988,
+              height: 32,
             })
-            console.log('✓ Signature embedded as image')
+            console.log('✓ Signature embedded as image on page 2 with exact field coordinates')
             fieldsFilledCount++
           }
         } catch (sigError) {

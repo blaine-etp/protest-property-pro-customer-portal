@@ -87,19 +87,34 @@ export const useFormSubmission = () => {
         throw new Error(`Appeal status creation failed: ${appealError.message}`);
       }
 
-      // Generate Form 50-162 automatically
+      // Generate both PDFs automatically for new customers
       try {
-        const { error: pdfError } = await supabase.functions.invoke('generate-form-50-162', {
+        // Generate Form 50-162
+        const { error: form50162Error } = await supabase.functions.invoke('generate-form-50-162', {
+          body: { 
+            propertyId: property.id, 
+            userId: tempUserId 
+          }
+        });
+
+        // Generate Services Agreement (only for new customers)
+        const { error: servicesAgreementError } = await supabase.functions.invoke('generate-services-agreement', {
           body: { 
             propertyId: property.id, 
             userId: tempUserId 
           }
         });
         
-        if (pdfError) {
-          console.error('PDF generation failed:', pdfError);
+        if (form50162Error) {
+          console.error('Form 50-162 generation failed:', form50162Error);
         } else {
           console.log('Form 50-162 generated successfully');
+        }
+
+        if (servicesAgreementError) {
+          console.error('Services Agreement generation failed:', servicesAgreementError);
+        } else {
+          console.log('Services Agreement generated successfully');
         }
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);

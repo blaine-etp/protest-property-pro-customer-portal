@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Share, Users, Gift, Mail } from "lucide-react";
+import { ArrowLeft, Share, Users, Gift, Mail, DollarSign } from "lucide-react";
 import { useCustomerData } from "@/hooks/useCustomerData";
 import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
+import { useReferralData } from "@/hooks/useReferralData";
 
 interface Profile {
   first_name: string;
@@ -17,25 +18,6 @@ interface Profile {
   email: string;
 }
 
-// Dummy referral data for demonstration
-const dummyReferrals = [
-  {
-    id: "ref-001",
-    name: "John Smith",
-    email: "john.smith@email.com",
-    status: "signed_up",
-    date: "2024-06-10",
-    reward: "$50"
-  },
-  {
-    id: "ref-002", 
-    name: "Sarah Johnson",
-    email: "sarah.j@email.com",
-    status: "pending",
-    date: "2024-06-05",
-    reward: "$50"
-  }
-];
 
 const ReferFriend = () => {
   const navigate = useNavigate();
@@ -52,6 +34,16 @@ const ReferFriend = () => {
   // Use appropriate data hook based on access method
   const tokenData = useTokenCustomerData(token || '');
   const emailData = useCustomerData(email || '');
+  
+  // Use referral data hook
+  const {
+    referrals,
+    creditBalance,
+    referralCode,
+    loading: referralLoading,
+    error: referralError,
+    sendReferralInvite
+  } = useReferralData(token, email);
   
   // Determine which data source to use
   const customerData = token ? tokenData : emailData;
@@ -71,7 +63,7 @@ const ReferFriend = () => {
     }
   }, [customerProfile, customerLoading, token, email]);
 
-  const handleSendInvite = () => {
+  const handleSendInvite = async () => {
     if (!friendEmail || !friendName) {
       toast({
         title: "Missing Information",
@@ -81,19 +73,27 @@ const ReferFriend = () => {
       return;
     }
 
-    // Demo functionality - in real app would send actual invite
-    toast({
-      title: "Invite Sent! (Demo)",
-      description: `Demo invite sent to ${friendName} at ${friendEmail}`,
-    });
-    
-    setFriendEmail("");
-    setFriendName("");
+    try {
+      await sendReferralInvite(friendEmail, friendName);
+      toast({
+        title: "Invite Sent!",
+        description: `Referral invite sent to ${friendName} at ${friendEmail}`,
+      });
+      
+      setFriendEmail("");
+      setFriendName("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopyReferralLink = () => {
-    const demoLink = `https://easytaxprotest.com/signup?ref=${profile?.user_id}`;
-    navigator.clipboard.writeText(demoLink);
+    const referralLink = `https://easytaxprotest.com/signup?ref=${referralCode}`;
+    navigator.clipboard.writeText(referralLink);
     toast({
       title: "Link Copied!",
       description: "Your referral link has been copied to clipboard.",
@@ -102,10 +102,12 @@ const ReferFriend = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'signed_up':
-        return <Badge variant="default">Signed Up</Badge>;
+      case 'completed':
+        return <Badge variant="default">Completed</Badge>;
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
+      case 'failed':
+        return <Badge variant="destructive">Failed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -196,7 +198,7 @@ const ReferFriend = () => {
                     <Gift className="h-6 w-6 text-purple-600" />
                   </div>
                   <p className="font-medium">You Both Earn</p>
-                  <p className="text-sm text-muted-foreground">$50 credit for you, $25 discount for them</p>
+                  <p className="text-sm text-muted-foreground">$25 credit for you, $50 credit for them</p>
                 </div>
               </div>
             </CardContent>
@@ -206,11 +208,7 @@ const ReferFriend = () => {
           <Card>
             <CardHeader>
               <CardTitle>Send Invitation</CardTitle>
-              <CardDescription>
-                <span className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
-                  ⚠️ DEMO - This invitation system is not yet functional
-                </span>
-              </CardDescription>
+              <CardDescription>Invite friends directly via email</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -251,7 +249,7 @@ const ReferFriend = () => {
               <div className="flex items-center space-x-2">
                 <Input
                   readOnly
-                  value={`https://easytaxprotest.com/signup?ref=${profile?.user_id}`}
+                  value={`https://easytaxprotest.com/signup?ref=${referralCode}`}
                   className="flex-1"
                 />
                 <Button onClick={handleCopyReferralLink} variant="outline">
@@ -266,37 +264,37 @@ const ReferFriend = () => {
           <Card>
             <CardHeader>
               <CardTitle>Your Referrals</CardTitle>
-              <CardDescription>
-                <span className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
-                  ⚠️ DEMO DATA - Example referrals for demonstration
-                </span>
-              </CardDescription>
+              <CardDescription>Track your referral progress and earned credits</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dummyReferrals.map((referral) => (
+                {referrals.map((referral) => (
                   <div key={referral.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
                         <Users className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
-                        <p className="font-medium">{referral.name}</p>
-                        <p className="text-sm text-muted-foreground">{referral.email}</p>
+                        <p className="font-medium">
+                          {referral.referee_first_name && referral.referee_last_name 
+                            ? `${referral.referee_first_name} ${referral.referee_last_name}` 
+                            : referral.referee_email}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{referral.referee_email}</p>
                         <p className="text-xs text-muted-foreground">
-                          Referred: {new Date(referral.date).toLocaleDateString()}
+                          Referred: {new Date(referral.signup_date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right space-y-2">
-                      <p className="font-bold">{referral.reward}</p>
+                      <p className="font-bold">${referral.credit_awarded_amount || 0}</p>
                       {getStatusBadge(referral.status)}
                     </div>
                   </div>
                 ))}
               </div>
               
-              {dummyReferrals.length === 0 && (
+              {referrals.length === 0 && (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No referrals yet</h3>
@@ -308,39 +306,59 @@ const ReferFriend = () => {
             </CardContent>
           </Card>
 
-          {/* Referral Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Referral Statistics</CardTitle>
-              <CardDescription>Your referral program performance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Credit Balance and Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Credit Balance
+                </CardTitle>
+                <CardDescription>Your available referral credits</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Referrals</p>
-                  <p className="text-2xl font-bold">{dummyReferrals.length}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Successful</p>
-                  <p className="text-2xl font-bold">
-                    {dummyReferrals.filter(r => r.status === 'signed_up').length}
+                  <p className="text-3xl font-bold text-green-600">${creditBalance}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Available for future invoices
                   </p>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Pending</p>
-                  <p className="text-2xl font-bold">
-                    {dummyReferrals.filter(r => r.status === 'pending').length}
-                  </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Referral Statistics</CardTitle>
+                <CardDescription>Your referral program performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Total Referrals</p>
+                    <p className="text-2xl font-bold">{referrals.length}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Completed</p>
+                    <p className="text-2xl font-bold">
+                      {referrals.filter(r => r.status === 'completed').length}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Pending</p>
+                    <p className="text-2xl font-bold">
+                      {referrals.filter(r => r.status === 'pending').length}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Total Earned</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${referrals.reduce((sum, r) => sum + (r.credit_awarded_amount || 0), 0)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Earned</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${dummyReferrals.filter(r => r.status === 'signed_up').length * 50}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

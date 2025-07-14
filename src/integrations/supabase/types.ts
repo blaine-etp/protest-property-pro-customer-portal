@@ -106,6 +106,57 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string | null
+          referral_relationship_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          referral_relationship_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          referral_relationship_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_referral_relationship_id_fkey"
+            columns: ["referral_relationship_id"]
+            isOneToOne: false
+            referencedRelation: "referral_relationships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       customer_documents: {
         Row: {
           created_at: string
@@ -160,6 +211,8 @@ export type Database = {
           mailing_state: string | null
           mailing_zip: string | null
           phone: string | null
+          referral_code: string | null
+          referral_credit_balance: number | null
           role: string | null
           token_expires_at: string | null
           updated_at: string
@@ -182,6 +235,8 @@ export type Database = {
           mailing_state?: string | null
           mailing_zip?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referral_credit_balance?: number | null
           role?: string | null
           token_expires_at?: string | null
           updated_at?: string
@@ -204,6 +259,8 @@ export type Database = {
           mailing_state?: string | null
           mailing_zip?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referral_credit_balance?: number | null
           role?: string | null
           token_expires_at?: string | null
           updated_at?: string
@@ -246,6 +303,69 @@ export type Database = {
           {
             foreignKeyName: "fk_properties_user"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      referral_relationships: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          credit_awarded_amount: number | null
+          id: string
+          referee_email: string
+          referee_first_name: string | null
+          referee_id: string
+          referee_last_name: string | null
+          referral_code: string
+          referrer_id: string
+          signup_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          credit_awarded_amount?: number | null
+          id?: string
+          referee_email: string
+          referee_first_name?: string | null
+          referee_id: string
+          referee_last_name?: string | null
+          referral_code: string
+          referrer_id: string
+          signup_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          credit_awarded_amount?: number | null
+          id?: string
+          referee_email?: string
+          referee_first_name?: string | null
+          referee_id?: string
+          referee_last_name?: string | null
+          referral_code?: string
+          referrer_id?: string
+          signup_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_relationships_referee_id_fkey"
+            columns: ["referee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "referral_relationships_referrer_id_fkey"
+            columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]

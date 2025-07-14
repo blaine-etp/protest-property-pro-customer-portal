@@ -210,6 +210,7 @@ export type Database = {
           mailing_city: string | null
           mailing_state: string | null
           mailing_zip: string | null
+          permissions: string | null
           phone: string | null
           referral_code: string | null
           referral_credit_balance: number | null
@@ -234,6 +235,7 @@ export type Database = {
           mailing_city?: string | null
           mailing_state?: string | null
           mailing_zip?: string | null
+          permissions?: string | null
           phone?: string | null
           referral_code?: string | null
           referral_credit_balance?: number | null
@@ -258,6 +260,7 @@ export type Database = {
           mailing_city?: string | null
           mailing_state?: string | null
           mailing_zip?: string | null
+          permissions?: string | null
           phone?: string | null
           referral_code?: string | null
           referral_credit_balance?: number | null

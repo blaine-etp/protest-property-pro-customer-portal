@@ -35,7 +35,19 @@ export default function Auth() {
           title: "Welcome back!",
           description: "You've been signed in successfully.",
         });
-        navigate('/customer-portal');
+        
+        // Check user permissions to determine redirect
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('permissions')
+          .eq('user_id', data.user.id)
+          .single();
+          
+        if (profile?.permissions === 'administrator') {
+          navigate('/admin');
+        } else {
+          navigate('/customer-portal');
+        }
       }
     } catch (error: any) {
       toast({

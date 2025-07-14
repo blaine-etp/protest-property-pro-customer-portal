@@ -14,6 +14,14 @@ import Documents from "./pages/Documents";
 import ReferFriend from "./pages/ReferFriend";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import { AdminLayout } from "./components/AdminLayout";
+import Admin from "./pages/Admin";
+import AdminCustomers from "./pages/AdminCustomers";
+import AdminBlog from "./pages/AdminBlog";
+import AdminEvidence from "./pages/AdminEvidence";
+import AdminBulkUpload from "./pages/AdminBulkUpload";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +42,15 @@ const App = () => (
           <Route path="/documents" element={<Documents />} />
           <Route path="/refer-friend" element={<ReferFriend />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Admin />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="blog" element={<AdminBlog />} />
+            <Route path="evidence" element={<AdminEvidence />} />
+            <Route path="bulk-upload" element={<AdminBulkUpload />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

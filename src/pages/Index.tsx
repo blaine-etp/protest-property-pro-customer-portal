@@ -12,6 +12,7 @@ const Index = () => {
   const [showForm, setShowForm] = useState(false);
   const [searchParams] = useSearchParams();
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [formAddress, setFormAddress] = useState("");
 
   useEffect(() => {
     const ref = searchParams.get('ref');
@@ -20,17 +21,27 @@ const Index = () => {
     }
   }, [searchParams]);
 
+  const handleStartFlow = (address: string) => {
+    setFormAddress(address);
+    setShowForm(true);
+  };
+
   return (
     <div className="min-h-screen">
       {!showForm && <Header />}
       <main>
-        <HeroSection showForm={showForm} setShowForm={setShowForm} referralCode={referralCode} />
+        <HeroSection 
+          showForm={showForm} 
+          setShowForm={setShowForm} 
+          referralCode={referralCode}
+          initialAddress={formAddress}
+        />
         {!showForm && (
           <>
             <BenefitsSection />
             <ProcessSection />
             <TestimonialsSection />
-            <CTASection />
+            <CTASection onStartFlow={handleStartFlow} />
           </>
         )}
       </main>

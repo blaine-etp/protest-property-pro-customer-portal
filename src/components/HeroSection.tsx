@@ -11,10 +11,11 @@ interface HeroSectionProps {
   showForm: boolean;
   setShowForm: (show: boolean) => void;
   referralCode?: string | null;
+  initialAddress?: string;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm, referralCode }) => {
-  const [address, setAddress] = useState("");
+export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm, referralCode, initialAddress = "" }) => {
+  const [address, setAddress] = useState(initialAddress);
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {

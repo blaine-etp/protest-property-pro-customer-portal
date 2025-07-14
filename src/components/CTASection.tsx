@@ -3,14 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, Phone, Building2 } from "lucide-react";
 import { useState } from "react";
 
-export const CTASection = () => {
+interface CTASectionProps {
+  onStartFlow: (address: string) => void;
+}
+
+export const CTASection = ({ onStartFlow }: CTASectionProps) => {
   const [address, setAddress] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (address.trim()) {
-      console.log("Address submitted:", address);
-      alert(`Starting property tax protest process for: ${address}`);
+      onStartFlow(address);
     }
   };
 

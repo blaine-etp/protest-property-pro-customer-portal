@@ -69,6 +69,12 @@ const CustomerPortal = () => {
       if (token) params.set('token', token);
       const queryString = params.toString();
       navigate(`/add-property${queryString ? `?${queryString}` : ''}`);
+    } else if (action === "billing") {
+      const params = new URLSearchParams();
+      if (email) params.set('email', email);
+      if (token) params.set('token', token);
+      const queryString = params.toString();
+      navigate(`/billing${queryString ? `?${queryString}` : ''}`);
     } else {
       console.log(`Account action: ${action}`);
       // TODO: Implement other account actions

@@ -27,20 +27,20 @@ const testimonials = [
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-20 bg-background">
+    <section className="py-12 bg-gradient-to-b from-gradient-hero to-background -mt-4">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-primary-foreground mb-4">
             What Our Clients Say
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-primary-foreground/90 max-w-3xl mx-auto">
             Join thousands of satisfied homeowners who have successfully reduced their property taxes with our help.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="p-6 hover:shadow-hero transition-all duration-300 transform hover:-translate-y-1 border-border/50">
+            <Card key={index} className="p-6 hover:shadow-hero transition-all duration-300 transform hover:-translate-y-1 border-border/50 bg-background/95 backdrop-blur-sm">
               <CardContent className="p-0">
                 <div className="flex items-center mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (

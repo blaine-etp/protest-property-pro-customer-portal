@@ -38,9 +38,9 @@ const Index = () => {
         />
         {!showForm && (
           <>
+            <TestimonialsSection />
             <BenefitsSection />
             <ProcessSection />
-            <TestimonialsSection />
             <CTASection onStartFlow={handleStartFlow} />
           </>
         )}

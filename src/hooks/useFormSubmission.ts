@@ -11,6 +11,40 @@ export const useFormSubmission = () => {
     setIsSubmitting(true);
     
     try {
+      // Check if email exists in profiles table (pending or authenticated users)
+      const { data: existingProfiles, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('email, is_authenticated')
+        .eq('email', formData.email);
+
+      if (profileCheckError) {
+        console.error('Profile check error:', profileCheckError);
+      } else if (existingProfiles && existingProfiles.length > 0) {
+        const existingProfile = existingProfiles[0];
+        if (existingProfile.is_authenticated) {
+          toast({
+            title: "Email Already Registered",
+            description: "This email is already registered. Please sign in to access your account.",
+            variant: "destructive",
+          });
+          return { 
+            success: false, 
+            error: "EMAIL_EXISTS_AUTHENTICATED",
+            redirectTo: "/auth"
+          };
+        } else {
+          toast({
+            title: "Application Already Submitted",
+            description: "You've already submitted an application with this email. Please check your email for account setup instructions.",
+            variant: "destructive",
+          });
+          return { 
+            success: false, 
+            error: "EMAIL_EXISTS_PENDING"
+          };
+        }
+      }
+
       // Generate a temporary user ID for data storage (will be linked to real auth user later)
       const tempUserId = crypto.randomUUID();
 

@@ -12,6 +12,7 @@ import AddProperty from "./pages/AddProperty";
 import Billing from "./pages/Billing";
 import Documents from "./pages/Documents";
 import ReferFriend from "./pages/ReferFriend";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/billing" element={<Billing />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/refer-friend" element={<ReferFriend />} />
+          <Route path="/auth" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

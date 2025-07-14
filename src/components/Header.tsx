@@ -113,8 +113,8 @@ export const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="default" size="sm">
-                Sign In
+              <Button variant="default" size="sm" asChild>
+                <Link to="/auth">Sign In</Link>
               </Button>
             )}
           </div>

@@ -104,8 +104,12 @@ export const Header = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/billing">Billing</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>All Documents</DropdownMenuItem>
-                  <DropdownMenuItem>Refer-a-Friend</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/documents">All Documents</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/refer-friend">Refer-a-Friend</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     Log out

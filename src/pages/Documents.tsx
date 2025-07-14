@@ -15,7 +15,7 @@ interface Profile {
   user_id: string;
 }
 
-interface Document {
+interface CustomerDocument {
   id: string;
   document_type: string;
   file_path: string;
@@ -30,7 +30,7 @@ const Documents = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<CustomerDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Get URL parameters for token-based access
@@ -89,11 +89,11 @@ const Documents = () => {
     }
   };
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (customerDocument: CustomerDocument) => {
     try {
       const { data, error } = await supabase.storage
         .from('customer-documents')
-        .download(document.file_path);
+        .download(customerDocument.file_path);
 
       if (error) throw error;
 
@@ -101,7 +101,7 @@ const Documents = () => {
       const url = URL.createObjectURL(data);
       const a = window.document.createElement('a');
       a.href = url;
-      a.download = `${document.document_type}-${document.id}.pdf`;
+      a.download = `${customerDocument.document_type}-${customerDocument.id}.pdf`;
       window.document.body.appendChild(a);
       a.click();
       window.document.body.removeChild(a);
@@ -231,32 +231,32 @@ const Documents = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {documents.map((document) => (
-                  <div key={document.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {documents.map((customerDocument) => (
+                  <div key={customerDocument.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                        {getDocumentIcon(document.document_type)}
+                        {getDocumentIcon(customerDocument.document_type)}
                       </div>
                       <div>
-                        <p className="font-medium">{getDocumentDisplayName(document.document_type)}</p>
-                        <p className="text-sm text-muted-foreground">Property ID: {document.property_id}</p>
+                        <p className="font-medium">{getDocumentDisplayName(customerDocument.document_type)}</p>
+                        <p className="text-sm text-muted-foreground">Property ID: {customerDocument.property_id}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           <Calendar className="h-3 w-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
-                            Generated: {new Date(document.generated_at).toLocaleDateString()}
+                            Generated: {new Date(customerDocument.generated_at).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right space-y-2">
                       <Badge variant="default" className="text-xs">
-                        {document.status.toUpperCase()}
+                        {customerDocument.status.toUpperCase()}
                       </Badge>
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDownload(document)}
+                          onClick={() => handleDownload(customerDocument)}
                         >
                           <Download className="h-3 w-3 mr-1" />
                           Download

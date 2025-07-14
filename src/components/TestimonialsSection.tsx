@@ -39,8 +39,54 @@ export const TestimonialsSection = () => {
           <path
             d="M0,0 C240,16 480,32 720,16 C960,0 1200,16 1200,16 L1200,160 L0,160 Z"
             fill="var(--wave-primary)"
-            className="animate-pulse opacity-20"
+            className="animate-pulse opacity-25"
             style={{ animationDuration: '12s', animationDelay: '1s' }}
+          />
+          <path
+            d="M0,0 C300,20 600,40 900,20 C1050,10 1200,20 1200,20 L1200,160 L0,160 Z"
+            fill="var(--wave-secondary)"
+            className="animate-pulse opacity-20"
+            style={{ animationDuration: '16s', animationDelay: '3s' }}
+          />
+        </svg>
+      </div>
+
+      {/* Middle wave layers for continuous flow */}
+      <div className="absolute top-1/3 left-0 w-full">
+        <svg
+          className="w-full h-24"
+          viewBox="0 0 1200 120"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0,40 C240,56 480,72 720,56 C960,40 1200,48 1200,48 L1200,120 L0,120 Z"
+            fill="var(--wave-tertiary)"
+            className="animate-pulse opacity-15"
+            style={{ animationDuration: '14s', animationDelay: '2s' }}
+          />
+        </svg>
+      </div>
+
+      {/* Bottom wave pattern extending toward next section */}
+      <div className="absolute bottom-0 left-0 w-full">
+        <svg
+          className="w-full h-32"
+          viewBox="0 0 1200 160"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0,120 C200,104 400,88 600,104 C800,120 1000,136 1200,136 L1200,160 L0,160 Z"
+            fill="var(--wave-primary)"
+            className="animate-pulse opacity-20"
+            style={{ animationDuration: '18s', animationDelay: '4s' }}
+          />
+          <path
+            d="M0,140 C300,124 600,108 900,124 C1050,132 1200,140 1200,140 L1200,160 L0,160 Z"
+            fill="var(--wave-secondary)"
+            className="animate-pulse opacity-15"
+            style={{ animationDuration: '20s', animationDelay: '6s' }}
           />
         </svg>
       </div>

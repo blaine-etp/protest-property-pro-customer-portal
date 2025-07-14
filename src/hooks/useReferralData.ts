@@ -112,6 +112,11 @@ export const useReferralData = (token?: string, email?: string) => {
         throw new Error('User not found');
       }
 
+      // Prevent self-referral by email
+      if (friendEmail.toLowerCase() === profileData.email.toLowerCase()) {
+        throw new Error('You cannot refer yourself');
+      }
+
       // Check if this email has already been referred
       const { data: existingReferral } = await supabase
         .from('referral_relationships')

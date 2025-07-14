@@ -10,9 +10,10 @@ import MultiStepForm from "./MultiStepForm";
 interface HeroSectionProps {
   showForm: boolean;
   setShowForm: (show: boolean) => void;
+  referralCode?: string | null;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm, referralCode }) => {
   const [address, setAddress] = useState("");
   const navigate = useNavigate();
 
@@ -173,7 +174,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm 
         ) : (
           <div className="max-w-4xl mx-auto">
             <MultiStepForm 
-              address={address} 
+              address={address}
+              referralCode={referralCode}
               onComplete={(formData) => {
                 // Navigate to email verification with the email from form data
                 navigate(`/email-verification?email=${encodeURIComponent(formData.email)}`);

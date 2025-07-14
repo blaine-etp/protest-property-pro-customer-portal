@@ -92,7 +92,7 @@ const ReferFriend = () => {
   };
 
   const handleCopyReferralLink = () => {
-    const referralLink = `https://easytaxprotest.com/signup?ref=${referralCode}`;
+    const referralLink = `${window.location.origin}/?ref=${referralCode}`;
     navigator.clipboard.writeText(referralLink);
     toast({
       title: "Link Copied!",
@@ -249,7 +249,7 @@ const ReferFriend = () => {
               <div className="flex items-center space-x-2">
                 <Input
                   readOnly
-                  value={`https://easytaxprotest.com/signup?ref=${referralCode}`}
+                  value={`${window.location.origin}/?ref=${referralCode}`}
                   className="flex-1"
                 />
                 <Button onClick={handleCopyReferralLink} variant="outline">

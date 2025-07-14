@@ -123,6 +123,44 @@ const SetupAccount = () => {
         .update({ user_id: authData.user.id })
         .eq('user_id', profile.user_id);
 
+      // Check if user was referred via referral code and create relationship
+      const referralCode = searchParams.get('ref');
+      if (referralCode) {
+        try {
+          // Find the referrer by referral code
+          const { data: referrerProfile, error: referrerError } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name')
+            .eq('referral_code', referralCode)
+            .single();
+
+          if (referrerProfile && !referrerError) {
+            // Create referral relationship
+            const { error: referralError } = await supabase
+              .from('referral_relationships')
+              .insert({
+                referrer_id: referrerProfile.user_id,
+                referee_id: authData.user.id,
+                referee_email: profile.email,
+                referee_first_name: profile.first_name,
+                referee_last_name: profile.last_name,
+                referral_code: referralCode,
+                status: 'completed',
+                signup_date: new Date().toISOString(),
+              });
+
+            if (referralError) {
+              console.error('Failed to create referral relationship:', referralError);
+            } else {
+              console.log('Referral relationship created successfully');
+            }
+          }
+        } catch (referralErr) {
+          console.error('Error processing referral:', referralErr);
+          // Don't fail the signup if referral processing fails
+        }
+      }
+
       toast({
         title: "Account Created Successfully!",
         description: "Your account has been set up. You can now log in anytime.",

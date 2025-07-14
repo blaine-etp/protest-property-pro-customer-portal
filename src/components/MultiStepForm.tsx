@@ -19,14 +19,16 @@ export interface FormData {
   includeAllProperties: boolean;
   isOwnerVerified?: boolean;
   signature?: string;
+  referralCode?: string;
 }
 
 interface MultiStepFormProps {
   address: string;
+  referralCode?: string | null;
   onComplete?: (formData: FormData) => void;
 }
 
-const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) => {
+const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [animationDirection, setAnimationDirection] = useState<'in' | 'out'>('in');
@@ -40,6 +42,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, onComplete }) =>
     phone: '',
     agreeToUpdates: true,
     includeAllProperties: false,
+    referralCode: referralCode || undefined,
   });
 
   const totalSteps = 3;

@@ -91,11 +91,47 @@ const Documents = () => {
 
   const handleDownload = async (customerDocument: CustomerDocument) => {
     try {
+      // First, let's try to check if the file exists
+      const { data: fileData, error: listError } = await supabase.storage
+        .from('customer-documents')
+        .list(customerDocument.file_path.split('/').slice(0, -1).join('/'));
+
+      if (listError) {
+        console.error('Error listing files:', listError);
+        toast({
+          title: "Access Error",
+          description: "Unable to access document storage. Please check your permissions.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const fileName = customerDocument.file_path.split('/').pop();
+      const fileExists = fileData?.some(file => file.name === fileName);
+
+      if (!fileExists) {
+        toast({
+          title: "File Not Found",
+          description: "This document file was not found in storage. It may not have been properly generated.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Try to download the file
       const { data, error } = await supabase.storage
         .from('customer-documents')
         .download(customerDocument.file_path);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Download error:', error);
+        toast({
+          title: "Download Failed",
+          description: `Failed to download document: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Create download link
       const url = URL.createObjectURL(data);
@@ -115,7 +151,7 @@ const Documents = () => {
       console.error('Error downloading document:', error);
       toast({
         title: "Download Failed",
-        description: "Failed to download document. Please try again.",
+        description: "An unexpected error occurred while downloading the document.",
         variant: "destructive",
       });
     }

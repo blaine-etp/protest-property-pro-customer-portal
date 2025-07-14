@@ -9,6 +9,7 @@ import CustomerPortal from "./pages/CustomerPortal";
 import SetupAccount from "./pages/SetupAccount";
 import Account from "./pages/Account";
 import AddProperty from "./pages/AddProperty";
+import Billing from "./pages/Billing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/setup-account" element={<SetupAccount />} />
           <Route path="/account" element={<Account />} />
           <Route path="/add-property" element={<AddProperty />} />
+          <Route path="/billing" element={<Billing />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

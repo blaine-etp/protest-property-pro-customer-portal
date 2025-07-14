@@ -95,9 +95,15 @@ export const Header = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Account</DropdownMenuItem>
-                  <DropdownMenuItem>Add Property</DropdownMenuItem>
-                  <DropdownMenuItem>Billing</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/account">Account</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/add-property">Add Property</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/billing">Billing</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem>All Documents</DropdownMenuItem>
                   <DropdownMenuItem>Refer-a-Friend</DropdownMenuItem>
                   <DropdownMenuSeparator />

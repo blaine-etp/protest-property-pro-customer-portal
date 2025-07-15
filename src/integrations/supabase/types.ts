@@ -14,50 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      appeal_status: {
-        Row: {
-          appeal_status: string | null
-          auto_appeal_enabled: boolean | null
-          contingency_fee_percent: number | null
-          created_at: string
-          exemption_status: string | null
-          id: string
-          property_id: string
-          savings_amount: number | null
-          updated_at: string
-        }
-        Insert: {
-          appeal_status?: string | null
-          auto_appeal_enabled?: boolean | null
-          contingency_fee_percent?: number | null
-          created_at?: string
-          exemption_status?: string | null
-          id?: string
-          property_id: string
-          savings_amount?: number | null
-          updated_at?: string
-        }
-        Update: {
-          appeal_status?: string | null
-          auto_appeal_enabled?: boolean | null
-          contingency_fee_percent?: number | null
-          created_at?: string
-          exemption_status?: string | null
-          id?: string
-          property_id?: string
-          savings_amount?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_appeal_status_property"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       applications: {
         Row: {
           id: string
@@ -103,6 +59,154 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      bills: {
+        Row: {
+          bill_number: string
+          contingency_fee_percent: number | null
+          created_at: string
+          due_date: string | null
+          id: string
+          notes: string | null
+          owner_id: string
+          paid_date: string | null
+          status: string
+          tax_year: number
+          total_assessed_value: number | null
+          total_fee_amount: number | null
+          total_market_value: number | null
+          total_protest_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          bill_number?: string
+          contingency_fee_percent?: number | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          owner_id: string
+          paid_date?: string | null
+          status?: string
+          tax_year: number
+          total_assessed_value?: number | null
+          total_fee_amount?: number | null
+          total_market_value?: number | null
+          total_protest_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bill_number?: string
+          contingency_fee_percent?: number | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          paid_date?: string | null
+          status?: string
+          tax_year?: number
+          total_assessed_value?: number | null
+          total_fee_amount?: number | null
+          total_market_value?: number | null
+          total_protest_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_bills_owner"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_properties: {
+        Row: {
+          communication_id: string
+          created_at: string
+          id: string
+          property_id: string
+        }
+        Insert: {
+          communication_id: string
+          created_at?: string
+          id?: string
+          property_id: string
+        }
+        Update: {
+          communication_id?: string
+          created_at?: string
+          id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_comm_props_communication"
+            columns: ["communication_id"]
+            isOneToOne: false
+            referencedRelation: "communications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_comm_props_property"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications: {
+        Row: {
+          contact_id: string
+          created_at: string
+          follow_up_date: string | null
+          id: string
+          inquiry_type: string
+          message: string | null
+          priority: string
+          resolution_notes: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          follow_up_date?: string | null
+          id?: string
+          inquiry_type?: string
+          message?: string | null
+          priority?: string
+          resolution_notes?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          follow_up_date?: string | null
+          id?: string
+          inquiry_type?: string
+          message?: string | null
+          priority?: string
+          resolution_notes?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_communications_contact"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -193,6 +297,90 @@ export type Database = {
         }
         Relationships: []
       }
+      document_properties: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          property_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          property_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_doc_props_document"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "customer_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_doc_props_property"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owners: {
+        Row: {
+          contact_info: Json | null
+          created_at: string
+          id: string
+          mailing_address: string | null
+          mailing_address_2: string | null
+          mailing_city: string | null
+          mailing_state: string | null
+          mailing_zip: string | null
+          name: string
+          notes: string | null
+          owner_type: string
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          contact_info?: Json | null
+          created_at?: string
+          id?: string
+          mailing_address?: string | null
+          mailing_address_2?: string | null
+          mailing_city?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
+          name: string
+          notes?: string | null
+          owner_type?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contact_info?: Json | null
+          created_at?: string
+          id?: string
+          mailing_address?: string | null
+          mailing_address_2?: string | null
+          mailing_city?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
+          name?: string
+          notes?: string | null
+          owner_type?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agree_to_updates: boolean | null
@@ -274,41 +462,136 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          contact_id: string | null
           created_at: string
           estimated_savings: number | null
           id: string
           include_all_properties: boolean | null
+          owner_id: string | null
           parcel_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address: string
+          contact_id?: string | null
           created_at?: string
           estimated_savings?: number | null
           id?: string
           include_all_properties?: boolean | null
+          owner_id?: string | null
           parcel_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address?: string
+          contact_id?: string | null
           created_at?: string
           estimated_savings?: number | null
           id?: string
           include_all_properties?: boolean | null
+          owner_id?: string | null
           parcel_number?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
+            foreignKeyName: "fk_properties_contact"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_properties_owner"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_properties_user"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      protests: {
+        Row: {
+          appeal_status: string | null
+          assessed_value: number | null
+          auto_appeal_enabled: boolean | null
+          bill_id: string | null
+          contingency_fee_percent: number | null
+          created_at: string
+          exemption_status: string | null
+          hearing_date: string | null
+          id: string
+          market_value: number | null
+          property_id: string
+          protest_amount: number | null
+          protest_date: string | null
+          resolution_date: string | null
+          savings_amount: number | null
+          tax_year: number | null
+          updated_at: string
+        }
+        Insert: {
+          appeal_status?: string | null
+          assessed_value?: number | null
+          auto_appeal_enabled?: boolean | null
+          bill_id?: string | null
+          contingency_fee_percent?: number | null
+          created_at?: string
+          exemption_status?: string | null
+          hearing_date?: string | null
+          id?: string
+          market_value?: number | null
+          property_id: string
+          protest_amount?: number | null
+          protest_date?: string | null
+          resolution_date?: string | null
+          savings_amount?: number | null
+          tax_year?: number | null
+          updated_at?: string
+        }
+        Update: {
+          appeal_status?: string | null
+          assessed_value?: number | null
+          auto_appeal_enabled?: boolean | null
+          bill_id?: string | null
+          contingency_fee_percent?: number | null
+          created_at?: string
+          exemption_status?: string | null
+          hearing_date?: string | null
+          id?: string
+          market_value?: number | null
+          property_id?: string
+          protest_amount?: number | null
+          protest_date?: string | null
+          resolution_date?: string | null
+          savings_amount?: number | null
+          tax_year?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_appeal_status_property"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_protests_bill"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
           },
         ]
       }

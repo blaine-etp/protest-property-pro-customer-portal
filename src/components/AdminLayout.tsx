@@ -28,6 +28,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+// =============================================================================
+// DEVELOPMENT MODE FLAG - REMOVE WHEN AUTHENTICATION IS READY
+// =============================================================================
+const DEVELOPMENT_MODE = true; // Set to false to re-enable authentication
+// =============================================================================
+
 const navigationItems = [
   {
     title: "Dashboard",
@@ -73,6 +79,11 @@ function AdminSidebar() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    if (DEVELOPMENT_MODE) {
+      // In development mode, just navigate to home
+      navigate("/");
+      return;
+    }
     await supabase.auth.signOut();
     navigate("/");
   };
@@ -148,6 +159,27 @@ export function AdminLayout() {
 
   useEffect(() => {
     const checkAdminAccess = async () => {
+      // DEVELOPMENT MODE BYPASS - Skip authentication entirely
+      if (DEVELOPMENT_MODE) {
+        // Create mock user data for development
+        const mockUser = {
+          id: "dev-user-123",
+          email: "admin@dev.local",
+          user_metadata: {},
+          app_metadata: {},
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          role: "authenticated",
+          email_confirmed_at: new Date().toISOString(),
+        } as User;
+        
+        setUser(mockUser);
+        setLoading(false);
+        return;
+      }
+
+      // Original authentication logic (disabled in development mode)
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {

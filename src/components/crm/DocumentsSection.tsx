@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,97 +22,40 @@ import {
   FileX,
   Clock,
   Settings,
+  Database,
 } from "lucide-react";
+import { dataService } from "@/services";
+import type { Document, DocumentTemplate } from "@/services/types";
 
 export function DocumentsSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("documents");
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const documents = [
-    {
-      id: "1",
-      name: "Form 50-162 - Property Tax Protest",
-      type: "form-50-162",
-      property: "123 Main Street, Austin, TX",
-      owner: "John Smith",
-      protest: "PRT-001",
-      status: "Generated",
-      createdDate: "2024-01-15",
-      size: "2.3 MB",
-      downloadCount: 3,
-    },
-    {
-      id: "2",
-      name: "Evidence Package - Market Analysis",
-      type: "evidence-package",
-      property: "456 Oak Avenue, Austin, TX",
-      owner: "Sarah Johnson",
-      protest: "PRT-002",
-      status: "Draft",
-      createdDate: "2024-01-14",
-      size: "5.7 MB",
-      downloadCount: 1,
-    },
-    {
-      id: "3",
-      name: "Hearing Notice - County Appeal",
-      type: "hearing-notice",
-      property: "789 Pine Street, Austin, TX",
-      owner: "Michael Brown",
-      protest: "PRT-003",
-      status: "Delivered",
-      createdDate: "2024-01-12",
-      size: "1.2 MB",
-      downloadCount: 5,
-    },
-    {
-      id: "4",
-      name: "Settlement Agreement",
-      type: "settlement",
-      property: "321 Elm Drive, Austin, TX",
-      owner: "Emily Davis",
-      protest: "PRT-004",
-      status: "Signed",
-      createdDate: "2024-01-10",
-      size: "800 KB",
-      downloadCount: 2,
-    },
-  ];
+  useEffect(() => {
+    loadDocumentsData();
+  }, []);
 
-  const templates = [
-    {
-      id: "1",
-      name: "Form 50-162 Template",
-      description: "Standard property tax protest form",
-      category: "Legal Forms",
-      lastUpdated: "2024-01-01",
-      usage: 45,
-    },
-    {
-      id: "2",
-      name: "Evidence Package Template",
-      description: "Market analysis and comparable properties",
-      category: "Evidence",
-      lastUpdated: "2023-12-15",
-      usage: 32,
-    },
-    {
-      id: "3",
-      name: "Hearing Notice Template",
-      description: "County appeal board hearing notification",
-      category: "Notifications",
-      lastUpdated: "2023-12-10",
-      usage: 28,
-    },
-    {
-      id: "4",
-      name: "Settlement Agreement Template",
-      description: "Standard settlement terms and conditions",
-      category: "Legal Forms",
-      lastUpdated: "2023-11-20",
-      usage: 15,
-    },
-  ];
+  const loadDocumentsData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [documentsData, templatesData] = await Promise.all([
+        dataService.getDocuments(),
+        dataService.getDocumentTemplates(),
+      ]);
+      setDocuments(documentsData);
+      setTemplates(templatesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load documents data');
+      console.error('Failed to load documents data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredDocuments = documents.filter(doc =>
     doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -150,13 +93,60 @@ export function DocumentsSection() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Document Management</h2>
+            <p className="text-slate-600">Loading documents...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-8 bg-slate-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Document Management</h2>
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+          <Button onClick={loadDocumentsData}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Document Management</h2>
-          <p className="text-slate-600">Generate, manage, and track legal documents</p>
+          <div className="flex items-center gap-2">
+            <p className="text-slate-600">Generate, manage, and track legal documents</p>
+            <Badge variant="outline" className="text-xs">
+              <Database className="h-3 w-3 mr-1" />
+              Mock Data
+            </Badge>
+          </div>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />

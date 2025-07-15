@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,102 +23,40 @@ import {
   Building,
   User,
   Upload,
+  Database,
 } from "lucide-react";
+import { dataService } from "@/services";
+import type { Bill, Invoice } from "@/services/types";
 
 export function BillingSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("bills");
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const bills = [
-    {
-      id: "1",
-      propertyAddress: "123 Main Street, Austin, TX",
-      owner: "John Smith",
-      taxYear: "2024",
-      billNumber: "TAX-2024-001",
-      assessedValue: "$450,000",
-      taxAmount: "$12,350",
-      dueDate: "2024-03-15",
-      status: "Pending",
-      paidAmount: "$0",
-      importDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      propertyAddress: "456 Oak Avenue, Austin, TX",
-      owner: "Sarah Johnson",
-      taxYear: "2024",
-      billNumber: "TAX-2024-002",
-      assessedValue: "$325,000",
-      taxAmount: "$8,925",
-      dueDate: "2024-03-20",
-      status: "Under Review",
-      paidAmount: "$0",
-      importDate: "2024-01-14",
-    },
-    {
-      id: "3",
-      propertyAddress: "789 Pine Street, Austin, TX",
-      owner: "Michael Brown",
-      taxYear: "2023",
-      billNumber: "TAX-2023-003",
-      assessedValue: "$675,000",
-      taxAmount: "$18,525",
-      dueDate: "2023-12-15",
-      status: "Protested",
-      paidAmount: "$15,325",
-      importDate: "2023-10-01",
-    },
-    {
-      id: "4",
-      propertyAddress: "321 Elm Drive, Austin, TX",
-      owner: "Emily Davis",
-      taxYear: "2023",
-      billNumber: "TAX-2023-004",
-      assessedValue: "$280,000",
-      taxAmount: "$7,700",
-      dueDate: "2023-12-20",
-      status: "Paid",
-      paidAmount: "$7,700",
-      importDate: "2023-09-15",
-    },
-  ];
+  useEffect(() => {
+    loadBillingData();
+  }, []);
 
-  const invoices = [
-    {
-      id: "1",
-      billId: "TAX-2024-001",
-      propertyAddress: "123 Main Street, Austin, TX",
-      client: "John Smith",
-      serviceType: "Property Tax Protest",
-      amount: "$750",
-      status: "Sent",
-      dueDate: "2024-02-15",
-      createdDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      billId: "TAX-2024-002",
-      propertyAddress: "456 Oak Avenue, Austin, TX",
-      client: "Sarah Johnson",
-      serviceType: "Assessment Review",
-      amount: "$500",
-      status: "Draft",
-      dueDate: "2024-02-20",
-      createdDate: "2024-01-14",
-    },
-    {
-      id: "3",
-      billId: "TAX-2023-003",
-      propertyAddress: "789 Pine Street, Austin, TX",
-      client: "Michael Brown",
-      serviceType: "Appeal Representation",
-      amount: "$1,200",
-      status: "Paid",
-      dueDate: "2024-01-10",
-      createdDate: "2023-12-01",
-    },
-  ];
+  const loadBillingData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [billsData, invoicesData] = await Promise.all([
+        dataService.getBills(),
+        dataService.getInvoices(),
+      ]);
+      setBills(billsData);
+      setInvoices(invoicesData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load billing data');
+      console.error('Failed to load billing data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredBills = bills.filter(bill =>
     bill.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -150,13 +88,60 @@ export function BillingSection() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Billing Management</h2>
+            <p className="text-slate-600">Loading billing data...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-8 bg-slate-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Billing Management</h2>
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+          <Button onClick={loadBillingData}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Billing Management</h2>
-          <p className="text-slate-600">Manage tax bills and client invoicing</p>
+          <div className="flex items-center gap-2">
+            <p className="text-slate-600">Manage tax bills and client invoicing</p>
+            <Badge variant="outline" className="text-xs">
+              <Database className="h-3 w-3 mr-1" />
+              Mock Data
+            </Badge>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">

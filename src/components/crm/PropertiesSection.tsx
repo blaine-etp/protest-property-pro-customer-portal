@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,66 +23,35 @@ import {
   TrendingUp,
   FileText,
   Gavel,
+  Database,
 } from "lucide-react";
+import { dataService } from "@/services";
+import type { Property } from "@/services/types";
 
 export function PropertiesSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid");
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const properties = [
-    {
-      id: "1",
-      address: "123 Main Street, Austin, TX 78701",
-      parcelNumber: "012345678",
-      assessedValue: "$450,000",
-      marketValue: "$520,000",
-      taxAmount: "$12,350",
-      owner: "John Smith",
-      status: "Active Protest",
-      protestDeadline: "2024-02-15",
-      potentialSavings: "$2,100",
-      lastUpdated: "2024-01-15",
-    },
-    {
-      id: "2", 
-      address: "456 Oak Avenue, Austin, TX 78702",
-      parcelNumber: "987654321",
-      assessedValue: "$325,000",
-      marketValue: "$380,000",
-      taxAmount: "$8,925",
-      owner: "Sarah Johnson",
-      status: "Review Needed",
-      protestDeadline: "2024-02-20",
-      potentialSavings: "$1,650",
-      lastUpdated: "2024-01-14",
-    },
-    {
-      id: "3",
-      address: "789 Pine Street, Austin, TX 78703",
-      parcelNumber: "456789123",
-      assessedValue: "$675,000",
-      marketValue: "$720,000",
-      taxAmount: "$18,525",
-      owner: "Michael Brown",
-      status: "Completed",
-      protestDeadline: "N/A",
-      potentialSavings: "$3,200",
-      lastUpdated: "2024-01-10",
-    },
-    {
-      id: "4",
-      address: "321 Elm Drive, Austin, TX 78704",
-      parcelNumber: "789123456",
-      assessedValue: "$280,000",
-      marketValue: "$295,000",
-      taxAmount: "$7,700",
-      owner: "Emily Davis",
-      status: "Monitoring",
-      protestDeadline: "2024-03-01",
-      potentialSavings: "$450",
-      lastUpdated: "2024-01-12",
-    },
-  ];
+  useEffect(() => {
+    loadProperties();
+  }, []);
+
+  const loadProperties = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await dataService.getProperties();
+      setProperties(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load properties');
+      console.error('Failed to load properties:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredProperties = properties.filter(property =>
     property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,13 +79,60 @@ export function PropertiesSection() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Properties Management</h2>
+            <p className="text-slate-600">Loading properties...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-8 bg-slate-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Properties Management</h2>
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+          <Button onClick={loadProperties}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Properties Management</h2>
-          <p className="text-slate-600">Track property assessments and protest opportunities</p>
+          <div className="flex items-center gap-2">
+            <p className="text-slate-600">Track property assessments and protest opportunities</p>
+            <Badge variant="outline" className="text-xs">
+              <Database className="h-3 w-3 mr-1" />
+              Mock Data
+            </Badge>
+          </div>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />

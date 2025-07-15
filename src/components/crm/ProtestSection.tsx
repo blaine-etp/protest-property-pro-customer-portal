@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,65 +22,34 @@ import {
   TrendingUp,
   Building,
   User,
+  Database,
 } from "lucide-react";
+import { dataService } from "@/services";
+import type { Protest } from "@/services/types";
 
 export function ProtestSection() {
   const [activeView, setActiveView] = useState("pipeline");
+  const [protests, setProtests] = useState<Protest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const protests = [
-    {
-      id: "1",
-      propertyAddress: "123 Main Street, Austin, TX",
-      owner: "John Smith",
-      status: "Filed",
-      filedDate: "2024-01-10",
-      hearingDate: "2024-02-15",
-      assessedValue: "$450,000",
-      targetValue: "$420,000",
-      potentialSavings: "$2,100",
-      agent: "Jane Doe",
-      progress: 25,
-    },
-    {
-      id: "2",
-      propertyAddress: "456 Oak Avenue, Austin, TX",
-      owner: "Sarah Johnson",
-      status: "Under Review",
-      filedDate: "2024-01-15",
-      hearingDate: "2024-02-20",
-      assessedValue: "$325,000",
-      targetValue: "$305,000",
-      potentialSavings: "$1,650",
-      agent: "Mike Wilson",
-      progress: 60,
-    },
-    {
-      id: "3",
-      propertyAddress: "789 Pine Street, Austin, TX",
-      owner: "Michael Brown",
-      status: "Approved",
-      filedDate: "2023-12-05",
-      hearingDate: "2024-01-10",
-      assessedValue: "$675,000",
-      targetValue: "$640,000",
-      potentialSavings: "$3,200",
-      agent: "Sarah Lee",
-      progress: 100,
-    },
-    {
-      id: "4",
-      propertyAddress: "321 Elm Drive, Austin, TX",
-      owner: "Emily Davis",
-      status: "Rejected",
-      filedDate: "2023-11-20",
-      hearingDate: "2023-12-15",
-      assessedValue: "$280,000",
-      targetValue: "$260,000",
-      potentialSavings: "$0",
-      agent: "Tom Garcia",
-      progress: 100,
-    },
-  ];
+  useEffect(() => {
+    loadProtests();
+  }, []);
+
+  const loadProtests = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await dataService.getProtests();
+      setProtests(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load protests');
+      console.error('Failed to load protests:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const protestsByStatus = {
     "Pending": protests.filter(p => p.status === "Pending"),
@@ -112,13 +81,60 @@ export function ProtestSection() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Protest Management</h2>
+            <p className="text-slate-600">Loading protests...</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-8 bg-slate-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Protest Management</h2>
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+          <Button onClick={loadProtests}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Protest Management</h2>
-          <p className="text-slate-600">Track and manage property tax protests</p>
+          <div className="flex items-center gap-2">
+            <p className="text-slate-600">Track and manage property tax protests</p>
+            <Badge variant="outline" className="text-xs">
+              <Database className="h-3 w-3 mr-1" />
+              Mock Data
+            </Badge>
+          </div>
         </div>
         <Button>
           <Plus className="h-4 w-4 mr-2" />

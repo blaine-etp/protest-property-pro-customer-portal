@@ -23,6 +23,7 @@ import AdminEvidence from "./pages/AdminEvidence";
 import AdminBulkUpload from "./pages/AdminBulkUpload";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
+import AdminCRM from "./pages/AdminCRM";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +47,7 @@ const App = () => (
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Admin />} />
-            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="customers" element={<AdminCRM />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="evidence" element={<AdminEvidence />} />
             <Route path="bulk-upload" element={<AdminBulkUpload />} />

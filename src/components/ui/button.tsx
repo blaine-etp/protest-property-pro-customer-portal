@@ -20,6 +20,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         hero: "bg-gradient-accent text-accent-foreground shadow-hero hover:shadow-xl transform hover:-translate-y-1 border-0",
         accent: "bg-gradient-accent text-accent-foreground shadow-card hover:shadow-hero transform hover:-translate-y-0.5",
+        "modern-hero": "relative bg-primary text-primary-foreground overflow-hidden transition-all duration-300 ease-smooth shadow-glow border-0 hover:scale-[1.03] hover:shadow-xl hover:shadow-primary/25 active:scale-[0.98] focus-visible:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 before:absolute before:inset-0 before:bg-gradient-primary before:opacity-100 hover:before:opacity-90 after:absolute after:inset-0 after:bg-white/10 after:opacity-0 hover:after:opacity-100 after:transition-opacity after:duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

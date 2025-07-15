@@ -106,9 +106,9 @@ export const useFormSubmission = () => {
         throw new Error(`Application creation failed: ${applicationError.message}`);
       }
 
-      // 4. Create initial appeal status
-      const { error: appealError } = await supabase
-        .from('appeal_status')
+      // 4. Create initial protest record
+      const { error: protestError } = await supabase
+        .from('protests')
         .insert({
           property_id: property.id,
           appeal_status: 'pending',
@@ -117,8 +117,8 @@ export const useFormSubmission = () => {
           savings_amount: formData.estimatedSavings || 0,
         });
 
-      if (appealError) {
-        throw new Error(`Appeal status creation failed: ${appealError.message}`);
+      if (protestError) {
+        throw new Error(`Protest record creation failed: ${protestError.message}`);
       }
 
       // Generate both PDFs automatically for new customers

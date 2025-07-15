@@ -66,7 +66,7 @@ export const useTokenCustomerData = (token: string) => {
         .from('properties')
         .select(`
           *,
-          appeal_status (
+          protests (
             appeal_status,
             exemption_status,
             auto_appeal_enabled,
@@ -82,7 +82,7 @@ export const useTokenCustomerData = (token: string) => {
       // Transform the data to match the expected structure
       const transformedProperties = propertiesData?.map(property => ({
         ...property,
-        appeal_status: property.appeal_status?.[0] || null
+        appeal_status: property.protests?.[0] || null
       })) || [];
 
       setProperties(transformedProperties);
@@ -102,7 +102,7 @@ export const useTokenCustomerData = (token: string) => {
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
 
       const { error } = await supabase
-        .from('appeal_status')
+        .from('protests')
         .update({ auto_appeal_enabled: newAutoAppealStatus })
         .eq('property_id', propertyId);
 

@@ -51,12 +51,12 @@ export const useCustomerData = (email: string) => {
 
         setProfile(profileData);
 
-        // Fetch properties with appeal status
+        // Fetch properties with protest data
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select(`
             *,
-            appeal_status (
+            protests (
               appeal_status,
               exemption_status,
               auto_appeal_enabled,
@@ -72,9 +72,9 @@ export const useCustomerData = (email: string) => {
         // Transform the data to match our Property interface
         const transformedProperties = (propertiesData || []).map(property => ({
           ...property,
-          appeal_status: Array.isArray(property.appeal_status) 
-            ? property.appeal_status[0] 
-            : property.appeal_status
+          appeal_status: Array.isArray(property.protests) 
+            ? property.protests[0] 
+            : property.protests
         }));
 
         setProperties(transformedProperties);
@@ -97,7 +97,7 @@ export const useCustomerData = (email: string) => {
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
 
       const { error } = await supabase
-        .from('appeal_status')
+        .from('protests')
         .update({ auto_appeal_enabled: newAutoAppealStatus })
         .eq('property_id', propertyId);
 

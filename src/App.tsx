@@ -13,6 +13,7 @@ import Billing from "./pages/Billing";
 import Documents from "./pages/Documents";
 import ReferFriend from "./pages/ReferFriend";
 import Auth from "./pages/Auth";
+import SetPassword from "./pages/SetPassword";
 import NotFound from "./pages/NotFound";
 import { AdminLayout } from "./components/AdminLayout";
 import Admin from "./pages/Admin";
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/documents" element={<Documents />} />
           <Route path="/refer-friend" element={<ReferFriend />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Admin />} />
             <Route path="customers" element={<AdminCustomers />} />

@@ -101,11 +101,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session?.user) {
-          // Create anonymous user for demo purposes
+          // Create user account with email confirmation
           const { data, error } = await supabase.auth.signUp({
             email: formData.email,
-            password: Math.random().toString(36).substring(2, 15), // Random password
+            password: Math.random().toString(36).substring(2, 15), // Temporary password
             options: {
+              emailRedirectTo: `${window.location.origin}/set-password`,
               data: {
                 first_name: formData.firstName,
                 last_name: formData.lastName,

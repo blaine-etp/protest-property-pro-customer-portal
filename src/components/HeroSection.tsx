@@ -128,9 +128,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
                 </div>
                 <Button 
                   type="submit" 
-                  variant="modern-hero" 
+                  variant="hero" 
                   size="lg"
-                  className="h-14 px-8 text-lg font-semibold relative z-10"
+                  className="h-14 px-8 text-lg font-semibold"
                 >
                   <Search className="mr-2 h-5 w-5" />
                   Check Savings

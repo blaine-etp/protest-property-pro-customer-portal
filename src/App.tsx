@@ -24,6 +24,7 @@ import AdminBulkUpload from "./pages/AdminBulkUpload";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCRM from "./pages/AdminCRM";
+import AdminContactDetail from "./pages/AdminContactDetail";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Admin />} />
             <Route path="customers" element={<AdminCRM />} />
+            <Route path="customers/:contactId" element={<AdminContactDetail />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="evidence" element={<AdminEvidence />} />
             <Route path="bulk-upload" element={<AdminBulkUpload />} />

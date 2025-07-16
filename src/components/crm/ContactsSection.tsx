@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 
 export function ContactsSection() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
 
@@ -95,6 +97,10 @@ export function ContactsSection() {
     }
   };
 
+  const handleContactClick = (contactId: string) => {
+    navigate(`/admin/customers/${contactId}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
@@ -133,7 +139,11 @@ export function ContactsSection() {
       {/* Contacts Grid View */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredContacts.map((contact) => (
-          <Card key={contact.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card 
+            key={contact.id} 
+            className="hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => handleContactClick(contact.id)}
+          >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -229,7 +239,11 @@ export function ContactsSection() {
             </TableHeader>
             <TableBody>
               {filteredContacts.map((contact) => (
-                <TableRow key={contact.id}>
+                <TableRow 
+                  key={contact.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleContactClick(contact.id)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">

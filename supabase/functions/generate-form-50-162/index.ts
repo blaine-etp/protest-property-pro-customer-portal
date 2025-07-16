@@ -52,13 +52,20 @@ serve(async (req) => {
     }
     console.log('✓ Customer data:', customerData)
 
-    // Step 2: Fetch property data
+    // Step 2: Fetch property data with owner information
     console.log('Step 2: Fetching property data...')
     const { data: propertyData, error: propertyError } = await supabaseClient
       .from('properties')
       .select(`
         address,
-        include_all_properties
+        include_all_properties,
+        owner_id,
+        owners (
+          name,
+          entity_relationship,
+          form_entity_name,
+          form_entity_type
+        )
       `)
       .eq('id', propertyId)
       .maybeSingle()
@@ -174,10 +181,40 @@ serve(async (req) => {
       const currentDate = new Date().toLocaleDateString('en-US')
       tryFillField(['date', 'Date', 'today', 'current_date', 'Date_af_date'], currentDate)
 
-      // Fill name at bottom (name of property owner) - leave top name field blank
-      const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim()
-      if (fullName) {
-        tryFillField(['Name of Property Owner'], fullName)
+      // Determine if property is owned by entity and fill appropriate fields
+      const hasEntityOwner = propertyData.owner_id && propertyData.owners
+      
+      if (hasEntityOwner) {
+        // Entity ownership - use entity data
+        const entityData = propertyData.owners
+        
+        // Fill "Name" field with entity name
+        if (entityData.form_entity_name || entityData.name) {
+          const entityName = entityData.form_entity_name || entityData.name
+          tryFillField(['Name'], entityName)
+        }
+        
+        // Fill "Name of Property Owner" field with entity name
+        if (entityData.form_entity_name || entityData.name) {
+          const entityName = entityData.form_entity_name || entityData.name
+          tryFillField(['Name of Property Owner'], entityName)
+        }
+        
+        // Fill "Title" field with relationship to entity
+        if (entityData.entity_relationship) {
+          tryFillField(['Title'], entityData.entity_relationship)
+        }
+        
+        console.log('✓ Entity ownership fields filled:', {
+          entityName: entityData.form_entity_name || entityData.name,
+          relationship: entityData.entity_relationship
+        })
+      } else {
+        // Individual ownership - use customer data as before
+        const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim()
+        if (fullName) {
+          tryFillField(['Name of Property Owner'], fullName)
+        }
       }
 
       // Fill property checkboxes using exact field names

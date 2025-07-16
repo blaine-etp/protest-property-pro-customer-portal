@@ -25,6 +25,8 @@ export interface Property {
   id: string;
   address: string;
   parcelNumber: string;
+  etpPid?: string;
+  countyPid?: string;
   assessedValue: string;
   marketValue: string;
   taxAmount: string;

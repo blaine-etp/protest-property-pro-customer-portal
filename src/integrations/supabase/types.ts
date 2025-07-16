@@ -20,6 +20,7 @@ export type Database = {
           is_owner_verified: boolean | null
           property_id: string
           signature: string | null
+          signup_pid: string | null
           status: string | null
           submitted_at: string
           updated_at: string
@@ -30,6 +31,7 @@ export type Database = {
           is_owner_verified?: boolean | null
           property_id: string
           signature?: string | null
+          signup_pid?: string | null
           status?: string | null
           submitted_at?: string
           updated_at?: string
@@ -40,6 +42,7 @@ export type Database = {
           is_owner_verified?: boolean | null
           property_id?: string
           signature?: string | null
+          signup_pid?: string | null
           status?: string | null
           submitted_at?: string
           updated_at?: string
@@ -463,8 +466,10 @@ export type Database = {
         Row: {
           address: string
           contact_id: string | null
+          county_pid: string | null
           created_at: string
           estimated_savings: number | null
+          etp_pid: string | null
           id: string
           include_all_properties: boolean | null
           owner_id: string | null
@@ -475,8 +480,10 @@ export type Database = {
         Insert: {
           address: string
           contact_id?: string | null
+          county_pid?: string | null
           created_at?: string
           estimated_savings?: number | null
+          etp_pid?: string | null
           id?: string
           include_all_properties?: boolean | null
           owner_id?: string | null
@@ -487,8 +494,10 @@ export type Database = {
         Update: {
           address?: string
           contact_id?: string | null
+          county_pid?: string | null
           created_at?: string
           estimated_savings?: number | null
+          etp_pid?: string | null
           id?: string
           include_all_properties?: boolean | null
           owner_id?: string | null

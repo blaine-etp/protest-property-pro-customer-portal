@@ -98,6 +98,8 @@ export const mockContacts: Contact[] = [
 export const mockProperties: Property[] = [
   {
     id: "1",
+    etpPid: "ETP-TX-TRAV-001234",
+    countyPid: "R123456789",
     address: "123 Main Street, Austin, TX 78701",
     parcelNumber: "012345678",
     assessedValue: "$450,000",
@@ -111,6 +113,8 @@ export const mockProperties: Property[] = [
   },
   {
     id: "2",
+    etpPid: "ETP-TX-TRAV-001235",
+    countyPid: "R987654321",
     address: "456 Oak Avenue, Austin, TX 78702",
     parcelNumber: "987654321",
     assessedValue: "$325,000",
@@ -124,6 +128,8 @@ export const mockProperties: Property[] = [
   },
   {
     id: "3",
+    etpPid: "ETP-TX-TRAV-001236",
+    countyPid: "R456789123",
     address: "789 Pine Street, Austin, TX 78703",
     parcelNumber: "456789123",
     assessedValue: "$675,000",
@@ -137,6 +143,8 @@ export const mockProperties: Property[] = [
   },
   {
     id: "4",
+    etpPid: "ETP-TX-TRAV-001237",
+    countyPid: "R789123456",
     address: "321 Elm Drive, Austin, TX 78704",
     parcelNumber: "789123456",
     assessedValue: "$280,000",

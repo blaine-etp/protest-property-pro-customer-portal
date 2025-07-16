@@ -465,7 +465,6 @@ export type Database = {
       properties: {
         Row: {
           address: string
-          contact_id: string | null
           county_pid: string | null
           created_at: string
           estimated_savings: number | null
@@ -474,12 +473,12 @@ export type Database = {
           include_all_properties: boolean | null
           owner_id: string | null
           parcel_number: string | null
+          secondary_contact_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address: string
-          contact_id?: string | null
           county_pid?: string | null
           created_at?: string
           estimated_savings?: number | null
@@ -488,12 +487,12 @@ export type Database = {
           include_all_properties?: boolean | null
           owner_id?: string | null
           parcel_number?: string | null
+          secondary_contact_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address?: string
-          contact_id?: string | null
           county_pid?: string | null
           created_at?: string
           estimated_savings?: number | null
@@ -502,13 +501,14 @@ export type Database = {
           include_all_properties?: boolean | null
           owner_id?: string | null
           parcel_number?: string | null
+          secondary_contact_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "fk_properties_contact"
-            columns: ["contact_id"]
+            columns: ["secondary_contact_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

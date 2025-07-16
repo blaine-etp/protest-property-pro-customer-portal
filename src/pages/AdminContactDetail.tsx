@@ -56,7 +56,7 @@ export default function AdminContactDetail() {
             *,
             protests (*)
           `)
-          .eq("contact_id", contactId);
+          .eq("user_id", profile.user_id);
 
         if (propertiesError) throw propertiesError;
 

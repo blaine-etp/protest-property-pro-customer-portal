@@ -340,6 +340,10 @@ export type Database = {
         Row: {
           contact_info: Json | null
           created_at: string
+          created_by_user_id: string | null
+          entity_relationship: string | null
+          form_entity_name: string | null
+          form_entity_type: string | null
           id: string
           mailing_address: string | null
           mailing_address_2: string | null
@@ -349,12 +353,17 @@ export type Database = {
           name: string
           notes: string | null
           owner_type: string
+          property_id: string | null
           tax_id: string | null
           updated_at: string
         }
         Insert: {
           contact_info?: Json | null
           created_at?: string
+          created_by_user_id?: string | null
+          entity_relationship?: string | null
+          form_entity_name?: string | null
+          form_entity_type?: string | null
           id?: string
           mailing_address?: string | null
           mailing_address_2?: string | null
@@ -364,12 +373,17 @@ export type Database = {
           name: string
           notes?: string | null
           owner_type?: string
+          property_id?: string | null
           tax_id?: string | null
           updated_at?: string
         }
         Update: {
           contact_info?: Json | null
           created_at?: string
+          created_by_user_id?: string | null
+          entity_relationship?: string | null
+          form_entity_name?: string | null
+          form_entity_type?: string | null
           id?: string
           mailing_address?: string | null
           mailing_address_2?: string | null
@@ -379,10 +393,26 @@ export type Database = {
           name?: string
           notes?: string | null
           owner_type?: string
+          property_id?: string | null
           tax_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "owners_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "owners_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

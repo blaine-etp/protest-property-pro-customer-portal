@@ -49,7 +49,40 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 3. Create application record for new property
+      // 3. Create owner record if entity is involved
+      let ownerId = null;
+      if (formData.isTrustEntity && formData.entityName) {
+        const { data: owner, error: ownerError } = await supabase
+          .from('owners')
+          .insert({
+            name: formData.entityName,
+            owner_type: formData.entityType?.toLowerCase() || 'entity',
+            property_id: property.id,
+            created_by_user_id: existingUserId,
+            entity_relationship: formData.relationshipToEntity,
+            form_entity_name: formData.entityName,
+            form_entity_type: formData.entityType,
+          })
+          .select()
+          .single();
+
+        if (ownerError) {
+          throw new Error(`Owner creation failed: ${ownerError.message}`);
+        }
+        ownerId = owner.id;
+
+        // Update property with owner_id
+        const { error: propertyUpdateError } = await supabase
+          .from('properties')
+          .update({ owner_id: ownerId })
+          .eq('id', property.id);
+
+        if (propertyUpdateError) {
+          throw new Error(`Property owner update failed: ${propertyUpdateError.message}`);
+        }
+      }
+
+      // 4. Create application record for new property
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
@@ -66,7 +99,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
         throw new Error(`Application creation failed: ${applicationError.message}`);
       }
 
-      // 4. Create initial protest record for new property
+      // 5. Create initial protest record for new property
       const { error: protestError } = await supabase
         .from('protests')
         .insert({

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { FormData } from '../MultiStepForm';
@@ -15,7 +15,18 @@ const schema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   isTrustEntity: z.boolean(),
+  entityName: z.string().optional(),
+  relationshipToEntity: z.string().optional(),
+  entityType: z.enum(['LLC', 'Corporation', 'Partnership', 'Estate', 'Trust', 'Other']).optional(),
   role: z.enum(['homeowner', 'property_manager', 'authorized_person']),
+}).refine((data) => {
+  if (data.isTrustEntity) {
+    return data.entityName && data.relationshipToEntity && data.entityType;
+  }
+  return true;
+}, {
+  message: "Entity name, relationship, and type are required when property is owned by an entity",
+  path: ["entityName"],
 });
 
 interface SavingsStepProps {
@@ -42,10 +53,15 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
     defaultValues: {
       firstName: formData.firstName,
       lastName: formData.lastName,
-      isTrustEntity: formData.isTrustEntity,
+      isTrustEntity: formData.isTrustEntity || false,
+      entityName: formData.entityName || '',
+      relationshipToEntity: formData.relationshipToEntity || '',
+      entityType: formData.entityType,
       role: formData.role,
     },
   });
+
+  const isTrustEntity = form.watch('isTrustEntity');
 
   const onSubmit = (values: z.infer<typeof schema>) => {
     updateFormData(values);
@@ -136,21 +152,122 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
               control={form.control}
               name="isTrustEntity"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormItem className="space-y-3">
+                  <FormLabel className="text-base font-medium">
+                    Is this property owned by a trust, LLC, or other entity?
+                  </FormLabel>
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <RadioGroup
+                      onValueChange={(value) => field.onChange(value === 'true')}
+                      value={field.value ? 'true' : 'false'}
+                      className="flex flex-row space-x-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="false" id="no" />
+                        <FormLabel htmlFor="no" className="font-normal cursor-pointer">
+                          No
+                        </FormLabel>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="true" id="yes" />
+                        <FormLabel htmlFor="yes" className="font-normal cursor-pointer">
+                          Yes
+                        </FormLabel>
+                      </div>
+                    </RadioGroup>
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      Is This Property Owned By A Trust, LLC, Or Other Entity?
-                    </FormLabel>
-                  </div>
                 </FormItem>
               )}
             />
+
+            {isTrustEntity && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="entityName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entity Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Entity Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="relationshipToEntity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Relationship to Entity *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Owner, Agent, Trustee, etc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="entityType"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Type of Entity *</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="grid grid-cols-2 gap-4"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="LLC" id="llc" />
+                            <FormLabel htmlFor="llc" className="font-normal cursor-pointer">
+                              LLC
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Corporation" id="corporation" />
+                            <FormLabel htmlFor="corporation" className="font-normal cursor-pointer">
+                              Corporation
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Partnership" id="partnership" />
+                            <FormLabel htmlFor="partnership" className="font-normal cursor-pointer">
+                              Partnership
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Estate" id="estate" />
+                            <FormLabel htmlFor="estate" className="font-normal cursor-pointer">
+                              Estate
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Trust" id="trust" />
+                            <FormLabel htmlFor="trust" className="font-normal cursor-pointer">
+                              Trust
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Other" id="other" />
+                            <FormLabel htmlFor="other" className="font-normal cursor-pointer">
+                              Other
+                            </FormLabel>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <FormField
               control={form.control}

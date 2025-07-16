@@ -12,6 +12,9 @@ export interface FormData {
   firstName: string;
   lastName: string;
   isTrustEntity: boolean;
+  entityName?: string;
+  relationshipToEntity?: string;
+  entityType?: 'LLC' | 'Corporation' | 'Partnership' | 'Estate' | 'Trust' | 'Other';
   role: 'homeowner' | 'property_manager' | 'authorized_person';
   email: string;
   phone: string;

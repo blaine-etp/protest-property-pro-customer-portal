@@ -729,6 +729,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_owner: {
+        Args: { owner_id: string }
+        Returns: boolean
+      }
       can_create_profile: {
         Args: { profile_user_id: string; profile_email: string }
         Returns: boolean

@@ -171,35 +171,43 @@ export const useFormSubmission = () => {
       // Generate both PDFs automatically for new customers
       try {
         // Generate Form 50-162
-        const { error: form50162Error } = await supabase.functions.invoke('generate-form-50-162', {
-          body: { 
-            propertyId: property.id, 
-            userId: tempUserId 
+        try {
+          const { error: form50162Error } = await supabase.functions.invoke('generate-form-50-162', {
+            body: { 
+              propertyId: property.id, 
+              userId: tempUserId 
+            }
+          });
+          
+          if (form50162Error) {
+            console.error('Form 50-162 generation failed:', form50162Error);
+          } else {
+            console.log('Form 50-162 generated successfully');
           }
-        });
-
-        // Generate Services Agreement (only for new customers)
-        const { error: servicesAgreementError } = await supabase.functions.invoke('generate-services-agreement', {
-          body: { 
-            propertyId: property.id, 
-            userId: tempUserId 
-          }
-        });
-        
-        if (form50162Error) {
-          console.error('Form 50-162 generation failed:', form50162Error);
-        } else {
-          console.log('Form 50-162 generated successfully');
+        } catch (form50162NetworkError) {
+          console.error('Form 50-162 network error:', form50162NetworkError);
         }
 
-        if (servicesAgreementError) {
-          console.error('Services Agreement generation failed:', servicesAgreementError);
-        } else {
-          console.log('Services Agreement generated successfully');
+        // Generate Services Agreement (only for new customers)
+        try {
+          const { error: servicesAgreementError } = await supabase.functions.invoke('generate-services-agreement', {
+            body: { 
+              propertyId: property.id, 
+              userId: tempUserId 
+            }
+          });
+          
+          if (servicesAgreementError) {
+            console.error('Services Agreement generation failed:', servicesAgreementError);
+          } else {
+            console.log('Services Agreement generated successfully');
+          }
+        } catch (servicesAgreementNetworkError) {
+          console.error('Services Agreement network error:', servicesAgreementNetworkError);
         }
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);
-      // Don't fail the submission if PDF generation fails
+        // Don't fail the submission if PDF generation fails
       }
 
       // 5. Handle referral code if provided

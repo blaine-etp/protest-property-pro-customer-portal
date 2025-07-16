@@ -89,37 +89,51 @@ export const useFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 3. Create owner record if entity is involved
-      let ownerId = null;
+      // 3. Create owner record (always created, but name depends on entity status)
+      let ownerName = '';
+      let ownerType = 'individual';
+      
+      // If entity is selected, use entity details
       if (formData.isTrustEntity && formData.entityName) {
-        const { data: owner, error: ownerError } = await supabase
-          .from('owners')
-          .insert({
-            name: formData.entityName,
-            owner_type: formData.entityType?.toLowerCase() || 'entity',
-            property_id: property.id,
-            created_by_user_id: tempUserId,
-            entity_relationship: formData.relationshipToEntity,
-            form_entity_name: formData.entityName,
-            form_entity_type: formData.entityType,
-          })
-          .select()
-          .single();
-
-        if (ownerError) {
-          throw new Error(`Owner creation failed: ${ownerError.message}`);
+        ownerName = formData.entityName;
+        ownerType = formData.entityType?.toLowerCase() || 'entity';
+      } else {
+        // For non-entities or if role is not homeowner, use person's name
+        if (formData.role === 'homeowner') {
+          ownerName = `${formData.firstName} ${formData.lastName}`;
+        } else {
+          ownerName = `${formData.firstName} ${formData.lastName}`;
         }
-        ownerId = owner.id;
+      }
 
-        // Update property with owner_id
-        const { error: propertyUpdateError } = await supabase
-          .from('properties')
-          .update({ owner_id: ownerId })
-          .eq('id', property.id);
+      const { data: owner, error: ownerError } = await supabase
+        .from('owners')
+        .insert({
+          name: ownerName,
+          owner_type: ownerType,
+          property_id: property.id,
+          created_by_user_id: tempUserId,
+          entity_relationship: formData.relationshipToEntity,
+          form_entity_name: formData.entityName,
+          form_entity_type: formData.entityType,
+          // Store the relationship to property selection
+          notes: `Relationship to property: ${formData.role || 'homeowner'}`,
+        })
+        .select()
+        .single();
 
-        if (propertyUpdateError) {
-          throw new Error(`Property owner update failed: ${propertyUpdateError.message}`);
-        }
+      if (ownerError) {
+        throw new Error(`Owner creation failed: ${ownerError.message}`);
+      }
+      
+      // Update property with owner_id
+      const { error: propertyUpdateError } = await supabase
+        .from('properties')
+        .update({ owner_id: owner.id })
+        .eq('id', property.id);
+
+      if (propertyUpdateError) {
+        throw new Error(`Property owner update failed: ${propertyUpdateError.message}`);
       }
 
       // 4. Create application record

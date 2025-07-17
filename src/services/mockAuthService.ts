@@ -76,9 +76,17 @@ class MockAuthService {
           lifetime_savings: 1200
         }
       ];
-
+      
       localStorage.setItem(this.MOCK_USERS_KEY, JSON.stringify(defaultUsers));
       localStorage.setItem(this.MOCK_PROFILES_KEY, JSON.stringify(defaultProfiles));
+      
+      // Create a default session for the customer user for demo purposes
+      const defaultSession: MockSession = {
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        user: defaultUsers[1] // customer user
+      };
+      this.setMockSession(defaultSession);
     }
   }
 

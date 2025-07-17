@@ -5,24 +5,66 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Phone, Mail, MapPin, FileText, Building, Users, Calculator, Receipt, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
 
-type Profile = Tables<"profiles">;
-type Property = Tables<"properties">;
-type Communication = Tables<"communications">;
-type Document = Tables<"customer_documents">;
-type ReferralRelationship = Tables<"referral_relationships">;
-type Bill = Tables<"bills">;
-type Protest = Tables<"protests">;
+// Mock data types
+interface MockProfile {
+  id: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  mailing_address?: string;
+  mailing_address_2?: string;
+  mailing_city?: string;
+  mailing_state?: string;
+  mailing_zip?: string;
+  created_at: string;
+  lifetime_savings: number;
+}
+
+interface MockProperty {
+  id: string;
+  address: string;
+  protests: MockProtest[];
+}
+
+interface MockProtest {
+  id: string;
+  appeal_status: string;
+}
+
+interface MockCommunication {
+  id: string;
+  subject: string;
+  status: string;
+  inquiry_type: string;
+  created_at: string;
+}
+
+interface MockDocument {
+  id: string;
+  document_type: string;
+  status: string;
+  generated_at: string;
+}
+
+interface MockBill {
+  id: string;
+  bill_number: string;
+  status: string;
+  total_fee_amount: number;
+  paid_date?: string;
+  due_date?: string;
+}
 
 interface ContactDetailData {
-  profile: Profile;
-  properties: (Property & { protests: Protest[] })[];
-  communications: Communication[];
-  documents: Document[];
-  referrals: ReferralRelationship[];
-  bills: Bill[];
+  profile: MockProfile;
+  properties: MockProperty[];
+  communications: MockCommunication[];
+  documents: MockDocument[];
+  referrals: any[];
+  bills: MockBill[];
 }
 
 export default function AdminContactDetail() {
@@ -40,80 +82,199 @@ export default function AdminContactDetail() {
         setLoading(true);
         setError(null);
 
-        // Fetch profile
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", contactId)
-          .single();
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (profileError) throw profileError;
-
-        // Fetch properties with protests
-        const { data: properties, error: propertiesError } = await supabase
-          .from("properties")
-          .select(`
-            *,
-            protests (*)
-          `)
-          .eq("user_id", profile.user_id);
-
-        if (propertiesError) throw propertiesError;
-
-        // Fetch communications
-        const { data: communications, error: communicationsError } = await supabase
-          .from("communications")
-          .select("*")
-          .eq("contact_id", contactId)
-          .order("created_at", { ascending: false });
-
-        if (communicationsError) throw communicationsError;
-
-        // Fetch documents
-        const { data: documents, error: documentsError } = await supabase
-          .from("customer_documents")
-          .select("*")
-          .eq("user_id", profile.user_id)
-          .order("created_at", { ascending: false });
-
-        if (documentsError) throw documentsError;
-
-        // Fetch referrals (both as referrer and referee)
-        const { data: referrals, error: referralsError } = await supabase
-          .from("referral_relationships")
-          .select("*")
-          .or(`referrer_id.eq.${profile.user_id},referee_id.eq.${profile.user_id}`)
-          .order("created_at", { ascending: false });
-
-        if (referralsError) throw referralsError;
-
-        // Fetch bills through property owners
-        const propertyIds = properties?.map(p => p.id) || [];
-        let bills: Bill[] = [];
-        
-        if (propertyIds.length > 0) {
-          const { data: billsData, error: billsError } = await supabase
-            .from("bills")
-            .select(`
-              *,
-              owners!inner (
-                properties!inner (id)
-              )
-            `)
-            .in("owners.properties.id", propertyIds);
-
-          if (!billsError && billsData) {
-            bills = billsData;
+        // Mock contact data based on contact ID
+        const mockContacts = {
+          "1": {
+            profile: {
+              id: "1",
+              user_id: "550e8400-e29b-41d4-a716-446655440001",
+              first_name: "John",
+              last_name: "Smith",
+              email: "john.smith@email.com",
+              phone: "(555) 123-4567",
+              mailing_address: "123 Main St",
+              mailing_city: "Austin",
+              mailing_state: "TX",
+              mailing_zip: "78701",
+              created_at: "2023-06-15T10:00:00Z",
+              lifetime_savings: 4250
+            },
+            properties: [
+              {
+                id: "prop-1",
+                address: "123 Main St, Austin, TX 78701",
+                protests: [
+                  { id: "protest-1", appeal_status: "approved" }
+                ]
+              },
+              {
+                id: "prop-2", 
+                address: "456 Oak Ave, Austin, TX 78702",
+                protests: [
+                  { id: "protest-2", appeal_status: "pending" }
+                ]
+              }
+            ],
+            communications: [
+              {
+                id: "comm-1",
+                subject: "Property tax appeal submitted",
+                status: "open",
+                inquiry_type: "appeal",
+                created_at: "2024-01-15T14:30:00Z"
+              }
+            ],
+            documents: [
+              {
+                id: "doc-1",
+                document_type: "form-50-162",
+                status: "generated",
+                generated_at: "2024-01-10T09:00:00Z"
+              },
+              {
+                id: "doc-2",
+                document_type: "services-agreement",
+                status: "signed",
+                generated_at: "2023-12-15T11:00:00Z"
+              }
+            ],
+            bills: [
+              {
+                id: "bill-1",
+                bill_number: "BILL-001",
+                status: "paid",
+                total_fee_amount: 1200,
+                paid_date: "2024-01-05T10:00:00Z"
+              }
+            ]
+          },
+          "2": {
+            profile: {
+              id: "2",
+              user_id: "550e8400-e29b-41d4-a716-446655440002",
+              first_name: "Sarah",
+              last_name: "Johnson",
+              email: "sarah.johnson@email.com",
+              phone: "(555) 234-5678",
+              created_at: "2023-08-20T14:00:00Z",
+              lifetime_savings: 0
+            },
+            properties: [
+              {
+                id: "prop-3",
+                address: "789 Pine St, Austin, TX 78703",
+                protests: []
+              }
+            ],
+            communications: [],
+            documents: [],
+            bills: []
+          },
+          "3": {
+            profile: {
+              id: "3",
+              user_id: "550e8400-e29b-41d4-a716-446655440003",
+              first_name: "Michael",
+              last_name: "Brown",
+              email: "michael.brown@email.com",
+              phone: "(555) 345-6789",
+              created_at: "2023-05-10T16:00:00Z",
+              lifetime_savings: 7890
+            },
+            properties: [
+              {
+                id: "prop-4",
+                address: "321 Cedar Ln, Austin, TX 78704",
+                protests: [
+                  { id: "protest-3", appeal_status: "approved" },
+                  { id: "protest-4", appeal_status: "pending" }
+                ]
+              }
+            ],
+            communications: [
+              {
+                id: "comm-2",
+                subject: "Follow-up on tax savings",
+                status: "closed",
+                inquiry_type: "general",
+                created_at: "2024-01-13T12:00:00Z"
+              }
+            ],
+            documents: [
+              {
+                id: "doc-3",
+                document_type: "form-50-162",
+                status: "generated",
+                generated_at: "2024-01-08T08:30:00Z"
+              }
+            ],
+            bills: [
+              {
+                id: "bill-2",
+                bill_number: "BILL-002",
+                status: "draft",
+                total_fee_amount: 2400,
+                due_date: "2024-02-15T10:00:00Z"
+              }
+            ]
+          },
+          "4": {
+            profile: {
+              id: "4",
+              user_id: "550e8400-e29b-41d4-a716-446655440004",
+              first_name: "Emily",
+              last_name: "Davis",
+              email: "emily.davis@email.com",
+              phone: "(555) 456-7890",
+              created_at: "2023-03-25T12:00:00Z",
+              lifetime_savings: 2100
+            },
+            properties: [
+              {
+                id: "prop-5",
+                address: "555 Elm St, Austin, TX 78705",
+                protests: [
+                  { id: "protest-5", appeal_status: "approved" }
+                ]
+              }
+            ],
+            communications: [],
+            documents: [
+              {
+                id: "doc-4",
+                document_type: "services-agreement",
+                status: "signed",
+                generated_at: "2023-12-20T15:30:00Z"
+              }
+            ],
+            bills: [
+              {
+                id: "bill-3",
+                bill_number: "BILL-003",
+                status: "paid",
+                total_fee_amount: 850,
+                paid_date: "2023-12-25T09:00:00Z"
+              }
+            ]
           }
+        };
+
+        const mockData = mockContacts[contactId as keyof typeof mockContacts];
+        
+        if (!mockData) {
+          throw new Error("Contact not found");
         }
 
         setContactData({
-          profile,
-          properties: properties || [],
-          communications: communications || [],
-          documents: documents || [],
-          referrals: referrals || [],
-          bills: bills || []
+          profile: mockData.profile,
+          properties: mockData.properties,
+          communications: mockData.communications,
+          documents: mockData.documents,
+          referrals: [], // Empty for demo
+          bills: mockData.bills
         });
 
       } catch (err) {

@@ -117,13 +117,7 @@ const Billing = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (email) params.set('email', email);
-              if (token) params.set('token', token);
-              const queryString = params.toString();
-              navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
-            }}
+            onClick={() => navigate('/customer-portal')}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />

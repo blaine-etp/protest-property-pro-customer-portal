@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Share, Users, Gift, Mail, DollarSign } from "lucide-react";
-import { useCustomerData } from "@/hooks/useCustomerData";
-import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
-import { useReferralData } from "@/hooks/useReferralData";
+import { useAuthenticatedCustomerData } from "@/hooks/useAuthenticatedCustomerData";
+import { authService } from "@/services";
 
 interface Profile {
   first_name: string;
@@ -21,47 +20,48 @@ interface Profile {
 
 const ReferFriend = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [friendEmail, setFriendEmail] = useState("");
   const [friendName, setFriendName] = useState("");
 
-  // Get URL parameters for token-based access
-  const email = searchParams.get('email');
-  const token = searchParams.get('token');
+  // Use authenticated customer data
+  const { profile, loading, error } = useAuthenticatedCustomerData();
   
-  // Use appropriate data hook based on access method
-  const tokenData = useTokenCustomerData(token || '');
-  const emailData = useCustomerData(email || '');
+  // Mock referral data for demo
+  const mockReferrals = [
+    {
+      id: '1',
+      referee_first_name: 'John',
+      referee_last_name: 'Doe',
+      referee_email: 'john.doe@example.com',
+      signup_date: '2024-01-15',
+      status: 'completed',
+      credit_awarded_amount: 25
+    },
+    {
+      id: '2',
+      referee_first_name: 'Jane',
+      referee_last_name: 'Smith',
+      referee_email: 'jane.smith@example.com',
+      signup_date: '2024-02-20',
+      status: 'pending',
+      credit_awarded_amount: 0
+    }
+  ];
   
-  // Use referral data hook
-  const {
-    referrals,
-    creditBalance,
-    referralCode,
-    loading: referralLoading,
-    error: referralError,
-    sendReferralInvite
-  } = useReferralData(token, email);
-  
-  // Determine which data source to use
-  const customerData = token ? tokenData : emailData;
-  const { profile: customerProfile, loading: customerLoading, error: customerError } = customerData;
+  const creditBalance = 50; // Mock credit balance for demo
+  const referralCode = 'REF123456'; // Mock referral code for demo
 
   useEffect(() => {
-    if (token || email) {
-      // Use token/email based access - profile data comes from customerData
-      if (customerProfile && !customerLoading) {
-        setProfile({
-          first_name: customerProfile.first_name || '',
-          last_name: customerProfile.last_name || '',
-          user_id: customerProfile.user_id,
-          email: customerProfile.email || '',
-        });
+    // Check authentication
+    const checkAuth = async () => {
+      const session = await authService.getSession();
+      if (!session) {
+        navigate('/auth');
       }
-    }
-  }, [customerProfile, customerLoading, token, email]);
+    };
+    checkAuth();
+  }, [navigate]);
 
   const handleSendInvite = async () => {
     if (!friendEmail || !friendName) {
@@ -73,22 +73,14 @@ const ReferFriend = () => {
       return;
     }
 
-    try {
-      await sendReferralInvite(friendEmail, friendName);
-      toast({
-        title: "Invite Sent!",
-        description: `Referral invite sent to ${friendName} at ${friendEmail}`,
-      });
-      
-      setFriendEmail("");
-      setFriendName("");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    // Mock invite sending for demo
+    toast({
+      title: "Invite Sent!",
+      description: `Demo: Referral invite sent to ${friendName} at ${friendEmail}`,
+    });
+    
+    setFriendEmail("");
+    setFriendName("");
   };
 
   const handleCopyReferralLink = () => {
@@ -113,7 +105,7 @@ const ReferFriend = () => {
     }
   };
 
-  if (customerLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -123,7 +115,7 @@ const ReferFriend = () => {
     );
   }
 
-  if (customerError || !customerProfile) {
+  if (error || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -149,13 +141,7 @@ const ReferFriend = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (email) params.set('email', email);
-              if (token) params.set('token', token);
-              const queryString = params.toString();
-              navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
-            }}
+            onClick={() => navigate('/customer-portal')}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -268,7 +254,7 @@ const ReferFriend = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {referrals.map((referral) => (
+                {mockReferrals.map((referral) => (
                   <div key={referral.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
@@ -294,7 +280,7 @@ const ReferFriend = () => {
                 ))}
               </div>
               
-              {referrals.length === 0 && (
+              {mockReferrals.length === 0 && (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No referrals yet</h3>
@@ -335,24 +321,24 @@ const ReferFriend = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Total Referrals</p>
-                    <p className="text-2xl font-bold">{referrals.length}</p>
+                    <p className="text-2xl font-bold">{mockReferrals.length}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Completed</p>
                     <p className="text-2xl font-bold">
-                      {referrals.filter(r => r.status === 'completed').length}
+                      {mockReferrals.filter(r => r.status === 'completed').length}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Pending</p>
                     <p className="text-2xl font-bold">
-                      {referrals.filter(r => r.status === 'pending').length}
+                      {mockReferrals.filter(r => r.status === 'pending').length}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Total Earned</p>
                     <p className="text-2xl font-bold text-green-600">
-                      ${referrals.reduce((sum, r) => sum + (r.credit_awarded_amount || 0), 0)}
+                      ${mockReferrals.reduce((sum, r) => sum + (r.credit_awarded_amount || 0), 0)}
                     </p>
                   </div>
                 </div>

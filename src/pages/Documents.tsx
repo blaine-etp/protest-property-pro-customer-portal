@@ -9,12 +9,6 @@ import { useCustomerData } from "@/hooks/useCustomerData";
 import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Profile {
-  first_name: string;
-  last_name: string;
-  user_id: string;
-}
-
 interface CustomerDocument {
   id: string;
   document_type: string;
@@ -23,6 +17,7 @@ interface CustomerDocument {
   status: string;
   generated_at: string;
   created_at: string;
+  property_address?: string;
 }
 
 const Documents = () => {
@@ -156,7 +151,7 @@ const Documents = () => {
     return <FileText className="h-5 w-5 text-blue-600" />;
   };
 
-  if (customerLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -166,7 +161,7 @@ const Documents = () => {
     );
   }
 
-  if (customerError || !customerProfile) {
+  if (error || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -192,13 +187,7 @@ const Documents = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (email) params.set('email', email);
-              if (token) params.set('token', token);
-              const queryString = params.toString();
-              navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
-            }}
+            onClick={() => navigate('/customer-portal')}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -287,7 +276,7 @@ const Documents = () => {
                 ))}
               </div>
               
-              {documents.length === 0 && (
+              {mockDocuments.length === 0 && (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No documents yet</h3>

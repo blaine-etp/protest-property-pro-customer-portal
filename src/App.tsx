@@ -25,6 +25,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
+import Resources from "./pages/Resources";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/billing" element={<Billing />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/refer-friend" element={<ReferFriend />} />
+          <Route path="/resources" element={<Resources />} />
           <Route path="/protest/:protestId" element={<ProtestDetail />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>

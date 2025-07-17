@@ -27,10 +27,15 @@ export interface Property {
   parcelNumber: string;
   etpPid?: string;
   countyPid?: string;
+  propertyId: string;
   assessedValue: string;
   marketValue: string;
   taxAmount: string;
   owner: string;
+  ownerId?: string;
+  contactId?: string;
+  protestId?: string;
+  protestStatus?: 'filed' | 'settled' | 'none';
   status: 'Active Protest' | 'Review Needed' | 'Completed' | 'Monitoring';
   protestDeadline: string;
   potentialSavings: string;

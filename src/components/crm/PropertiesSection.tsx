@@ -24,6 +24,7 @@ import {
   FileText,
   Gavel,
   Database,
+  User,
 } from "lucide-react";
 import { dataService } from "@/services";
 import type { Property } from "@/services/types";
@@ -250,11 +251,42 @@ export function PropertiesSection() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
+                  
+                  <div className="flex flex-wrap gap-2 mt-3">
                     <Badge variant={getStatusColor(property.status) as any} className="flex items-center gap-1">
                       {getStatusIcon(property.status)}
                       {property.status}
                     </Badge>
+                    {property.contactId && (
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-slate-100"
+                        onClick={() => console.log('Navigate to contact:', property.contactId)}
+                      >
+                        <User className="h-3 w-3 mr-1" />
+                        Contact
+                      </Badge>
+                    )}
+                    {property.ownerId && (
+                      <Badge 
+                        variant="outline" 
+                        className="cursor-pointer hover:bg-slate-100"
+                        onClick={() => console.log('Navigate to owner:', property.ownerId)}
+                      >
+                        <Building className="h-3 w-3 mr-1" />
+                        {property.owner}
+                      </Badge>
+                    )}
+                    {property.protestStatus && property.protestStatus !== 'none' && (
+                      <Badge 
+                        variant={property.protestStatus === 'filed' ? 'default' : 'secondary'}
+                        className="cursor-pointer hover:opacity-80"
+                        onClick={() => console.log('Navigate to protest:', property.protestId)}
+                      >
+                        <Gavel className="h-3 w-3 mr-1" />
+                        Protest {property.protestStatus}
+                      </Badge>
+                    )}
                     {property.protestDeadline !== "N/A" && (
                       <Badge variant="outline">
                         <Calendar className="h-3 w-3 mr-1" />
@@ -265,10 +297,6 @@ export function PropertiesSection() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-slate-600">Owner</p>
-                      <p className="font-medium">{property.owner}</p>
-                    </div>
                     <div>
                       <p className="text-sm text-slate-600">Assessed Value</p>
                       <p className="font-medium">{property.assessedValue}</p>
@@ -281,24 +309,48 @@ export function PropertiesSection() {
                       <p className="text-sm text-slate-600">Annual Tax</p>
                       <p className="font-medium">{property.taxAmount}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-slate-600">Potential Savings</p>
+                      <p className="font-medium text-green-600">{property.potentialSavings}</p>
+                    </div>
                   </div>
                   
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-green-800">Potential Savings</span>
-                      <span className="text-lg font-bold text-green-600">{property.potentialSavings}</span>
+                  <div className="bg-slate-50 rounded p-3">
+                    <p className="text-xs font-medium text-slate-600 mb-2">Associated IDs</p>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-500">Property:</span>
+                        <p className="font-mono text-slate-700">{property.propertyId}</p>
+                      </div>
+                      {property.etpPid && (
+                        <div>
+                          <span className="text-slate-500">ETP:</span>
+                          <p className="font-mono text-slate-700">{property.etpPid}</p>
+                        </div>
+                      )}
+                      {property.countyPid && (
+                        <div>
+                          <span className="text-slate-500">County:</span>
+                          <p className="font-mono text-slate-700">{property.countyPid}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      View Location
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Gavel className="h-4 w-4 mr-1" />
-                      File Protest
-                    </Button>
+                  <div className="flex justify-between items-center pt-2">
+                    <p className="text-xs text-slate-500">
+                      Last updated: {property.lastUpdated}
+                    </p>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Gavel className="h-4 w-4 mr-1" />
+                        Protest
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

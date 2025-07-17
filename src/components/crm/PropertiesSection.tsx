@@ -310,28 +310,8 @@ export function PropertiesSection() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-slate-600">Assessed Value</p>
-                      <p className="font-medium">{property.assessedValue}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">Market Value</p>
-                      <p className="font-medium">{property.marketValue}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">Annual Tax</p>
-                      <p className="font-medium">{property.taxAmount}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">Potential Savings</p>
-                      <p className="font-medium text-green-600">{property.potentialSavings}</p>
-                    </div>
-                  </div>
-                  
-
-                  <div className="flex justify-between items-center pt-2">
+                <CardContent>
+                  <div className="flex justify-between items-center">
                     <p className="text-xs text-slate-500">
                       Last updated: {property.lastUpdated}
                     </p>

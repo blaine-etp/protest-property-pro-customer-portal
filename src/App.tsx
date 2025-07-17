@@ -48,7 +48,7 @@ const App = () => (
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Admin />} />
-            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="customers" element={<AdminCRM />} />
             <Route path="customers/:contactId" element={<AdminContactDetail />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="evidence" element={<AdminEvidence />} />

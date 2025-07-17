@@ -43,7 +43,11 @@ export const useReferralData = (token?: string, email?: string) => {
       // First get the user profile
       let profileQuery = supabase.from('profiles').select('*');
       
-      if (email) {
+      if (token) {
+        profileQuery = profileQuery
+          .eq('authentication_token', token)
+          .gt('token_expires_at', new Date().toISOString());
+      } else if (email) {
         profileQuery = profileQuery.eq('email', email);
       }
 
@@ -94,7 +98,11 @@ export const useReferralData = (token?: string, email?: string) => {
       // Get the current user profile
       let profileQuery = supabase.from('profiles').select('*');
       
-      if (email) {
+      if (token) {
+        profileQuery = profileQuery
+          .eq('authentication_token', token)
+          .gt('token_expires_at', new Date().toISOString());
+      } else if (email) {
         profileQuery = profileQuery.eq('email', email);
       }
 

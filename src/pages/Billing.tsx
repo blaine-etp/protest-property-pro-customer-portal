@@ -1,87 +1,122 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Download, Calendar, DollarSign } from "lucide-react";
-import { useCustomerData } from "@/hooks/useCustomerData";
-import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
+import { ArrowLeft, Download, FileText, CreditCard, DollarSign } from "lucide-react";
+import { useAuthenticatedCustomerData } from "@/hooks/useAuthenticatedCustomerData";
+import { authService } from "@/services";
 
-interface Profile {
-  first_name: string;
-  last_name: string;
-  lifetime_savings: number;
-}
-
-// Dummy invoice data - clearly labeled as example data
-const dummyInvoices = [
+// Enhanced mock invoice data for demonstration
+const mockInvoices = [
   {
-    id: "INV-2024-001",
-    date: "2024-06-15",
-    amount: 250.00,
-    status: "paid",
-    description: "Property Tax Appeal Service - 123 Main St",
-    downloadUrl: "#"
+    id: 'INV-2024-001',
+    date: '2024-01-15',
+    amount: 1250.00,
+    status: 'paid',
+    description: 'Property Tax Protest Success Fee - 123 Main St, Austin TX',
+    downloadUrl: '#',
+    type: 'success_fee',
+    taxYear: 2023,
+    property: '123 Main St, Austin TX'
   },
   {
-    id: "INV-2024-002", 
-    date: "2024-05-20",
-    amount: 175.00,
-    status: "paid",
-    description: "Property Tax Appeal Service - 456 Oak Ave",
-    downloadUrl: "#"
+    id: 'INV-2024-002',
+    date: '2024-02-15',
+    amount: 875.50,
+    status: 'paid',
+    description: 'Property Tax Protest Success Fee - 456 Oak Ave, Austin TX',
+    downloadUrl: '#',
+    type: 'success_fee',
+    taxYear: 2023,
+    property: '456 Oak Ave, Austin TX'
   },
   {
-    id: "INV-2024-003",
-    date: "2024-04-10", 
-    amount: 300.00,
-    status: "paid",
-    description: "Property Tax Appeal Service - 789 Pine Rd",
-    downloadUrl: "#"
+    id: 'INV-2024-003',
+    date: '2024-03-01',
+    amount: 320.75,
+    status: 'pending',
+    description: 'Property Tax Appeal Filing Fee - 789 Pine Rd, Austin TX',
+    downloadUrl: '#',
+    type: 'filing_fee',
+    taxYear: 2024,
+    property: '789 Pine Rd, Austin TX'
+  },
+  {
+    id: 'INV-2024-004',
+    date: '2024-03-15',
+    amount: 195.25,
+    status: 'paid',
+    description: 'Document Processing Fee - Multiple Properties',
+    downloadUrl: '#',
+    type: 'processing_fee',
+    taxYear: 2024,
+    property: 'Multiple Properties'
+  },
+  {
+    id: 'INV-2023-015',
+    date: '2023-12-15',
+    amount: 2100.00,
+    status: 'paid',
+    description: 'Property Tax Protest Success Fee - 101 Elm St, Austin TX',
+    downloadUrl: '#',
+    type: 'success_fee',
+    taxYear: 2022,
+    property: '101 Elm St, Austin TX'
+  },
+  {
+    id: 'INV-2023-014',
+    date: '2023-11-30',
+    amount: 450.00,
+    status: 'paid',
+    description: 'Consultation & Filing Fee - New Property Setup',
+    downloadUrl: '#',
+    type: 'consultation_fee',
+    taxYear: 2023,
+    property: 'New Property Setup'
   }
 ];
 
 const Billing = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
 
-  // Get URL parameters for token-based access
-  const email = searchParams.get('email');
-  const token = searchParams.get('token');
-  
-  // Use appropriate data hook based on access method
-  const tokenData = useTokenCustomerData(token || '');
-  const emailData = useCustomerData(email || '');
-  
-  // Determine which data source to use
-  const customerData = token ? tokenData : emailData;
-  const { profile: customerProfile, loading: customerLoading, error: customerError } = customerData;
+  // Use authenticated customer data
+  const { profile, loading, error } = useAuthenticatedCustomerData();
 
   useEffect(() => {
-    if (token || email) {
-      // Use token/email based access - profile data comes from customerData
-      if (customerProfile && !customerLoading) {
-        setProfile({
-          first_name: customerProfile.first_name || '',
-          last_name: customerProfile.last_name || '',
-          lifetime_savings: customerProfile.lifetime_savings || 0,
-        });
+    // Check authentication
+    const checkAuth = async () => {
+      const session = await authService.getSession();
+      if (!session) {
+        navigate('/auth');
       }
-    }
-  }, [customerProfile, customerLoading, token, email]);
+    };
+    checkAuth();
+  }, [navigate]);
 
   const handleDownload = (invoiceId: string) => {
     toast({
-      title: "Download Demo",
-      description: "This is a demo - no actual invoice file available",
-      variant: "default",
+      title: "Demo Download",
+      description: `This would download invoice ${invoiceId} in a real application.`,
     });
   };
+  
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return <Badge variant="default" className="bg-green-600">Paid</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">Pending</Badge>;
+      case 'overdue':
+        return <Badge variant="destructive">Overdue</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
 
-  if (customerLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -91,7 +126,7 @@ const Billing = () => {
     );
   }
 
-  if (customerError || !customerProfile) {
+  if (error || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -125,7 +160,7 @@ const Billing = () => {
           </Button>
           <h1 className="text-3xl font-bold">Billing & Invoices</h1>
           <p className="text-muted-foreground mt-2">
-            Welcome back, {profile?.first_name}! View and download your payment history.
+            Welcome back, {profile.first_name}! Manage your billing and view invoice history.
           </p>
         </div>
 
@@ -133,26 +168,37 @@ const Billing = () => {
           {/* Billing Summary */}
           <Card>
             <CardHeader>
-              <CardTitle>Billing Summary</CardTitle>
-              <CardDescription>Your account and payment overview</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Billing Summary
+              </CardTitle>
+              <CardDescription>Overview of your account and savings</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Lifetime Savings</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${profile?.lifetime_savings?.toLocaleString() || '0'}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Paid</p>
+                  <h3 className="text-lg font-medium text-muted-foreground">Customer</h3>
                   <p className="text-2xl font-bold">
-                    ${dummyInvoices.reduce((sum, inv) => sum + inv.amount, 0).toLocaleString()}
+                    {profile.first_name} {profile.last_name}
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Account Status</p>
-                  <Badge variant="default" className="text-sm">Active</Badge>
+                  <h3 className="text-lg font-medium text-muted-foreground">Lifetime Savings</h3>
+                  <p className="text-2xl font-bold text-green-600">
+                    ${profile.lifetime_savings.toLocaleString()}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-muted-foreground">Total Invoices</h3>
+                  <p className="text-2xl font-bold">
+                    {mockInvoices.length}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-muted-foreground">Total Paid</h3>
+                  <p className="text-2xl font-bold text-green-600">
+                    ${mockInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0).toLocaleString()}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -162,43 +208,37 @@ const Billing = () => {
           <Card>
             <CardHeader>
               <CardTitle>Invoice History</CardTitle>
-              <CardDescription>
-                <span className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
-                  ⚠️ DEMO DATA - These are example invoices for demonstration purposes
-                </span>
-              </CardDescription>
+              <CardDescription>Your complete invoice history and payment status</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dummyInvoices.map((invoice) => (
+                {mockInvoices.map((invoice) => (
                   <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                        <DollarSign className="h-5 w-5 text-blue-600" />
+                        <FileText className="h-5 w-5 text-blue-600" />
                       </div>
                       <div>
                         <p className="font-medium">{invoice.id}</p>
                         <p className="text-sm text-muted-foreground">{invoice.description}</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Calendar className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(invoice.date).toLocaleDateString()}
-                          </span>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                          <span>Date: {invoice.date}</span>
+                          <span>Tax Year: {invoice.taxYear}</span>
+                          <span className="capitalize">{invoice.type.replace('_', ' ')}</span>
                         </div>
+                        <p className="text-xs text-muted-foreground mt-1">{invoice.property}</p>
                       </div>
                     </div>
                     <div className="text-right space-y-2">
                       <p className="font-bold">${invoice.amount.toFixed(2)}</p>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="default" className="text-xs">
-                          {invoice.status.toUpperCase()}
-                        </Badge>
-                        <Button
+                      {getStatusBadge(invoice.status)}
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
                           variant="outline"
-                          size="sm"
                           onClick={() => handleDownload(invoice.id)}
                         >
-                          <Download className="h-3 w-3 mr-1" />
+                          <Download className="h-4 w-4 mr-1" />
                           Download
                         </Button>
                       </div>
@@ -207,13 +247,34 @@ const Billing = () => {
                 ))}
               </div>
               
-              {dummyInvoices.length === 0 && (
+              {mockInvoices.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">No invoices found</p>
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No invoices found</h3>
+                  <p className="text-muted-foreground">
+                    Your invoice history will appear here once services are rendered.
+                  </p>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Demo Notice */}
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-white text-xs font-bold">?</span>
+              </div>
+              <div>
+                <h3 className="font-medium mb-1">Demo Billing Data</h3>
+                <p className="text-sm text-muted-foreground">
+                  This demonstrates various invoice types including success fees, filing fees, 
+                  and consultation charges. In the real application, actual invoices would be 
+                  generated based on completed services and downloadable as PDFs.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

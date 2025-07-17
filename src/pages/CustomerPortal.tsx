@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerData';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { authService } from '@/services';
 import DocumentsSection from '@/components/DocumentsSection';
 
 const CustomerPortal = () => {
@@ -38,8 +38,8 @@ const CustomerPortal = () => {
   useEffect(() => {
     // Check if user is authenticated
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
+      const session = await authService.getSession();
+      if (!session) {
         navigate('/auth');
       }
     };
@@ -60,7 +60,7 @@ const CustomerPortal = () => {
       navigate('/refer-friend');
     } else if (action === "logout") {
       try {
-        await supabase.auth.signOut();
+        await authService.signOut();
         navigate('/auth');
       } catch (error) {
         console.error('Error signing out:', error);

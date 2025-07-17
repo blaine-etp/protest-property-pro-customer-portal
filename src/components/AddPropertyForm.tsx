@@ -22,7 +22,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
 }) => {
   const { submitAddProperty, isSubmitting } = useAddPropertySubmission({
     existingUserId: existingProfile.user_id,
-    isTokenAccess: true // Since we're accessing via token/email
+    isTokenAccess: false // Using regular mock auth, not token access
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useCustomerData } from '@/hooks/useCustomerData';
-import { useTokenCustomerData } from '@/hooks/useTokenCustomerData';
+import { mockAuthService } from '@/services/mockAuthService';
 import AddPropertyForm from '@/components/AddPropertyForm';
 
 const addressSchema = z.object({
@@ -17,20 +16,42 @@ const addressSchema = z.object({
 });
 
 const AddProperty = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || '';
-  const token = searchParams.get('token') || '';
   const [currentAddress, setCurrentAddress] = useState('');
   const [showForm, setShowForm] = useState(false);
-  
-  // Use different hooks based on whether we have a token or email
-  const emailData = useCustomerData(email);
-  const tokenData = useTokenCustomerData(token);
-  
-  // Determine which data source to use
-  const isTokenAccess = Boolean(token);
-  const { profile, properties, loading, error } = isTokenAccess ? tokenData : emailData;
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const sessionResult = await mockAuthService.getSession();
+        if (sessionResult?.data?.session?.user) {
+          const user = sessionResult.data.session.user;
+          const userData = {
+            user_id: user.id,
+            first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
+            last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
+            email: user.email,
+            phone: user.email === 'customer@example.com' ? '(555) 123-4567' : '(555) 987-6543',
+            role: 'homeowner',
+            is_trust_entity: false,
+            agree_to_updates: true
+          };
+          setProfile(userData);
+        } else {
+          navigate('/auth');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        navigate('/auth');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [navigate]);
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
@@ -45,15 +66,10 @@ const AddProperty = () => {
   };
 
   const handleBackToPortal = () => {
-    const params = new URLSearchParams();
-    if (email) params.set('email', email);
-    if (token) params.set('token', token);
-    const queryString = params.toString();
-    navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
+    navigate('/customer-portal');
   };
 
   const handleFormComplete = () => {
-    // Navigate back to customer portal with success
     handleBackToPortal();
   };
 
@@ -68,18 +84,18 @@ const AddProperty = () => {
     );
   }
 
-  if (error || !profile) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <h2 className="text-xl font-bold">Account Not Found</h2>
+              <h2 className="text-xl font-bold">Access Denied</h2>
               <p className="text-muted-foreground">
-                {error || "No customer account found."}
+                Please log in to add a property.
               </p>
-              <Button onClick={() => window.location.href = '/'}>
-                Return to Home
+              <Button onClick={() => navigate('/auth')}>
+                Go to Login
               </Button>
             </div>
           </CardContent>
@@ -152,7 +168,7 @@ const AddProperty = () => {
                     )}
                   />
                   
-                  <Button type="submit" className="w-full" variant="accent">
+                  <Button type="submit" className="w-full">
                     Continue
                   </Button>
                 </form>

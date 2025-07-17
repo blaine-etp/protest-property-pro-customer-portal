@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+interface Profile {
+  id: string;
+  user_id: string;
+  email: string;
+  referral_credit_balance: number;
+  referral_code: string;
+  authentication_token?: string;
+  token_expires_at?: string;
+}
+
 interface ReferralRelationship {
   id: string;
   referee_email: string;
@@ -41,27 +51,40 @@ export const useReferralData = (token?: string, email?: string) => {
       setError(null);
 
       // First get the user profile
-      let profileQuery = supabase.from('profiles').select('*');
+      let profileData: Profile | null = null;
       
       if (token) {
-        profileQuery = profileQuery
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .select('*')
           .eq('authentication_token', token)
-          .gt('token_expires_at', new Date().toISOString());
+          .gt('token_expires_at', new Date().toISOString())
+          .single();
+        
+        if (error) throw new Error('Invalid token or user not found');
+        profileData = data as Profile;
       } else if (email) {
-        profileQuery = profileQuery.eq('email', email);
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('email', email)
+          .single();
+        
+        if (error) throw new Error('Invalid email or user not found');
+        profileData = data as Profile;
+      } else {
+        throw new Error('No token or email provided');
       }
 
-      const { data: profileData, error: profileError } = await profileQuery.single();
-
-      if (profileError || !profileData) {
-        throw new Error('Invalid token or user not found');
+      if (!profileData) {
+        throw new Error('User not found');
       }
 
       setCreditBalance(profileData.referral_credit_balance || 0);
       setReferralCode(profileData.referral_code || '');
 
       // Fetch referral relationships where this user is the referrer
-      const { data: referralData, error: referralError } = await supabase
+      const { data: referralData, error: referralError } = await (supabase as any)
         .from('referral_relationships')
         .select('*')
         .eq('referrer_id', profileData.user_id)
@@ -74,7 +97,7 @@ export const useReferralData = (token?: string, email?: string) => {
       setReferrals(referralData || []);
 
       // Fetch credit transactions
-      const { data: transactionData, error: transactionError } = await supabase
+      const { data: transactionData, error: transactionError } = await (supabase as any)
         .from('credit_transactions')
         .select('*')
         .eq('user_id', profileData.user_id)
@@ -96,19 +119,32 @@ export const useReferralData = (token?: string, email?: string) => {
   const sendReferralInvite = async (friendEmail: string, friendName: string) => {
     try {
       // Get the current user profile
-      let profileQuery = supabase.from('profiles').select('*');
+      let profileData: Profile | null = null;
       
       if (token) {
-        profileQuery = profileQuery
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .select('*')
           .eq('authentication_token', token)
-          .gt('token_expires_at', new Date().toISOString());
+          .gt('token_expires_at', new Date().toISOString())
+          .single();
+        
+        if (error) throw new Error('User not found');
+        profileData = data as Profile;
       } else if (email) {
-        profileQuery = profileQuery.eq('email', email);
+        const { data, error } = await (supabase as any)
+          .from('profiles')
+          .select('*')
+          .eq('email', email)
+          .single();
+        
+        if (error) throw new Error('User not found');
+        profileData = data as Profile;
+      } else {
+        throw new Error('No token or email provided');
       }
 
-      const { data: profileData, error: profileError } = await profileQuery.single();
-
-      if (profileError || !profileData) {
+      if (!profileData) {
         throw new Error('User not found');
       }
 
@@ -118,7 +154,7 @@ export const useReferralData = (token?: string, email?: string) => {
       }
 
       // Check if this email has already been referred
-      const { data: existingReferral } = await supabase
+      const { data: existingReferral } = await (supabase as any)
         .from('referral_relationships')
         .select('id')
         .eq('referee_email', friendEmail)
@@ -129,7 +165,7 @@ export const useReferralData = (token?: string, email?: string) => {
       }
 
       // Create referral relationship
-      const { error: insertError } = await supabase
+      const { error: insertError } = await (supabase as any)
         .from('referral_relationships')
         .insert({
           referrer_id: profileData.user_id,

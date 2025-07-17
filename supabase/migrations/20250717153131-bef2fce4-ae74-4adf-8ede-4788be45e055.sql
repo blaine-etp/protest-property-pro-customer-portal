@@ -10,8 +10,7 @@ WITH CHECK (
   created_by_user_id IN (
     SELECT p.user_id 
     FROM profiles p 
-    WHERE p.user_id = created_by_user_id
-    AND (
+    WHERE (
       -- During signup flow: profile exists but not authenticated
       (p.is_authenticated = false AND p.authentication_token IS NOT NULL AND p.token_expires_at > now())
       OR

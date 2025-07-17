@@ -36,6 +36,7 @@ export interface Property {
   contactId?: string;
   protestId?: string;
   protestStatus?: 'filed' | 'settled' | 'none';
+  documentId?: string;
   status: 'Active Protest' | 'Review Needed' | 'Completed' | 'Monitoring';
   protestDeadline: string;
   potentialSavings: string;

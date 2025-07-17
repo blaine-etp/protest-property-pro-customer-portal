@@ -297,7 +297,16 @@ export function PropertiesSection() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-slate-600">Documents:</span>
-                      <span className="text-sm">Appointment Of Agent</span>
+                      <span 
+                        className="text-sm cursor-pointer hover:underline text-blue-600"
+                        onClick={() => console.log('Navigate to document:', property.documentId)}
+                      >
+                        {property.documentId === "1" ? "Form 50-162 - Property Tax Protest" :
+                         property.documentId === "2" ? "Evidence Package - Market Analysis" :
+                         property.documentId === "3" ? "Hearing Notice - County Appeal" :
+                         property.documentId === "4" ? "Settlement Agreement" : 
+                         "No documents"}
+                      </span>
                     </div>
                   </div>
                 </CardHeader>

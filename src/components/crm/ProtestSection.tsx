@@ -55,29 +55,24 @@ export function ProtestSection() {
 
   const protestsByStatus = {
     "Filed": protests.filter(p => p.status === "Filed"),
-    "Under Review": protests.filter(p => p.status === "Under Review"),
-    "Approved": protests.filter(p => p.status === "Approved"),
-    "Rejected": protests.filter(p => p.status === "Rejected"),
+    "Hearing Date Scheduled": protests.filter(p => p.status === "Hearing Date Scheduled"),
+    "Settled": protests.filter(p => p.status === "Settled"),
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Pending": return "yellow";
       case "Filed": return "blue";
-      case "Under Review": return "orange";
-      case "Approved": return "green";
-      case "Rejected": return "red";
+      case "Hearing Date Scheduled": return "orange";
+      case "Settled": return "green";
       default: return "gray";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Pending": return <Clock className="h-4 w-4" />;
       case "Filed": return <FileText className="h-4 w-4" />;
-      case "Under Review": return <AlertCircle className="h-4 w-4" />;
-      case "Approved": return <CheckCircle className="h-4 w-4" />;
-      case "Rejected": return <XCircle className="h-4 w-4" />;
+      case "Hearing Date Scheduled": return <Calendar className="h-4 w-4" />;
+      case "Settled": return <CheckCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -158,7 +153,7 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Active</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {protests.filter(p => ["Filed", "Under Review"].includes(p.status)).length}
+                  {protests.filter(p => ["Filed", "Hearing Date Scheduled"].includes(p.status)).length}
                 </p>
               </div>
               <AlertCircle className="h-8 w-8 text-orange-500" />
@@ -171,7 +166,7 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Settled</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {protests.filter(p => p.status === "Approved").length}
+                  {protests.filter(p => p.status === "Settled").length}
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -377,11 +372,11 @@ export function ProtestSection() {
                 {protests.map((protest, index) => (
                   <div key={protest.id} className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className={`w-3 h-3 rounded-full ${
-                        protest.status === "Approved" ? "bg-green-500" :
-                        protest.status === "Rejected" ? "bg-red-500" :
-                        "bg-blue-500"
-                      }`}></div>
+                       <div className={`w-3 h-3 rounded-full ${
+                         protest.status === "Settled" ? "bg-green-500" :
+                         protest.status === "Filed" ? "bg-blue-500" :
+                         "bg-orange-500"
+                       }`}></div>
                       {index < protests.length - 1 && (
                         <div className="w-px h-16 bg-slate-200 mt-2"></div>
                       )}

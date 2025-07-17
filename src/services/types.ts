@@ -47,7 +47,7 @@ export interface Protest {
   id: string;
   propertyAddress: string;
   owner: string;
-  status: 'Pending' | 'Filed' | 'Under Review' | 'Approved' | 'Rejected';
+  status: 'Filed' | 'Hearing Date Scheduled' | 'Settled';
   filedDate: string;
   hearingDate: string;
   assessedValue: string;

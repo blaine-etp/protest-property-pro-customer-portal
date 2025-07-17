@@ -61,11 +61,21 @@ class MockFormService {
   private initializeMockData() {
     // Initialize with some sample data if none exists
     const existingProperties = this.getMockProperties();
-    if (existingProperties.length === 0) {
+    
+    // Check if we need to update to UUID format
+    const hasOldFormat = existingProperties.some(p => p.user_id && !p.user_id.includes('-'));
+    if (hasOldFormat) {
+      console.log('🔍 Clearing old format property data...');
+      localStorage.removeItem(this.MOCK_PROPERTIES_KEY);
+      localStorage.removeItem(this.MOCK_OWNERS_KEY);
+    }
+    
+    const properties = this.getMockProperties();
+    if (properties.length === 0) {
       const sampleProperties: MockProperty[] = [
         {
           id: 'prop-1',
-          user_id: 'customer-1',
+          user_id: '550e8400-e29b-41d4-a716-446655440001', // UUID format matching mock auth
           owner_id: 'owner-1',
           address: '123 Main St, Austin, TX 78701',
           parcel_number: 'PAR123456',
@@ -79,7 +89,7 @@ class MockFormService {
         },
         {
           id: 'prop-2',
-          user_id: 'customer-1',
+          user_id: '550e8400-e29b-41d4-a716-446655440001', // UUID format matching mock auth
           owner_id: 'owner-1',
           address: '456 Oak Ave, Austin, TX 78702',
           parcel_number: 'PAR654321',
@@ -98,7 +108,7 @@ class MockFormService {
           id: 'owner-1',
           name: 'John Doe',
           owner_type: 'individual',
-          created_by_user_id: 'customer-1',
+          created_by_user_id: '550e8400-e29b-41d4-a716-446655440001', // UUID format
           notes: 'Relationship to property: homeowner'
         }
       ];

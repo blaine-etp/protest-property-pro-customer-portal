@@ -717,6 +717,10 @@ export type Database = {
         Args: { profile_user_id: string; profile_email: string }
         Returns: boolean
       }
+      get_user_permissions: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

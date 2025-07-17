@@ -52,7 +52,6 @@ export function ProtestSection() {
   };
 
   const protestsByStatus = {
-    "Pending": protests.filter(p => p.status === "Pending"),
     "Filed": protests.filter(p => p.status === "Filed"),
     "Under Review": protests.filter(p => p.status === "Under Review"),
     "Approved": protests.filter(p => p.status === "Approved"),

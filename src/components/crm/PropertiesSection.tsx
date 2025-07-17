@@ -225,9 +225,6 @@ export function PropertiesSection() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-lg">{property.address}</CardTitle>
-                      <p className="text-sm text-slate-500 mt-1">
-                        Parcel: {property.parcelNumber}
-                      </p>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -252,47 +249,56 @@ export function PropertiesSection() {
                     </DropdownMenu>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <Badge variant={getStatusColor(property.status) as any} className="flex items-center gap-1">
-                      {getStatusIcon(property.status)}
-                      {property.status}
-                    </Badge>
-                    {property.contactId && (
-                      <Badge 
-                        variant="outline" 
-                        className="cursor-pointer hover:bg-slate-100"
-                        onClick={() => console.log('Navigate to contact:', property.contactId)}
-                      >
-                        <User className="h-3 w-3 mr-1" />
-                        Contact
-                      </Badge>
-                    )}
-                    {property.ownerId && (
-                      <Badge 
-                        variant="outline" 
-                        className="cursor-pointer hover:bg-slate-100"
-                        onClick={() => console.log('Navigate to owner:', property.ownerId)}
-                      >
-                        <Building className="h-3 w-3 mr-1" />
-                        {property.owner}
-                      </Badge>
-                    )}
-                    {property.protestStatus && property.protestStatus !== 'none' && (
-                      <Badge 
-                        variant={property.protestStatus === 'filed' ? 'default' : 'secondary'}
-                        className="cursor-pointer hover:opacity-80"
+                  <div className="space-y-2 mt-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600">Address:</span>
+                      <span className="text-sm">{property.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600">County:</span>
+                      <span className="text-sm">Travis</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600">Protest:</span>
+                      <span 
+                        className="text-sm cursor-pointer hover:underline text-blue-600"
                         onClick={() => console.log('Navigate to protest:', property.protestId)}
                       >
-                        <Gavel className="h-3 w-3 mr-1" />
-                        Protest {property.protestStatus}
-                      </Badge>
+                        {property.protestStatus === 'filed' ? 'active, filed' : 
+                         property.protestStatus === 'settled' ? 'settled' : 
+                         'none'}
+                      </span>
+                    </div>
+                    {property.contactId && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-600">Contact:</span>
+                        <span 
+                          className="text-sm cursor-pointer hover:underline text-blue-600"
+                          onClick={() => console.log('Navigate to contact:', property.contactId)}
+                        >
+                          John Smith
+                        </span>
+                      </div>
                     )}
-                    {property.protestDeadline !== "N/A" && (
-                      <Badge variant="outline">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        Due: {property.protestDeadline}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600">Owner:</span>
+                      <span 
+                        className="text-sm cursor-pointer hover:underline text-blue-600"
+                        onClick={() => console.log('Navigate to owner:', property.ownerId)}
+                      >
+                        {property.owner}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600">IDs:</span>
+                      <span className="text-sm font-mono">
+                        {property.propertyId}, {property.etpPid || 'N/A'}, {property.countyPid || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600">Documents:</span>
+                      <span className="text-sm">Appointment Of Agent</span>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -315,27 +321,6 @@ export function PropertiesSection() {
                     </div>
                   </div>
                   
-                  <div className="bg-slate-50 rounded p-3">
-                    <p className="text-xs font-medium text-slate-600 mb-2">Associated IDs</p>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div>
-                        <span className="text-slate-500">Property:</span>
-                        <p className="font-mono text-slate-700">{property.propertyId}</p>
-                      </div>
-                      {property.etpPid && (
-                        <div>
-                          <span className="text-slate-500">ETP:</span>
-                          <p className="font-mono text-slate-700">{property.etpPid}</p>
-                        </div>
-                      )}
-                      {property.countyPid && (
-                        <div>
-                          <span className="text-slate-500">County:</span>
-                          <p className="font-mono text-slate-700">{property.countyPid}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
                   <div className="flex justify-between items-center pt-2">
                     <p className="text-xs text-slate-500">
@@ -383,7 +368,6 @@ export function PropertiesSection() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{property.address}</p>
-                          <p className="text-sm text-slate-500">Parcel: {property.parcelNumber}</p>
                         </div>
                       </TableCell>
                       <TableCell>{property.owner}</TableCell>

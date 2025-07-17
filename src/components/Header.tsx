@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Scale, Phone, Mail, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import {
   DropdownMenu,
@@ -18,21 +18,24 @@ export const Header = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    const checkAuth = async () => {
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    };
+    
+    checkAuth();
+    
+    const unsubscribe = authService.onAuthStateChange((user) => {
+      setUser(user);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await authService.signOut();
   };
 
   return (

@@ -134,27 +134,19 @@ class MockStorageService {
   }
 
   // Simulate supabase.storage.from(bucket).download()
-  async downloadFile(bucket: string, path: string) {
+  async downloadFile(bucket: string, path: string): Promise<Blob> {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     const files = this.getMockFiles();
     const file = files.find(f => f.bucket_id === bucket && f.name === path);
 
     if (!file) {
-      return {
-        data: null,
-        error: { message: 'File not found' }
-      };
+      throw new Error('File not found');
     }
 
-    // Return a mock blob
+    // Return a mock blob directly
     const mockContent = `Mock content for ${path}`;
-    const blob = new Blob([mockContent], { type: file.content_type });
-
-    return {
-      data: blob,
-      error: null
-    };
+    return new Blob([mockContent], { type: file.content_type });
   }
 
   // Simulate supabase.storage.from(bucket).getPublicUrl()

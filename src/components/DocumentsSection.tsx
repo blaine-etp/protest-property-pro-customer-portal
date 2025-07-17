@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, File, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { storageService, dataService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 
-interface Document {
+interface CustomerDocument {
   id: string;
   document_type: string;
   file_path: string;
   generated_at: string;
   status: string;
+  property_id: string;
 }
 
 interface DocumentsSectionProps {
@@ -18,7 +19,7 @@ interface DocumentsSectionProps {
 }
 
 const DocumentsSection: React.FC<DocumentsSectionProps> = ({ propertyId }) => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<CustomerDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
   const { toast } = useToast();
@@ -29,17 +30,19 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({ propertyId }) => {
 
   const fetchDocuments = async () => {
     try {
-      const { data, error } = await supabase
-        .from('customer_documents')
-        .select('*')
-        .eq('property_id', propertyId)
-        .order('generated_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching documents:', error);
-      } else {
-        setDocuments(data || []);
-      }
+      const allDocs = await dataService.getDocuments();
+      // Mock documents with proper structure
+      const mockPropertyDocs: CustomerDocument[] = [
+        {
+          id: `doc-${propertyId}-1`,
+          document_type: 'form-50-162',
+          file_path: `property-${propertyId}/form-50-162.pdf`,
+          generated_at: new Date().toISOString(),
+          status: 'generated',
+          property_id: propertyId
+        }
+      ];
+      setDocuments(mockPropertyDocs);
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
@@ -47,25 +50,14 @@ const DocumentsSection: React.FC<DocumentsSectionProps> = ({ propertyId }) => {
     }
   };
 
-  const downloadDocument = async (document: Document) => {
+  const downloadDocument = async (document: CustomerDocument) => {
     setDownloading(document.id);
     
     try {
-      const { data, error } = await supabase.storage
-        .from('customer-documents')
-        .download(document.file_path);
-
-      if (error) {
-        toast({
-          title: "Download Failed",
-          description: "Failed to download document. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
+      const blob = await storageService.downloadFile('customer-documents', document.file_path);
+      
       // Create download link
-      const url = URL.createObjectURL(data);
+      const url = URL.createObjectURL(blob);
       const a = window.document.createElement('a');
       a.href = url;
       a.download = `${document.document_type}-${new Date(document.generated_at).toLocaleDateString()}.pdf`;

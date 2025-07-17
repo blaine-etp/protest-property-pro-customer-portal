@@ -175,8 +175,8 @@ class MockAuthService {
     return { error: null };
   }
 
-  // Simulate supabase.auth.onAuthStateChange
-  onAuthStateChange(callback: (event: string, session: MockSession | null) => void) {
+  // Simulate supabase.auth.onAuthStateChange (original Supabase format)
+  onAuthStateChangeOriginal(callback: (event: string, session: MockSession | null) => void) {
     // Initial state check
     const currentSession = this.getCurrentSession();
     if (currentSession) {
@@ -201,6 +201,39 @@ class MockAuthService {
   private getCurrentSession(): MockSession | null {
     const sessionData = localStorage.getItem(this.MOCK_SESSION_KEY);
     return sessionData ? JSON.parse(sessionData) : null;
+  }
+
+  // Get current user (compatible with Supabase User type)
+  async getCurrentUser() {
+    const session = this.getCurrentSession();
+    if (!session) return null;
+    
+    // Convert MockUser to Supabase User format
+    return {
+      id: session.user.id,
+      email: session.user.email,
+      user_metadata: {},
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      role: 'authenticated',
+      email_confirmed_at: new Date().toISOString(),
+    };
+  }
+
+  // Auth state change handler compatible with component usage
+  onAuthStateChange(callback: (user: any) => void): () => void {
+    // Initial state check
+    setTimeout(async () => {
+      const user = await this.getCurrentUser();
+      callback(user);
+    }, 0);
+
+    // Return unsubscribe function
+    return () => {
+      console.log('Mock auth state subscription unsubscribed');
+    };
   }
 
   // Mock method to get profile data (replaces Supabase database queries)

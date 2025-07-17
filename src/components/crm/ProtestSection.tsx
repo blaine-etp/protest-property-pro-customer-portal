@@ -136,10 +136,6 @@ export function ProtestSection() {
             </Badge>
           </div>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          File New Protest
-        </Button>
       </div>
 
       {/* Protest Stats */}
@@ -172,7 +168,7 @@ export function ProtestSection() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Approved</p>
+                <p className="text-sm font-medium text-slate-600">Settled</p>
                 <p className="text-2xl font-bold text-green-600">
                   {protests.filter(p => p.status === "Approved").length}
                 </p>
@@ -196,7 +192,7 @@ export function ProtestSection() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Total Savings</p>
+                <p className="text-sm font-medium text-slate-600">Total Reduced</p>
                 <p className="text-2xl font-bold text-green-600">$6,950</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />

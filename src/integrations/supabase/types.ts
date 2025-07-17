@@ -394,15 +394,7 @@ export type Database = {
           tax_id?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "owners_created_by_user_id_fkey"
-            columns: ["created_by_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {

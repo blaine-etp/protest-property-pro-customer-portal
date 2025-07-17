@@ -242,16 +242,19 @@ export default function AdminCustomers() {
       </Card>
 
       {/* Property Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredProperties.map((property) => (
-          <Card key={property.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-4">
+          <Card key={property.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-primary">
+            <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-slate-600" />
+                  <CardTitle className="text-xl font-bold text-slate-900 mb-1">
                     {property.address}
                   </CardTitle>
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <Hash className="h-3 w-3" />
+                    <span className="font-mono">{property.associatedIds.parcelNumber}</span>
+                  </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -268,83 +271,68 @@ export default function AdminCustomers() {
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Property
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Generate Documents
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Associated Profile/Contact */}
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">Associated Contact</span>
-                </div>
-                <div>
-                  <p className="font-medium text-blue-900">{property.profile.name}</p>
-                  <p className="text-sm text-blue-700">{property.profile.email}</p>
-                  <p className="text-sm text-blue-700">{property.profile.phone}</p>
-                </div>
-              </div>
 
-              {/* Owner Information */}
-              <div className="bg-slate-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Building className="h-4 w-4 text-slate-600" />
-                  <span className="text-sm font-medium text-slate-800">Property Owner</span>
+            <CardContent className="space-y-4">
+              {/* Primary Contact & Protest Status - Most Important Info */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-slate-900">{property.profile.name}</span>
+                  </div>
+                  {getProtestStatusBadge(property.protest)}
+                </div>
+                
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Building className="h-4 w-4" />
+                  <span>{property.owner.name}</span>
                   {getOwnerTypeBadge(property.owner)}
                 </div>
-                <p className="font-medium text-slate-900">{property.owner.name}</p>
-                {property.owner.entityName && property.owner.entityName !== property.owner.name && (
-                  <p className="text-sm text-slate-600">Entity: {property.owner.entityName}</p>
-                )}
               </div>
 
-              {/* Protest Status */}
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gavel className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-800">Protest Status</span>
-                </div>
-                {getProtestStatusBadge(property.protest)}
-              </div>
-
-              {/* Associated IDs */}
-              <div className="bg-green-50 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Hash className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Associated IDs</span>
-                </div>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-green-700">Parcel:</span>
-                    <span className="font-mono text-green-900">{property.associatedIds.parcelNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-green-700">County PID:</span>
-                    <span className="font-mono text-green-900">{property.associatedIds.countyPid}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-green-700">ETP PID:</span>
-                    <span className="font-mono text-green-900">{property.associatedIds.etpPid}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Eye className="h-4 w-4 mr-1" />
-                  View Details
+              {/* Key Actions */}
+              <div className="flex gap-2 pt-2 border-t">
+                <Button variant="default" size="sm" className="flex-1">
+                  <FileText className="h-4 w-4 mr-1" />
+                  View 50-162
                 </Button>
                 <Button variant="outline" size="sm" className="flex-1">
                   <Gavel className="h-4 w-4 mr-1" />
-                  Manage Protest
+                  Protest
                 </Button>
               </div>
+
+              {/* Additional Details - Collapsible */}
+              <details className="group">
+                <summary className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer hover:text-slate-900">
+                  <span>More Details</span>
+                  <svg className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </summary>
+                
+                <div className="mt-3 space-y-3 text-sm">
+                  <div>
+                    <span className="text-slate-600">Contact:</span>
+                    <div className="ml-2">
+                      <p>{property.profile.email}</p>
+                      <p>{property.profile.phone}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <span className="text-slate-600">Property IDs:</span>
+                    <div className="ml-2 space-y-1">
+                      <p><span className="font-mono">{property.associatedIds.countyPid}</span></p>
+                      <p><span className="font-mono">{property.associatedIds.etpPid}</span></p>
+                    </div>
+                  </div>
+                </div>
+              </details>
             </CardContent>
           </Card>
         ))}

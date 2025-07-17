@@ -35,9 +35,14 @@ class MockAuthService {
   }
 
   private initializeMockData() {
+    console.log('🔍 Initializing mock data...');
+    
     // Initialize with some default users if none exist
     const existingUsers = this.getMockUsers();
+    console.log('🔍 Existing users:', existingUsers);
+    
     if (existingUsers.length === 0) {
+      console.log('🔍 Creating default users and profiles...');
       const defaultUsers: MockUser[] = [
         { id: 'admin-1', email: 'admin@example.com', permissions: 'administrator' },
         { id: 'customer-1', email: 'customer@example.com', permissions: 'customer' },
@@ -86,7 +91,27 @@ class MockAuthService {
         refresh_token: 'mock-refresh-token',
         user: defaultUsers[1] // customer user
       };
+      console.log('🔍 Creating default session:', defaultSession);
       this.setMockSession(defaultSession);
+    }
+    
+    // Always ensure there's a session for demo purposes
+    const currentSession = localStorage.getItem(this.MOCK_SESSION_KEY);
+    console.log('🔍 Current session in localStorage:', currentSession);
+    
+    if (!currentSession) {
+      console.log('🔍 No session found, creating one...');
+      const users = this.getMockUsers();
+      if (users.length > 0) {
+        const customerUser = users.find(u => u.permissions === 'customer') || users[0];
+        const demoSession: MockSession = {
+          access_token: 'demo-access-token',
+          refresh_token: 'demo-refresh-token',
+          user: customerUser
+        };
+        console.log('🔍 Creating demo session:', demoSession);
+        this.setMockSession(demoSession);
+      }
     }
   }
 

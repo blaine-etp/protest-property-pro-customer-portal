@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
-import { useFormSubmission } from '@/hooks/useFormSubmission';
+import { useSimplifiedFormSubmission } from '@/hooks/useSimplifiedFormSubmission';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ReviewStepProps {
@@ -28,7 +28,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
-  const { submitFormData, isSubmitting } = useFormSubmission();
+  const { submitFormData, isSubmitting } = useSimplifiedFormSubmission();
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -97,47 +97,18 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         // For add property mode, use the onComplete callback which will handle the submission
         onComplete();
       } else {
-        // Original signup flow logic
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session?.user) {
-          // Create user account with email confirmation
-          const { data, error } = await supabase.auth.signUp({
-            email: formData.email,
-            password: Math.random().toString(36).substring(2, 15), // Temporary password
-            options: {
-              emailRedirectTo: `${window.location.origin}/set-password`,
-              data: {
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-              }
-            }
+        // New simplified signup flow
+        const result = await submitFormData(updatedFormData);
+        if (result.success) {
+          // Show success message and redirect to sign in
+          toast({
+            title: "Application Submitted!",
+            description: "Please check your email to complete account setup.",
           });
-
-          if (error) {
-            toast({
-              title: "Submission Error",
-              description: "Failed to create user account",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (data.user) {
-            // Submit form data
-            const result = await submitFormData(updatedFormData);
-            if (result.success && result.token) {
-              // Redirect to customer portal with token
-              window.location.href = `/customer-portal?token=${result.token}`;
-            }
-          }
-        } else {
-          // Submit form data for existing user
-          const result = await submitFormData(updatedFormData);
-          if (result.success && result.token) {
-            // Redirect to customer portal with token  
-            window.location.href = `/customer-portal?token=${result.token}`;
-          }
+          // Redirect to home page with success message
+          window.location.href = "/?signup=success";
+        } else if (result.redirectTo) {
+          window.location.href = result.redirectTo;
         }
       }
     }

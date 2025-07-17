@@ -1,5 +1,5 @@
-import React from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,86 +10,68 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
-import { 
   Collapsible, 
   CollapsibleContent, 
   CollapsibleTrigger 
 } from '@/components/ui/collapsible';
 import { 
   ChevronDown,
-  Home,
-  MapPin,
-  DollarSign,
-  Settings,
   Plus,
-  ToggleLeft,
-  ToggleRight,
   Building,
   User,
   LogOut,
   Loader2,
   ExternalLink,
-  MoreVertical
+  MoreVertical,
+  DollarSign
 } from 'lucide-react';
-import { useCustomerData } from '@/hooks/useCustomerData';
-import { useTokenCustomerData } from '@/hooks/useTokenCustomerData';
+import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerData';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import DocumentsSection from '@/components/DocumentsSection';
 
 const CustomerPortal = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email') || '';
-  const token = searchParams.get('token') || '';
   const { toast } = useToast();
-  
-  // Use different hooks based on whether we have a token or email
-  const emailData = useCustomerData(email);
-  const tokenData = useTokenCustomerData(token);
-  
-  // Determine which data source to use
-  const isTokenAccess = Boolean(token);
-  const { profile, properties, loading, error, toggleAutoAppeal } = isTokenAccess ? tokenData : emailData;
+  const { profile, properties, loading, error, toggleAutoAppeal } = useAuthenticatedCustomerData();
 
-  const handleAccountAction = (action: string) => {
+  useEffect(() => {
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate('/auth');
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
+
+  const handleAccountAction = async (action: string) => {
     if (action === "account") {
-      const params = new URLSearchParams();
-      if (email) params.set('email', email);
-      if (token) params.set('token', token);
-      const queryString = params.toString();
-      navigate(`/account${queryString ? `?${queryString}` : ''}`);
+      navigate('/account');
     } else if (action === "add-property") {
-      const params = new URLSearchParams();
-      if (email) params.set('email', email);
-      if (token) params.set('token', token);
-      const queryString = params.toString();
-      navigate(`/add-property${queryString ? `?${queryString}` : ''}`);
+      navigate('/add-property');
     } else if (action === "billing") {
-      const params = new URLSearchParams();
-      if (email) params.set('email', email);
-      if (token) params.set('token', token);
-      const queryString = params.toString();
-      navigate(`/billing${queryString ? `?${queryString}` : ''}`);
+      navigate('/billing');
     } else if (action === "documents") {
-      const params = new URLSearchParams();
-      if (email) params.set('email', email);
-      if (token) params.set('token', token);
-      const queryString = params.toString();
-      navigate(`/documents${queryString ? `?${queryString}` : ''}`);
+      navigate('/documents');
     } else if (action === "refer-friend") {
-      const params = new URLSearchParams();
-      if (email) params.set('email', email);
-      if (token) params.set('token', token);
-      const queryString = params.toString();
-      navigate(`/refer-friend${queryString ? `?${queryString}` : ''}`);
+      navigate('/refer-friend');
+    } else if (action === "logout") {
+      try {
+        await supabase.auth.signOut();
+        navigate('/auth');
+      } catch (error) {
+        console.error('Error signing out:', error);
+        toast({
+          title: "Sign Out Error",
+          description: "There was an error signing out. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       console.log(`Account action: ${action}`);
-      // TODO: Implement other account actions
     }
   };
 

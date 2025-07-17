@@ -25,30 +25,65 @@ interface Property {
   };
 }
 
-export const useTokenCustomerData = (token: string) => {
+export const useAuthenticatedCustomerData = () => {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) {
-      setError('No token provided');
-      setLoading(false);
-      return;
-    }
-
     fetchCustomerData();
-  }, [token]);
+  }, []);
 
   const fetchCustomerData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // This hook is now deprecated - token-based auth has been removed
-      // Return error to redirect to new auth flow
-      throw new Error('Token-based authentication is no longer supported. Please use the new signin flow.');
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Fetch the profile for the authenticated user
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        throw new Error('Profile not found');
+      }
+
+      setProfile(profileData);
+
+      // Fetch properties for this user
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          protests (
+            appeal_status,
+            exemption_status,
+            auto_appeal_enabled,
+            savings_amount
+          )
+        `)
+        .eq('user_id', session.user.id);
+
+      if (propertiesError) {
+        throw new Error(`Failed to fetch properties: ${propertiesError.message}`);
+      }
+
+      // Transform the data to match the expected structure
+      const transformedProperties = propertiesData?.map(property => ({
+        ...property,
+        appeal_status: property.protests?.[0] || null
+      })) || [];
+
+      setProperties(transformedProperties);
     } catch (err: any) {
       console.error('Error fetching customer data:', err);
       setError(err.message);

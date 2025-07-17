@@ -77,13 +77,25 @@ export default function SetPassword() {
         throw error;
       }
 
+      // Mark user as authenticated in their profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({ is_authenticated: true })
+          .eq('user_id', user.id);
+
+        if (profileUpdateError) {
+          console.error('Error updating profile:', profileUpdateError);
+        }
+      }
+
       toast({
         title: "Password Set Successfully",
         description: "Your password has been set. Redirecting to your dashboard...",
       });
 
       // Check user permissions to determine redirect
-      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')

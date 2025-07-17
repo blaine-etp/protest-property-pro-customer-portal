@@ -3,8 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/components/MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 
-
-export const useFormSubmission = () => {
+export const useSimplifiedFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -12,7 +11,7 @@ export const useFormSubmission = () => {
     setIsSubmitting(true);
     
     try {
-      // Check if email exists in profiles table (pending or authenticated users)
+      // Step 1: Check if email already exists in profiles table
       const { data: existingProfiles, error: profileCheckError } = await supabase
         .from('profiles')
         .select('email, is_authenticated')
@@ -46,14 +45,31 @@ export const useFormSubmission = () => {
         }
       }
 
-      // Generate a temporary user ID for data storage (will be linked to real auth user later)
-      const tempUserId = crypto.randomUUID();
+      // Step 2: Create the Supabase user with email and temporary password
+      const tempPassword = `temp_${crypto.randomUUID()}`;
+      const { data: authUser, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: tempPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/set-password`,
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName
+          }
+        }
+      });
 
-      // 1. Create user profile with token (no authentication required)
+      if (authError || !authUser.user) {
+        throw new Error(`User creation failed: ${authError?.message}`);
+      }
+
+      const userId = authUser.user.id;
+
+      // Step 3: Create user profile (this will use auth.uid() in RLS)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .insert({
-          user_id: tempUserId, // Use temporary ID
+          user_id: userId,
           first_name: formData.firstName,
           last_name: formData.lastName,
           email: formData.email,
@@ -61,7 +77,7 @@ export const useFormSubmission = () => {
           is_trust_entity: formData.isTrustEntity,
           role: formData.role,
           agree_to_updates: formData.agreeToUpdates,
-          is_authenticated: false, // Mark as not yet authenticated
+          is_authenticated: false, // Will be set to true when they set their password
         })
         .select()
         .single();
@@ -70,23 +86,15 @@ export const useFormSubmission = () => {
         throw new Error(`Profile creation failed: ${profileError.message}`);
       }
 
-      // Profile created successfully
-
-      // 2. Create owner record (LINEAR FLOW - no property dependency)
+      // Step 4: Create owner record
       let ownerName = '';
       let ownerType = 'individual';
       
-      // If entity is selected, use entity details
       if (formData.isTrustEntity && formData.entityName) {
         ownerName = formData.entityName;
         ownerType = formData.entityType?.toLowerCase() || 'entity';
       } else {
-        // For non-entities or if role is not homeowner, use person's name
-        if (formData.role === 'homeowner') {
-          ownerName = `${formData.firstName} ${formData.lastName}`;
-        } else {
-          ownerName = `${formData.firstName} ${formData.lastName}`;
-        }
+        ownerName = `${formData.firstName} ${formData.lastName}`;
       }
 
       const { data: owner, error: ownerError } = await supabase
@@ -94,11 +102,10 @@ export const useFormSubmission = () => {
         .insert({
           name: ownerName,
           owner_type: ownerType,
-          created_by_user_id: tempUserId,
+          created_by_user_id: userId,
           entity_relationship: formData.relationshipToEntity,
           form_entity_name: formData.entityName,
           form_entity_type: formData.entityType,
-          // Store the relationship to property selection
           notes: `Relationship to property: ${formData.role || 'homeowner'}`,
         })
         .select()
@@ -108,12 +115,12 @@ export const useFormSubmission = () => {
         throw new Error(`Owner creation failed: ${ownerError.message}`);
       }
 
-      // 3. Create property record with owner_id (single INSERT, no circular dependency)
+      // Step 5: Create property record
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
-          user_id: tempUserId,
-          owner_id: owner.id, // Set owner_id directly in INSERT
+          user_id: userId,
+          owner_id: owner.id,
           address: formData.address,
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
@@ -126,11 +133,11 @@ export const useFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 4. Create application record
+      // Step 6: Create application record
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
-          user_id: tempUserId,
+          user_id: userId,
           property_id: property.id,
           signature: formData.signature,
           is_owner_verified: formData.isOwnerVerified,
@@ -143,7 +150,7 @@ export const useFormSubmission = () => {
         throw new Error(`Application creation failed: ${applicationError.message}`);
       }
 
-      // 5. Create initial protest record
+      // Step 7: Create initial protest record
       const { error: protestError } = await supabase
         .from('protests')
         .insert({
@@ -158,52 +165,9 @@ export const useFormSubmission = () => {
         throw new Error(`Protest record creation failed: ${protestError.message}`);
       }
 
-      // Generate both PDFs automatically for new customers
-      try {
-        // Generate Form 50-162
-        try {
-          const { error: form50162Error } = await supabase.functions.invoke('generate-form-50-162', {
-            body: { 
-              propertyId: property.id, 
-              userId: tempUserId 
-            }
-          });
-          
-          if (form50162Error) {
-            console.error('Form 50-162 generation failed:', form50162Error);
-          } else {
-            console.log('Form 50-162 generated successfully');
-          }
-        } catch (form50162NetworkError) {
-          console.error('Form 50-162 network error:', form50162NetworkError);
-        }
-
-        // Generate Services Agreement (only for new customers)
-        try {
-          const { error: servicesAgreementError } = await supabase.functions.invoke('generate-services-agreement', {
-            body: { 
-              propertyId: property.id, 
-              userId: tempUserId 
-            }
-          });
-          
-          if (servicesAgreementError) {
-            console.error('Services Agreement generation failed:', servicesAgreementError);
-          } else {
-            console.log('Services Agreement generated successfully');
-          }
-        } catch (servicesAgreementNetworkError) {
-          console.error('Services Agreement network error:', servicesAgreementNetworkError);
-        }
-      } catch (pdfError) {
-        console.error('PDF generation error:', pdfError);
-        // Don't fail the submission if PDF generation fails
-      }
-
-      // 5. Handle referral code if provided
+      // Step 8: Handle referral code if provided
       if (formData.referralCode) {
         try {
-          // Find the referrer by referral code
           const { data: referrerProfile, error: referrerError } = await supabase
             .from('profiles')
             .select('user_id, email, first_name, last_name')
@@ -212,56 +176,62 @@ export const useFormSubmission = () => {
 
           if (referrerError || !referrerProfile) {
             console.error('Referrer not found for code:', formData.referralCode);
-          } else {
-            // Prevent self-referral
-            if (referrerProfile.email !== formData.email) {
-              // Create referral relationship
-              const { error: referralError } = await supabase
-                .from('referral_relationships')
-                .insert({
-                  referrer_id: referrerProfile.user_id,
-                  referee_id: tempUserId,
-                  referral_code: formData.referralCode,
-                  referee_email: formData.email,
-                  referee_first_name: formData.firstName,
-                  referee_last_name: formData.lastName,
-                  status: 'completed' // Set to completed since they just signed up
-                });
+          } else if (referrerProfile.email !== formData.email) {
+            const { error: referralError } = await supabase
+              .from('referral_relationships')
+              .insert({
+                referrer_id: referrerProfile.user_id,
+                referee_id: userId,
+                referral_code: formData.referralCode,
+                referee_email: formData.email,
+                referee_first_name: formData.firstName,
+                referee_last_name: formData.lastName,
+                status: 'completed'
+              });
 
-              if (referralError) {
-                console.error('Failed to create referral relationship:', referralError);
-              } else {
-                console.log('Referral relationship created successfully');
-              }
-            } else {
-              console.log('Self-referral prevented');
+            if (referralError) {
+              console.error('Failed to create referral relationship:', referralError);
             }
           }
         } catch (referralError) {
           console.error('Referral processing error:', referralError);
-          // Don't fail the main submission if referral processing fails
         }
       }
 
+      // Step 9: Generate PDFs (non-blocking)
+      try {
+        Promise.all([
+          supabase.functions.invoke('generate-form-50-162', {
+            body: { propertyId: property.id, userId }
+          }),
+          supabase.functions.invoke('generate-services-agreement', {
+            body: { propertyId: property.id, userId }
+          })
+        ]).catch(console.error);
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError);
+      }
+
+      // Step 10: Sign out the temporary user session
+      await supabase.auth.signOut();
+
       toast({
         title: "Application Submitted Successfully",
-        description: "Your application has been submitted! You'll receive an email to create your account.",
+        description: "Your application has been submitted! Please check your email to set up your account.",
       });
 
       return { 
         success: true,
         profileId: profile.id, 
-        propertyId: property.id 
+        propertyId: property.id,
+        userId: userId
       };
     } catch (error: any) {
       console.error('Form submission error:', error);
       
-      // Provide more helpful error messages
       let errorMessage = error.message;
       if (error.message?.includes('row-level security')) {
         errorMessage = 'There was an authentication issue. Please try again or contact support.';
-      } else if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = 'Please check your email and confirm your account if this is your first time submitting.';
       }
       
       toast({

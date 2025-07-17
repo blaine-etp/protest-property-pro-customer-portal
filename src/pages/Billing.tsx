@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, DollarSign } from "lucide-react";
-import { useCustomerData } from "@/hooks/useCustomerData";
-import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
+import { mockAuthService } from "@/services/mockAuthService";
 
 interface Profile {
   first_name: string;
@@ -44,34 +43,33 @@ const dummyInvoices = [
 
 const Billing = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
-
-  // Get URL parameters for token-based access
-  const email = searchParams.get('email');
-  const token = searchParams.get('token');
-  
-  // Use appropriate data hook based on access method
-  const tokenData = useTokenCustomerData(token || '');
-  const emailData = useCustomerData(email || '');
-  
-  // Determine which data source to use
-  const customerData = token ? tokenData : emailData;
-  const { profile: customerProfile, loading: customerLoading, error: customerError } = customerData;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token || email) {
-      // Use token/email based access - profile data comes from customerData
-      if (customerProfile && !customerLoading) {
-        setProfile({
-          first_name: customerProfile.first_name || '',
-          last_name: customerProfile.last_name || '',
-          lifetime_savings: customerProfile.lifetime_savings || 0,
-        });
+    const loadProfile = async () => {
+      try {
+        const sessionResult = await mockAuthService.getSession();
+        if (sessionResult?.data?.session?.user) {
+          const user = sessionResult.data.session.user;
+          // Get user profile from mock data
+          const userData = {
+            first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
+            last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
+            lifetime_savings: 15000
+          };
+          setProfile(userData);
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [customerProfile, customerLoading, token, email]);
+    };
+
+    loadProfile();
+  }, []);
 
   const handleDownload = (invoiceId: string) => {
     toast({
@@ -81,7 +79,7 @@ const Billing = () => {
     });
   };
 
-  if (customerLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -91,7 +89,7 @@ const Billing = () => {
     );
   }
 
-  if (customerError || !customerProfile) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">

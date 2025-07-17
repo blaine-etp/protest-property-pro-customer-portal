@@ -24,7 +24,7 @@ const Documents = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [documents, setDocuments] = useState<CustomerDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -161,7 +161,7 @@ const Documents = () => {
     );
   }
 
-  if (error || !profile) {
+  if (customerError || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -276,7 +276,7 @@ const Documents = () => {
                 ))}
               </div>
               
-              {mockDocuments.length === 0 && (
+              {documents.length === 0 && (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No documents yet</h3>

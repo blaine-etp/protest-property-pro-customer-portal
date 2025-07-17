@@ -37,22 +37,32 @@ class MockAuthService {
   private initializeMockData() {
     console.log('🔍 Initializing mock data...');
     
-    // Initialize with some default users if none exist
+    // Clear existing mock data to ensure we use UUID format
     const existingUsers = this.getMockUsers();
-    console.log('🔍 Existing users:', existingUsers);
+    const hasOldFormat = existingUsers.some(u => !u.id.includes('-'));
+    if (hasOldFormat) {
+      console.log('🔍 Clearing old format mock data...');
+      localStorage.removeItem(this.MOCK_USERS_KEY);
+      localStorage.removeItem(this.MOCK_PROFILES_KEY);
+      localStorage.removeItem(this.MOCK_SESSION_KEY);
+    }
     
-    if (existingUsers.length === 0) {
+    // Initialize with some default users if none exist
+    const users = this.getMockUsers();
+    console.log('🔍 Existing users:', users);
+    
+    if (users.length === 0) {
       console.log('🔍 Creating default users and profiles...');
       const defaultUsers: MockUser[] = [
-        { id: 'admin-1', email: 'admin@example.com', permissions: 'administrator' },
-        { id: 'customer-1', email: 'customer@example.com', permissions: 'customer' },
-        { id: 'test-user-1', email: 'test@example.com', permissions: 'customer' }
+        { id: '550e8400-e29b-41d4-a716-446655440000', email: 'admin@example.com', permissions: 'administrator' },
+        { id: '550e8400-e29b-41d4-a716-446655440001', email: 'customer@example.com', permissions: 'customer' },
+        { id: '550e8400-e29b-41d4-a716-446655440002', email: 'test@example.com', permissions: 'customer' }
       ];
       
       const defaultProfiles: MockProfile[] = [
         {
-          id: 'profile-admin-1',
-          user_id: 'admin-1',
+          id: '550e8400-e29b-41d4-a716-446655440100',
+          user_id: '550e8400-e29b-41d4-a716-446655440000',
           first_name: 'Admin',
           last_name: 'User',
           email: 'admin@example.com',
@@ -61,8 +71,8 @@ class MockAuthService {
           lifetime_savings: 0
         },
         {
-          id: 'profile-customer-1', 
-          user_id: 'customer-1',
+          id: '550e8400-e29b-41d4-a716-446655440101', 
+          user_id: '550e8400-e29b-41d4-a716-446655440001',
           first_name: 'John',
           last_name: 'Doe',
           email: 'customer@example.com',
@@ -71,8 +81,8 @@ class MockAuthService {
           lifetime_savings: 2500
         },
         {
-          id: 'profile-test-1',
-          user_id: 'test-user-1',
+          id: '550e8400-e29b-41d4-a716-446655440102',
+          user_id: '550e8400-e29b-41d4-a716-446655440002',
           first_name: 'Test',
           last_name: 'User',
           email: 'test@example.com',
@@ -298,13 +308,13 @@ class MockAuthService {
     const profiles = this.getMockProfiles();
     
     const newUser: MockUser = {
-      id: `user-${Date.now()}`,
+      id: `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12).padStart(12, '0')}`,
       email,
       permissions
     };
 
     const newProfile: MockProfile = {
-      id: `profile-${Date.now()}`,
+      id: `550e8400-e29b-41d4-a716-${(Date.now() + 1000).toString().slice(-12).padStart(12, '0')}`,
       user_id: newUser.id,
       first_name: email.split('@')[0],
       last_name: 'User',

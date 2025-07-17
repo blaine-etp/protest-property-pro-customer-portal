@@ -3,52 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/components/MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 
-type SubmissionStage = 'profile' | 'property' | 'owner' | 'application' | 'documents' | 'complete';
-
 export const useFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionStage, setSubmissionStage] = useState<SubmissionStage>('profile');
-  const [submissionProgress, setSubmissionProgress] = useState(0);
   const { toast } = useToast();
-
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const createOwnerWithRetry = async (ownerData: any, maxAttempts = 5) => {
-    let lastError;
-    
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const { data: owner, error: ownerError } = await supabase
-          .from('owners')
-          .insert(ownerData)
-          .select()
-          .single();
-
-        if (ownerError) {
-          throw ownerError;
-        }
-        
-        console.log(`Owner created successfully on attempt ${attempt}`);
-        return owner;
-      } catch (error: any) {
-        lastError = error;
-        console.log(`Owner creation attempt ${attempt} failed:`, error.message);
-        
-        if (attempt < maxAttempts) {
-          const waitTime = Math.pow(2, attempt - 1) * 1000; // Exponential backoff: 1s, 2s, 4s, 8s
-          console.log(`Waiting ${waitTime}ms before retry...`);
-          await sleep(waitTime);
-        }
-      }
-    }
-    
-    throw lastError;
-  };
 
   const submitFormData = async (formData: FormData) => {
     setIsSubmitting(true);
-    setSubmissionStage('profile');
-    setSubmissionProgress(0);
     
     try {
       // Check if email exists in profiles table (pending or authenticated users)
@@ -89,8 +49,6 @@ export const useFormSubmission = () => {
       const tempUserId = crypto.randomUUID();
 
       // 1. Create user profile with token (no authentication required)
-      setSubmissionStage('profile');
-      setSubmissionProgress(10);
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -115,8 +73,6 @@ export const useFormSubmission = () => {
       const authToken = profile.authentication_token;
 
       // 2. Create property record
-      setSubmissionStage('property');
-      setSubmissionProgress(30);
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
@@ -133,10 +89,7 @@ export const useFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 3. Create owner record with retry logic
-      setSubmissionStage('owner');
-      setSubmissionProgress(50);
-      
+      // 3. Create owner record (always created, but name depends on entity status)
       let ownerName = '';
       let ownerType = 'individual';
       
@@ -153,18 +106,25 @@ export const useFormSubmission = () => {
         }
       }
 
-      const ownerData = {
-        name: ownerName,
-        owner_type: ownerType,
-        property_id: property.id,
-        created_by_user_id: tempUserId,
-        entity_relationship: formData.relationshipToEntity,
-        form_entity_name: formData.entityName,
-        form_entity_type: formData.entityType,
-        notes: `Relationship to property: ${formData.role || 'homeowner'}`,
-      };
+      const { data: owner, error: ownerError } = await supabase
+        .from('owners')
+        .insert({
+          name: ownerName,
+          owner_type: ownerType,
+          property_id: property.id,
+          created_by_user_id: tempUserId,
+          entity_relationship: formData.relationshipToEntity,
+          form_entity_name: formData.entityName,
+          form_entity_type: formData.entityType,
+          // Store the relationship to property selection
+          notes: `Relationship to property: ${formData.role || 'homeowner'}`,
+        })
+        .select()
+        .single();
 
-      const owner = await createOwnerWithRetry(ownerData);
+      if (ownerError) {
+        throw new Error(`Owner creation failed: ${ownerError.message}`);
+      }
       
       // Update property with owner_id
       const { error: propertyUpdateError } = await supabase
@@ -177,8 +137,6 @@ export const useFormSubmission = () => {
       }
 
       // 4. Create application record
-      setSubmissionStage('application');
-      setSubmissionProgress(70);
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
@@ -211,8 +169,6 @@ export const useFormSubmission = () => {
       }
 
       // Generate both PDFs automatically for new customers
-      setSubmissionStage('documents');
-      setSubmissionProgress(85);
       try {
         // Generate Form 50-162
         try {
@@ -297,9 +253,6 @@ export const useFormSubmission = () => {
         }
       }
 
-      setSubmissionStage('complete');
-      setSubmissionProgress(100);
-
       toast({
         title: "Application Submitted Successfully",
         description: "Your application has been submitted! You'll receive an email to create your account.",
@@ -330,14 +283,8 @@ export const useFormSubmission = () => {
       return { success: false, error: errorMessage };
     } finally {
       setIsSubmitting(false);
-      setSubmissionProgress(0);
     }
   };
 
-  return { 
-    submitFormData, 
-    isSubmitting, 
-    submissionStage, 
-    submissionProgress 
-  };
+  return { submitFormData, isSubmitting };
 };

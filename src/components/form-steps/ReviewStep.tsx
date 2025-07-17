@@ -2,10 +2,12 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 import { useFormSubmission } from '@/hooks/useFormSubmission';
 import { supabase } from '@/integrations/supabase/client';
+import { CheckCircle, Clock, Loader2 } from 'lucide-react';
 
 interface ReviewStepProps {
   formData: FormData;
@@ -28,7 +30,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
-  const { submitFormData, isSubmitting } = useFormSubmission();
+  const { submitFormData, isSubmitting, submissionStage, submissionProgress } = useFormSubmission();
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -156,14 +158,105 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     }
   };
 
+  const getStageMessage = (stage: string) => {
+    switch (stage) {
+      case 'profile':
+        return 'Creating your profile...';
+      case 'property':
+        return 'Setting up property details...';
+      case 'owner':
+        return 'Linking ownership information...';
+      case 'application':
+        return 'Finalizing application...';
+      case 'documents':
+        return 'Generating documents...';
+      case 'complete':
+        return 'Application completed successfully!';
+      default:
+        return 'Processing application...';
+    }
+  };
+
+  const submissionSteps = [
+    { id: 'profile', label: 'Profile', description: 'Creating your account' },
+    { id: 'property', label: 'Property', description: 'Setting up property details' },
+    { id: 'owner', label: 'Owner', description: 'Linking ownership information' },
+    { id: 'application', label: 'Application', description: 'Finalizing application' },
+    { id: 'documents', label: 'Documents', description: 'Generating required forms' },
+  ];
+
+  const getCurrentStepIndex = () => {
+    return submissionSteps.findIndex(step => step.id === submissionStage);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Last step before <span className="text-primary">${(formData.estimatedSavings || 1000).toLocaleString()}</span> in potential savings!
-        </h2>
-        {/* TODO: This savings amount should come from database and match the amount shown in step 1 */}
-      </div>
+      {isSubmitting && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center space-x-2">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">
+                  {getStageMessage(submissionStage)}
+                </h3>
+              </div>
+              
+              <div className="space-y-2">
+                <Progress value={submissionProgress} className="w-full" />
+                <p className="text-sm text-muted-foreground">
+                  This usually takes 10-15 seconds...
+                </p>
+              </div>
+
+              <div className="grid grid-cols-5 gap-2 mt-6">
+                {submissionSteps.map((step, index) => {
+                  const currentIndex = getCurrentStepIndex();
+                  const isComplete = index < currentIndex || submissionStage === 'complete';
+                  const isCurrent = index === currentIndex;
+                  
+                  return (
+                    <div key={step.id} className="flex flex-col items-center space-y-1">
+                      <div className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium
+                        ${isComplete 
+                          ? 'bg-primary text-primary-foreground' 
+                          : isCurrent 
+                            ? 'bg-primary/20 text-primary border-2 border-primary' 
+                            : 'bg-muted text-muted-foreground'
+                        }
+                      `}>
+                        {isComplete ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : isCurrent ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Clock className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <p className={`text-xs font-medium ${
+                          isComplete || isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                        }`}>
+                          {step.label}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isSubmitting && (
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Last step before <span className="text-primary">${(formData.estimatedSavings || 1000).toLocaleString()}</span> in potential savings!
+          </h2>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -284,10 +377,17 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           type="button"
           variant="accent"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !hasSignature}
           className="flex-1"
         >
-          {isSubmitting ? "Submitting..." : "Submit Application"}
+          {isSubmitting ? (
+            <div className="flex items-center space-x-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Processing Application...</span>
+            </div>
+          ) : (
+            "Submit Application"
+          )}
         </Button>
       </div>
     </div>

@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, FileText, Calendar } from "lucide-react";
-import { useCustomerData } from "@/hooks/useCustomerData";
-import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
-import { supabase } from "@/integrations/supabase/client";
+import { mockAuthService } from "@/services/mockAuthService";
+import { MockDataService } from "@/services/mockDataService";
 
 interface CustomerDocument {
   id: string;
@@ -22,119 +21,58 @@ interface CustomerDocument {
 
 const Documents = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [profile, setProfile] = useState<any | null>(null);
   const [documents, setDocuments] = useState<CustomerDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Get URL parameters for token-based access
-  const email = searchParams.get('email');
-  const token = searchParams.get('token');
-  
-  // Use appropriate data hook based on access method
-  const tokenData = useTokenCustomerData(token || '');
-  const emailData = useCustomerData(email || '');
-  
-  // Determine which data source to use
-  const customerData = token ? tokenData : emailData;
-  const { profile: customerProfile, loading: customerLoading, error: customerError } = customerData;
-
   useEffect(() => {
-    if (token || email) {
-      // Use token/email based access - profile data comes from customerData
-      if (customerProfile && !customerLoading) {
-        setProfile({
-          first_name: customerProfile.first_name || '',
-          last_name: customerProfile.last_name || '',
-          user_id: customerProfile.user_id,
-        });
+    const loadData = async () => {
+      try {
+        const sessionResult = await mockAuthService.getSession();
+        if (sessionResult?.data?.session?.user) {
+          const user = sessionResult.data.session.user;
+          // Set mock profile
+          const userData = {
+            first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
+            last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
+            user_id: user.id,
+          };
+          setProfile(userData);
+          
+          // Load mock documents
+          const dataService = new MockDataService();
+          const mockDocuments = await dataService.getDocuments();
+          // Convert to CustomerDocument format
+          const customerDocs = mockDocuments.map(doc => ({
+            id: doc.id,
+            document_type: doc.type === 'form-50-162' ? 'form-50-162' : 'services-agreement',
+            file_path: `/documents/${doc.id}.pdf`,
+            property_id: doc.property || 'prop-1',
+            status: 'generated',
+            generated_at: doc.createdDate,
+            created_at: doc.createdDate,
+            property_address: doc.property === 'prop-1' ? '123 Main St, Austin, TX 78701' : '456 Oak Ave, Austin, TX 78702'
+          }));
+          setDocuments(customerDocs);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [customerProfile, customerLoading, token, email]);
+    };
 
-  useEffect(() => {
-    if (profile?.user_id) {
-      fetchDocuments();
-    }
-  }, [profile?.user_id]);
+    loadData();
+  }, []);
 
-  const fetchDocuments = async () => {
-    if (!profile?.user_id) return;
-    
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('customer_documents')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load documents. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleDownload = (customerDocument: CustomerDocument) => {
+    toast({
+      title: "Download Started",
+      description: "Your document download has started.",
+    });
   };
 
-  const handleDownload = async (customerDocument: CustomerDocument) => {
-    try {
-      console.log('Attempting to download:', customerDocument.file_path);
-      
-      // Try to download the file directly
-      const { data, error } = await supabase.storage
-        .from('customer-documents')
-        .download(customerDocument.file_path);
-
-      if (error) {
-        console.error('Download error:', error);
-        toast({
-          title: "Download Failed",
-          description: `Storage error: ${error.message}. The file may not exist in storage.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!data) {
-        toast({
-          title: "Download Failed",
-          description: "No file data received from storage.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Create download link
-      const url = URL.createObjectURL(data);
-      const a = window.document.createElement('a');
-      a.href = url;
-      a.download = `${customerDocument.document_type}-${customerDocument.id}.pdf`;
-      window.document.body.appendChild(a);
-      a.click();
-      window.document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Download Started",
-        description: "Your document is being downloaded.",
-      });
-    } catch (error) {
-      console.error('Error downloading document:', error);
-      toast({
-        title: "Download Failed",
-        description: "An unexpected error occurred while downloading the document.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getDocumentDisplayName = (docType: string) => {
     switch (docType) {
@@ -161,7 +99,7 @@ const Documents = () => {
     );
   }
 
-  if (customerError || !profile) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">

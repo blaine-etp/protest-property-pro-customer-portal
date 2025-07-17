@@ -12,7 +12,7 @@ import AddProperty from "./pages/AddProperty";
 import Billing from "./pages/Billing";
 import Documents from "./pages/Documents";
 import ReferFriend from "./pages/ReferFriend";
-import Auth from "./pages/Auth";
+import ProtestDetail from "./pages/ProtestDetail";
 import SetPassword from "./pages/SetPassword";
 import NotFound from "./pages/NotFound";
 import { AdminLayout } from "./components/AdminLayout";
@@ -44,12 +44,13 @@ const App = () => (
           <Route path="/billing" element={<Billing />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/refer-friend" element={<ReferFriend />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/protest/:protestId" element={<ProtestDetail />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Admin />} />
             <Route path="customers" element={<AdminCRM />} />
             <Route path="customers/:contactId" element={<AdminContactDetail />} />
+            <Route path="protest/:protestId" element={<ProtestDetail />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="evidence" element={<AdminEvidence />} />
             <Route path="bulk-upload" element={<AdminBulkUpload />} />

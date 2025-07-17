@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ import { dataService } from "@/services";
 import type { Protest } from "@/services/types";
 
 export function ProtestSection() {
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState("pipeline");
   const [protests, setProtests] = useState<Protest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -223,10 +225,9 @@ export function ProtestSection() {
                      <Card 
                        key={protest.id} 
                        className="p-3 hover:shadow-md transition-shadow cursor-pointer"
-                       onClick={() => {
-                         // Navigate to protest detail page
-                         console.log(`Navigate to protest detail: ${protest.id}`);
-                       }}
+                        onClick={() => {
+                          navigate(`/admin/protest/${protest.id}`);
+                        }}
                      >
                        <div className="space-y-2">
                          <div className="flex items-start justify-between">

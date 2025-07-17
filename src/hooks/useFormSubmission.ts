@@ -3,35 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/components/MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 
-// Helper function to wait for profile to be available for RLS queries
-const waitForProfileAvailability = async (tempUserId: string, maxRetries = 5): Promise<void> => {
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      // Try to query the profile with the RLS policy conditions
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('user_id, authentication_token, token_expires_at')
-        .eq('user_id', tempUserId)
-        .single();
-
-      if (!error && profile && profile.authentication_token) {
-        console.log(`Profile available after attempt ${attempt}`);
-        return; // Profile is available and queryable
-      }
-    } catch (queryError) {
-      console.log(`Profile query attempt ${attempt} failed:`, queryError);
-    }
-
-    if (attempt < maxRetries) {
-      // Exponential backoff: 1s, 2s, 4s, 8s
-      const waitTime = Math.pow(2, attempt - 1) * 1000;
-      console.log(`Waiting ${waitTime}ms before retry attempt ${attempt + 1}`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
-    }
-  }
-  
-  throw new Error('Profile not available after maximum retries');
-};
 
 export const useFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,26 +73,7 @@ export const useFormSubmission = () => {
       // Get the generated authentication token
       const authToken = profile.authentication_token;
 
-      // 2. Create property record
-      const { data: property, error: propertyError } = await supabase
-        .from('properties')
-        .insert({
-          user_id: tempUserId,
-          address: formData.address,
-          parcel_number: formData.parcelNumber,
-          estimated_savings: formData.estimatedSavings,
-          include_all_properties: formData.includeAllProperties,
-        })
-        .select()
-        .single();
-
-      if (propertyError) {
-        throw new Error(`Property creation failed: ${propertyError.message}`);
-      }
-
-      // 3. Wait for profile to be available and queryable, then create owner record
-      await waitForProfileAvailability(tempUserId);
-      
+      // 2. Create owner record (LINEAR FLOW - no property dependency)
       let ownerName = '';
       let ownerType = 'individual';
       
@@ -143,7 +95,6 @@ export const useFormSubmission = () => {
         .insert({
           name: ownerName,
           owner_type: ownerType,
-          property_id: property.id,
           created_by_user_id: tempUserId,
           entity_relationship: formData.relationshipToEntity,
           form_entity_name: formData.entityName,
@@ -157,15 +108,23 @@ export const useFormSubmission = () => {
       if (ownerError) {
         throw new Error(`Owner creation failed: ${ownerError.message}`);
       }
-      
-      // Update property with owner_id
-      const { error: propertyUpdateError } = await supabase
-        .from('properties')
-        .update({ owner_id: owner.id })
-        .eq('id', property.id);
 
-      if (propertyUpdateError) {
-        throw new Error(`Property owner update failed: ${propertyUpdateError.message}`);
+      // 3. Create property record with owner_id (single INSERT, no circular dependency)
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .insert({
+          user_id: tempUserId,
+          owner_id: owner.id, // Set owner_id directly in INSERT
+          address: formData.address,
+          parcel_number: formData.parcelNumber,
+          estimated_savings: formData.estimatedSavings,
+          include_all_properties: formData.includeAllProperties,
+        })
+        .select()
+        .single();
+
+      if (propertyError) {
+        throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
       // 4. Create application record

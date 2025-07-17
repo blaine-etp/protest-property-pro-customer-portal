@@ -17,6 +17,12 @@ FOR SELECT
 USING (public.get_user_permissions(auth.uid()) = 'administrator');
 
 -- Fix similar admin policies on other tables to prevent recursion
+-- Drop the old recursive policies first
+DROP POLICY IF EXISTS "Admins can view all applications" ON public.applications;
+DROP POLICY IF EXISTS "Admins can view all properties" ON public.properties;
+DROP POLICY IF EXISTS "Admins can view all owners" ON public.owners;
+
+-- Drop existing new policies to recreate them
 DROP POLICY IF EXISTS "Administrators can view all applications" ON public.applications;
 DROP POLICY IF EXISTS "Administrators can view all properties" ON public.properties;
 DROP POLICY IF EXISTS "Administrators can view all bills" ON public.bills;

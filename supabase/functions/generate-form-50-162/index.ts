@@ -1,4 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { PDFDocument } from 'https://esm.sh/pdf-lib@1.17.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,46 +34,18 @@ serve(async (req) => {
       );
     }
 
-    // Test dependencies before processing
-    console.log('Testing dependency imports...');
+    // Initialize clients
+    console.log('Initializing Supabase client...');
     
-    let supabaseClient;
-    let PDFDocument;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    try {
-      console.log('Loading @supabase/supabase-js...');
-      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-      console.log('✓ Supabase client loaded');
-      
-      // Environment variable check
-      console.log('Checking environment variables...');
-      const supabaseUrl = Deno.env.get('SUPABASE_URL');
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      
-      if (!supabaseUrl) {
-        throw new Error('SUPABASE_URL environment variable not set');
-      }
-      if (!supabaseKey) {
-        throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable not set');
-      }
-      console.log('✓ Environment variables verified');
-      
-      supabaseClient = createClient(supabaseUrl, supabaseKey);
-      console.log('✓ Supabase client created');
-    } catch (supabaseError) {
-      console.error('❌ Failed to load Supabase:', supabaseError);
-      throw new Error(`Supabase dependency failed: ${supabaseError.message}`);
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing required environment variables');
     }
-
-    try {
-      console.log('Loading pdf-lib...');
-      const pdfLib = await import('https://esm.sh/pdf-lib@1.17.1');
-      PDFDocument = pdfLib.PDFDocument;
-      console.log('✓ PDF-lib loaded');
-    } catch (pdfError) {
-      console.error('❌ Failed to load PDF-lib:', pdfError);
-      throw new Error(`PDF-lib dependency failed: ${pdfError.message}`);
-    }
+    
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
+    console.log('✓ Supabase client initialized');
 
     // Parse request body
     let requestBody;
@@ -115,20 +89,14 @@ serve(async (req) => {
     }
     console.log('✓ Customer data:', customerData);
 
-    // Step 2: Fetch property data with owner information
+    // Step 2: Fetch property data
     console.log('Step 2: Fetching property data...');
     const { data: propertyData, error: propertyError } = await supabaseClient
       .from('properties')
       .select(`
         address,
         include_all_properties,
-        owner_id,
-        owners (
-          name,
-          entity_relationship,
-          form_entity_name,
-          form_entity_type
-        )
+        owner_id
       `)
       .eq('id', propertyId)
       .maybeSingle();
@@ -142,6 +110,30 @@ serve(async (req) => {
       throw new Error('No property found');
     }
     console.log('✓ Property data:', propertyData);
+
+    // Step 2b: Fetch owner data if owner_id exists
+    let ownerData = null;
+    if (propertyData.owner_id) {
+      console.log('Step 2b: Fetching owner data...');
+      const { data: owner, error: ownerError } = await supabaseClient
+        .from('owners')
+        .select(`
+          name,
+          owner_type,
+          entity_relationship,
+          form_entity_name,
+          form_entity_type
+        `)
+        .eq('id', propertyData.owner_id)
+        .maybeSingle();
+
+      if (ownerError) {
+        console.warn('⚠️ Owner data fetch warning:', ownerError.message);
+      } else {
+        ownerData = owner;
+        console.log('✓ Owner data:', ownerData);
+      }
+    }
 
     // Step 3: Fetch application data (optional signature)
     console.log('Step 3: Fetching application data...');
@@ -242,40 +234,47 @@ serve(async (req) => {
     const currentDate = new Date().toLocaleDateString('en-US');
     tryFillField(['date', 'Date', 'today', 'current_date', 'Date_af_date'], currentDate);
 
-    // Determine if property is owned by entity and fill appropriate fields
-    const hasEntityOwner = propertyData.owner_id && propertyData.owners;
+    // Determine ownership type and fill appropriate fields
+    const isEntityOwner = ownerData && ownerData.owner_type && ownerData.owner_type !== 'individual';
     
-    if (hasEntityOwner) {
+    console.log('✓ Ownership determination:', {
+      hasOwnerData: !!ownerData,
+      ownerType: ownerData?.owner_type,
+      isEntityOwner
+    });
+    
+    if (isEntityOwner && ownerData) {
       // Entity ownership - use entity data
-      const entityData = propertyData.owners;
+      console.log('Processing entity ownership...');
       
       // Fill "Name" field with entity name
-      if (entityData.form_entity_name || entityData.name) {
-        const entityName = entityData.form_entity_name || entityData.name;
+      const entityName = ownerData.form_entity_name || ownerData.name;
+      if (entityName) {
         tryFillField(['Name'], entityName);
       }
       
       // Fill "Name of Property Owner" field with entity name
-      if (entityData.form_entity_name || entityData.name) {
-        const entityName = entityData.form_entity_name || entityData.name;
+      if (entityName) {
         tryFillField(['Name of Property Owner'], entityName);
       }
       
       // Fill "Title" field with relationship to entity
-      if (entityData.entity_relationship) {
-        tryFillField(['Title'], entityData.entity_relationship);
+      if (ownerData.entity_relationship) {
+        tryFillField(['Title'], ownerData.entity_relationship);
       }
       
       console.log('✓ Entity ownership fields filled:', {
-        entityName: entityData.form_entity_name || entityData.name,
-        relationship: entityData.entity_relationship
+        entityName,
+        relationship: ownerData.entity_relationship
       });
     } else {
-      // Individual ownership - use customer data as before
+      // Individual ownership - use customer data
+      console.log('Processing individual ownership...');
       const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim();
       if (fullName) {
         tryFillField(['Name of Property Owner'], fullName);
       }
+      console.log('✓ Individual ownership field filled:', { fullName });
     }
 
     // Fill property checkboxes using exact field names

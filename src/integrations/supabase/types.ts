@@ -399,7 +399,6 @@ export type Database = {
       profiles: {
         Row: {
           agree_to_updates: boolean | null
-          authentication_token: string | null
           created_at: string
           email: string
           first_name: string
@@ -418,13 +417,11 @@ export type Database = {
           referral_code: string | null
           referral_credit_balance: number | null
           role: string | null
-          token_expires_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           agree_to_updates?: boolean | null
-          authentication_token?: string | null
           created_at?: string
           email: string
           first_name: string
@@ -443,13 +440,11 @@ export type Database = {
           referral_code?: string | null
           referral_credit_balance?: number | null
           role?: string | null
-          token_expires_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           agree_to_updates?: boolean | null
-          authentication_token?: string | null
           created_at?: string
           email?: string
           first_name?: string
@@ -468,7 +463,6 @@ export type Database = {
           referral_code?: string | null
           referral_credit_balance?: number | null
           role?: string | null
-          token_expires_at?: string | null
           updated_at?: string
           user_id?: string
         }

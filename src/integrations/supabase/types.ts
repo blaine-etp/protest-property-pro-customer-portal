@@ -733,6 +733,10 @@ export type Database = {
         Args: { owner_id: string }
         Returns: boolean
       }
+      can_create_owner: {
+        Args: { user_id_to_check: string }
+        Returns: boolean
+      }
       can_create_profile: {
         Args: { profile_user_id: string; profile_email: string }
         Returns: boolean

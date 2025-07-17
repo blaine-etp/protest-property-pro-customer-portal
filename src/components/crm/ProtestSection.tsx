@@ -258,17 +258,6 @@ export function ProtestSection() {
                     <p className="text-sm text-muted-foreground">Tax Year: {protest.protestYear}</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Assessed Value</span>
-                      <p className="font-semibold text-base">{protest.assessedValue}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Target Value</span>
-                      <p className="font-semibold text-base">{protest.targetValue}</p>
-                    </div>
-                  </div>
-                  
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">County:</span>

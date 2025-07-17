@@ -1,56 +1,384 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, CreditCard } from 'lucide-react';
-import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerData';
-import { authService } from '@/services';
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Clock } from "lucide-react";
+import { useCustomerData } from "@/hooks/useCustomerData";
+import { useTokenCustomerData } from "@/hooks/useTokenCustomerData";
+
+const accountInfoSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
+
+const passwordSchema = z.object({
+  oldPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(1, "Confirm password is required"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+const addressSchema = z.object({
+  mailingAddress: z.string().min(1, "Address is required"),
+  mailingAddress2: z.string().optional(),
+  mailingCity: z.string().min(1, "City is required"),
+  mailingState: z.string().min(1, "State is required"),
+  mailingZip: z.string().min(1, "ZIP code is required"),
+});
+
+type AccountInfoForm = z.infer<typeof accountInfoSchema>;
+type PasswordForm = z.infer<typeof passwordSchema>;
+type AddressForm = z.infer<typeof addressSchema>;
+
+interface Profile {
+  first_name: string;
+  last_name: string;
+  mailing_address?: string;
+  mailing_address_2?: string;
+  mailing_city?: string;
+  mailing_state?: string;
+  mailing_zip?: string;
+}
+
+interface VerificationCode {
+  code: string;
+  expires_at: string;
+}
 
 const Account = () => {
   const navigate = useNavigate();
-  const { profile, loading, error } = useAuthenticatedCustomerData();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [verificationCode, setVerificationCode] = useState<VerificationCode | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  // Get URL parameters for token-based access
+  const email = searchParams.get('email');
+  const token = searchParams.get('token');
+  
+  // Use appropriate data hook based on access method
+  const tokenData = useTokenCustomerData(token || '');
+  const emailData = useCustomerData(email || '');
+  
+  // Determine which data source to use
+  const customerData = token ? tokenData : emailData;
+  const { profile: customerProfile, loading: customerLoading, error: customerError } = customerData;
+
+  const accountForm = useForm<AccountInfoForm>({
+    resolver: zodResolver(accountInfoSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+    },
+  });
+
+  const passwordForm = useForm<PasswordForm>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  const addressForm = useForm<AddressForm>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: {
+      mailingAddress: "",
+      mailingAddress2: "",
+      mailingCity: "",
+      mailingState: "",
+      mailingZip: "",
+    },
+  });
 
   useEffect(() => {
-    // Check authentication
-    const checkAuth = async () => {
-      const session = await authService.getSession();
-      if (!session) {
-        navigate('/auth');
+    if (token || email) {
+      // Use token/email based access - profile data comes from customerData
+      if (customerProfile && !customerLoading) {
+        setProfile({
+          first_name: customerProfile.first_name || '',
+          last_name: customerProfile.last_name || '',
+          mailing_address: '',
+          mailing_address_2: '',
+          mailing_city: '',
+          mailing_state: '',
+          mailing_zip: '',
+        });
+        
+        accountForm.reset({
+          firstName: customerProfile.first_name || '',
+          lastName: customerProfile.last_name || '',
+        });
       }
-    };
-    checkAuth();
-  }, [navigate]);
+    } else {
+      // Use standard auth-based access
+      fetchProfile();
+      fetchActiveVerificationCode();
+    }
+  }, [customerProfile, customerLoading, token, email]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p>Loading account information...</p>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (verificationCode && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setVerificationCode(null);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [verificationCode, timeLeft]);
 
-  if (error || !profile) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-xl font-bold">Access Denied</h2>
-              <p className="text-muted-foreground">
-                Unable to load account information. Please check your access credentials.
-              </p>
-              <Button onClick={() => window.location.href = '/'}>
-                Return to Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Only redirect if we don't have token/email access
+        if (!token && !email) {
+          navigate("/");
+          return;
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(data);
+      accountForm.reset({
+        firstName: data.first_name || "",
+        lastName: data.last_name || "",
+      });
+      addressForm.reset({
+        mailingAddress: data.mailing_address || "",
+        mailingAddress2: data.mailing_address_2 || "",
+        mailingCity: data.mailing_city || "",
+        mailingState: data.mailing_state || "",
+        mailingZip: data.mailing_zip || "",
+      });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile information",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchActiveVerificationCode = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("verification_codes")
+        .select("code, expires_at")
+        .eq("user_id", user.id)
+        .eq("used", false)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setVerificationCode(data);
+        const expiresAt = new Date(data.expires_at).getTime();
+        const now = new Date().getTime();
+        const secondsLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+        setTimeLeft(secondsLeft);
+      }
+    } catch (error) {
+      console.error("Error fetching verification code:", error);
+    }
+  };
+
+  const onAccountInfoSubmit = async (data: AccountInfoForm) => {
+    setLoading(true);
+    try {
+      let userId: string;
+      
+      if (token || email) {
+        // Use customer profile user_id for token/email access
+        if (!customerProfile) throw new Error("No customer profile found");
+        userId = customerProfile.user_id;
+      } else {
+        // Use auth user for standard access
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No user found");
+        userId = user.id;
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Account information updated successfully",
+      });
+
+      if (!token && !email) {
+        fetchProfile();
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update account information",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onPasswordSubmit = async (data: PasswordForm) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Password updated successfully",
+      });
+
+      passwordForm.reset();
+    } catch (error) {
+      console.error("Error updating password:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update password",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddressSubmit = async (data: AddressForm) => {
+    setLoading(true);
+    try {
+      let userId: string;
+      
+      if (token || email) {
+        // Use customer profile user_id for token/email access
+        if (!customerProfile) throw new Error("No customer profile found");
+        userId = customerProfile.user_id;
+      } else {
+        // Use auth user for standard access
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No user found");
+        userId = user.id;
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          mailing_address: data.mailingAddress,
+          mailing_address_2: data.mailingAddress2 || null,
+          mailing_city: data.mailingCity,
+          mailing_state: data.mailingState,
+          mailing_zip: data.mailingZip,
+        })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Mailing address updated successfully",
+      });
+
+      if (!token && !email) {
+        fetchProfile();
+      }
+    } catch (error) {
+      console.error("Error updating address:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update mailing address",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateVerificationCode = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      const { error } = await supabase
+        .from("verification_codes")
+        .insert({
+          user_id: user.id,
+          code: code,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code Generated",
+        description: "Your verification code has been generated",
+      });
+
+      fetchActiveVerificationCode();
+    } catch (error) {
+      console.error("Error generating code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate verification code",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,96 +386,115 @@ const Account = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/customer-portal')}
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (email) params.set('email', email);
+              if (token) params.set('token', token);
+              const queryString = params.toString();
+              navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
+            }}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Customer Portal
           </Button>
           <h1 className="text-3xl font-bold">Account Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your account information and preferences.
-          </p>
         </div>
 
         <div className="space-y-6">
-          {/* Profile Information */}
+          {/* Account Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Profile Information
-              </CardTitle>
-              <CardDescription>Your basic account information</CardDescription>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>Update your personal information and password</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">First Name</label>
-                  <p className="text-lg font-medium">{profile.first_name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Last Name</label>
-                  <p className="text-lg font-medium">{profile.last_name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-lg font-medium">{profile.email}</p>
+            <CardContent className="space-y-6">
+              <Form {...accountForm}>
+                <form onSubmit={accountForm.handleSubmit(onAccountInfoSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={accountForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={accountForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-lg font-medium">{profile.phone || 'Not provided'}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <Button type="submit" disabled={loading}>
+                    Update Information
+                  </Button>
+                </form>
+              </Form>
 
-          {/* Account Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Status</CardTitle>
-              <CardDescription>Your account verification and settings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Authentication Status</label>
-                  <div className="mt-1">
-                    <Badge variant={profile.is_authenticated ? 'default' : 'secondary'}>
-                      {profile.is_authenticated ? 'Verified' : 'Pending Verification'}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Account Type</label>
-                  <div className="mt-1">
-                    <Badge variant="outline" className="capitalize">
-                      {profile.permissions || 'Customer'}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Trust Entity</label>
-                  <div className="mt-1">
-                    <Badge variant={profile.is_trust_entity ? 'default' : 'secondary'}>
-                      {profile.is_trust_entity ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Updates Agreement</label>
-                  <div className="mt-1">
-                    <Badge variant={profile.agree_to_updates ? 'default' : 'secondary'}>
-                      {profile.agree_to_updates ? 'Agreed' : 'Not Agreed'}
-                    </Badge>
-                  </div>
-                </div>
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium mb-4">Change Password</h3>
+                <Form {...passwordForm}>
+                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                    <FormField
+                      control={passwordForm.control}
+                      name="oldPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={passwordForm.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>New Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={passwordForm.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm Password</FormLabel>
+                            <FormControl>
+                              <Input type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <Button type="submit" disabled={loading}>
+                      Reset Password
+                    </Button>
+                  </form>
+                </Form>
               </div>
             </CardContent>
           </Card>
@@ -155,110 +502,116 @@ const Account = () => {
           {/* Mailing Address */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Mailing Address
-              </CardTitle>
-              <CardDescription>Where we send important documents and notices</CardDescription>
+              <CardTitle>Mailing Address</CardTitle>
+              <CardDescription>Update your mailing address information</CardDescription>
             </CardHeader>
             <CardContent>
-              {profile.mailing_address ? (
-                <div className="space-y-2">
-                  <p className="font-medium">{profile.mailing_address}</p>
-                  {profile.mailing_address_2 && <p>{profile.mailing_address_2}</p>}
-                  <p>
-                    {profile.mailing_city}, {profile.mailing_state} {profile.mailing_zip}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No mailing address on file</p>
-              )}
+              <Form {...addressForm}>
+                <form onSubmit={addressForm.handleSubmit(onAddressSubmit)} className="space-y-4">
+                  <FormField
+                    control={addressForm.control}
+                    name="mailingAddress"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addressForm.control}
+                    name="mailingAddress2"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address 2 (Optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={addressForm.control}
+                      name="mailingCity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={addressForm.control}
+                      name="mailingState"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={addressForm.control}
+                      name="mailingZip"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ZIP Code</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <Button type="submit" disabled={loading}>
+                    Update Address
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
 
-          {/* Account Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Lifetime Savings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  ${profile.lifetime_savings.toLocaleString()}
-                </div>
-                <p className="text-sm text-muted-foreground">Total amount saved</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Referral Credits</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  ${profile.referral_credit_balance || 0}
-                </div>
-                <p className="text-sm text-muted-foreground">Available credits</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Member Since</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {new Date(profile.created_at).getFullYear()}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(profile.created_at).toLocaleDateString()}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Referral Code */}
-          {profile.referral_code && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Referral Code</CardTitle>
-                <CardDescription>Share this code with friends to earn rewards</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <div className="text-lg font-mono font-bold p-3 bg-muted rounded-lg">
-                      {profile.referral_code}
+          {/* Verification Code */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Phone Support Verification</CardTitle>
+              <CardDescription>
+                For your security, a one-time verification code is required to help our customer care agents assist you over the phone. Click the 'Generate Code' button below to get your verification code. Code expires in 10 minutes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {verificationCode ? (
+                <div className="bg-muted p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Your verification code:</p>
+                      <p className="text-2xl font-mono font-bold">{verificationCode.code}</p>
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Clock className="mr-1 h-4 w-4" />
+                      Expires in {formatTime(timeLeft)}
                     </div>
                   </div>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(profile.referral_code!);
-                    }}
-                  >
-                    Copy Code
-                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Demo Notice */}
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-white text-xs font-bold">?</span>
-              </div>
-              <div>
-                <h3 className="font-medium mb-1">Demo Account</h3>
-                <p className="text-sm text-muted-foreground">
-                  This is a demonstration account with mock data. In the real application, 
-                  you would be able to edit these fields and update your preferences.
-                </p>
-              </div>
-            </div>
-          </div>
+              ) : (
+                <Button onClick={generateVerificationCode} disabled={loading}>
+                  Generate Code
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

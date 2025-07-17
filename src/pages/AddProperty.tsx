@@ -1,73 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Home, Plus } from 'lucide-react';
-import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerData';
-import { authService } from '@/services';
-import { AddPropertyForm } from '@/components/AddPropertyForm';
-import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import * as z from 'zod';
+import { useCustomerData } from '@/hooks/useCustomerData';
+import { useTokenCustomerData } from '@/hooks/useTokenCustomerData';
+import AddPropertyForm from '@/components/AddPropertyForm';
 
-// Address validation schema
 const addressSchema = z.object({
-  address: z.string().min(1, 'Address is required')
+  address: z.string().min(1, 'Address is required'),
 });
 
 const AddProperty = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const email = searchParams.get('email') || '';
+  const token = searchParams.get('token') || '';
   const [currentAddress, setCurrentAddress] = useState('');
-  const [showPropertyForm, setShowPropertyForm] = useState(false);
-
-  // Use authenticated customer data
-  const { profile, loading, error } = useAuthenticatedCustomerData();
+  const [showForm, setShowForm] = useState(false);
+  
+  // Use different hooks based on whether we have a token or email
+  const emailData = useCustomerData(email);
+  const tokenData = useTokenCustomerData(token);
+  
+  // Determine which data source to use
+  const isTokenAccess = Boolean(token);
+  const { profile, properties, loading, error } = isTokenAccess ? tokenData : emailData;
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
     defaultValues: {
-      address: ''
-    }
+      address: '',
+    },
   });
-
-  useEffect(() => {
-    // Check authentication
-    const checkAuth = async () => {
-      const session = await authService.getSession();
-      if (!session) {
-        navigate('/auth');
-      }
-    };
-    checkAuth();
-  }, [navigate]);
 
   const handleAddressSubmit = (values: z.infer<typeof addressSchema>) => {
     setCurrentAddress(values.address);
-    setShowPropertyForm(true);
+    setShowForm(true);
   };
 
   const handleBackToPortal = () => {
-    navigate('/customer-portal');
+    const params = new URLSearchParams();
+    if (email) params.set('email', email);
+    if (token) params.set('token', token);
+    const queryString = params.toString();
+    navigate(`/customer-portal${queryString ? `?${queryString}` : ''}`);
   };
 
   const handleFormComplete = () => {
-    toast({
-      title: "Property Added",
-      description: "Your property has been successfully added to your account.",
-    });
-    navigate('/customer-portal');
+    // Navigate back to customer portal with success
+    handleBackToPortal();
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p>Loading customer data...</p>
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading your account data...</span>
         </div>
       </div>
     );
@@ -79,9 +74,9 @@ const AddProperty = () => {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <h2 className="text-xl font-bold">Customer Profile Not Found</h2>
+              <h2 className="text-xl font-bold">Account Not Found</h2>
               <p className="text-muted-foreground">
-                We couldn't find your customer profile. Please contact support.
+                {error || "No customer account found."}
               </p>
               <Button onClick={() => window.location.href = '/'}>
                 Return to Home
@@ -93,92 +88,79 @@ const AddProperty = () => {
     );
   }
 
-  // Show AddPropertyForm if address is submitted
-  if (showPropertyForm && currentAddress) {
+  if (showForm) {
     return (
       <AddPropertyForm
-        currentAddress={currentAddress}
+        address={currentAddress}
         existingProfile={profile}
         onComplete={handleFormComplete}
-        onBack={() => setShowPropertyForm(false)}
+        onBack={() => setShowForm(false)}
       />
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-2xl mx-auto py-8 px-4">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={handleBackToPortal}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Customer Portal
-          </Button>
-          <h1 className="text-3xl font-bold">Add New Property</h1>
-          <p className="text-muted-foreground mt-2">
-            Welcome back, {profile.first_name}! Add another property to your account.
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Home className="h-5 w-5" />
-              Property Address
-            </CardTitle>
-            <CardDescription>
-              Enter the address of the property you'd like to add to your account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleAddressSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Property Address</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter full property address (e.g., 123 Main St, Austin, TX 78701)" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex gap-3">
-                  <Button type="submit" className="flex-1">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Continue with This Address
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-          <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-white text-xs font-bold">?</span>
-            </div>
+      {/* Header */}
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToPortal}
+              className="flex items-center"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Portal
+            </Button>
             <div>
-              <h3 className="font-medium mb-1">Demo Note</h3>
-              <p className="text-sm text-muted-foreground">
-                This is a demonstration version. In the real application, we would verify 
-                property ownership and connect to county tax databases for accurate information.
-              </p>
+              <h1 className="text-2xl font-bold text-foreground">Add Property</h1>
+              <p className="text-muted-foreground">Add another property to your account</p>
             </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-2xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">Property Address</CardTitle>
+              <p className="text-center text-muted-foreground">
+                Enter the address of the property you'd like to add
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleAddressSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="123 Main St, Austin, TX"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button type="submit" className="w-full" variant="accent">
+                    Continue
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 };

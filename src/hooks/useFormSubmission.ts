@@ -3,6 +3,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/components/MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper function to wait for profile to be available for RLS queries
+const waitForProfileAvailability = async (tempUserId: string, maxRetries = 5): Promise<void> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Try to query the profile with the RLS policy conditions
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('user_id, authentication_token, token_expires_at')
+        .eq('user_id', tempUserId)
+        .single();
+
+      if (!error && profile && profile.authentication_token) {
+        console.log(`Profile available after attempt ${attempt}`);
+        return; // Profile is available and queryable
+      }
+    } catch (queryError) {
+      console.log(`Profile query attempt ${attempt} failed:`, queryError);
+    }
+
+    if (attempt < maxRetries) {
+      // Exponential backoff: 1s, 2s, 4s, 8s
+      const waitTime = Math.pow(2, attempt - 1) * 1000;
+      console.log(`Waiting ${waitTime}ms before retry attempt ${attempt + 1}`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+  
+  throw new Error('Profile not available after maximum retries');
+};
+
 export const useFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -89,8 +119,8 @@ export const useFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 3. Wait briefly for profile to be committed, then create owner record
-      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second wait
+      // 3. Wait for profile to be available and queryable, then create owner record
+      await waitForProfileAvailability(tempUserId);
       
       let ownerName = '';
       let ownerType = 'individual';

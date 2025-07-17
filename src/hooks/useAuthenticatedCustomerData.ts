@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { authService, formService } from '@/services';
 
 interface CustomerProfile {
   id: string;
@@ -40,18 +40,14 @@ export const useAuthenticatedCustomerData = () => {
       setLoading(true);
       setError(null);
 
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check if user is authenticated  
+      const { data: { session } } = await authService.getSession();
       if (!session?.user) {
         throw new Error('User not authenticated');
       }
 
       // Fetch the profile for the authenticated user
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
+      const { data: profileData, error: profileError } = await authService.getProfile(session.user.id);
 
       if (profileError || !profileData) {
         throw new Error('Profile not found');
@@ -59,31 +55,10 @@ export const useAuthenticatedCustomerData = () => {
 
       setProfile(profileData);
 
-      // Fetch properties for this user
-      const { data: propertiesData, error: propertiesError } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          protests (
-            appeal_status,
-            exemption_status,
-            auto_appeal_enabled,
-            savings_amount
-          )
-        `)
-        .eq('user_id', session.user.id);
+      // Fetch properties for this user (using mock form service)
+      const propertiesData = await formService.getPropertiesForUser(session.user.id);
 
-      if (propertiesError) {
-        throw new Error(`Failed to fetch properties: ${propertiesError.message}`);
-      }
-
-      // Transform the data to match the expected structure
-      const transformedProperties = propertiesData?.map(property => ({
-        ...property,
-        appeal_status: property.protests?.[0] || null
-      })) || [];
-
-      setProperties(transformedProperties);
+      setProperties(propertiesData);
     } catch (err: any) {
       console.error('Error fetching customer data:', err);
       setError(err.message);
@@ -99,10 +74,7 @@ export const useAuthenticatedCustomerData = () => {
 
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
 
-      const { error } = await supabase
-        .from('protests')
-        .update({ auto_appeal_enabled: newAutoAppealStatus })
-        .eq('property_id', propertyId);
+      const { error } = await formService.toggleAutoAppeal(propertyId);
 
       if (error) {
         throw new Error(`Failed to update auto-appeal: ${error.message}`);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { authService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,7 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await authService.signInWithPassword({
         email,
         password,
       });
@@ -37,11 +37,7 @@ export default function Auth() {
         });
         
         // Check user permissions to determine redirect
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('permissions')
-          .eq('user_id', data.user.id)
-          .single();
+        const { data: profile } = await authService.getProfile(data.user.id);
           
         if (profile?.permissions === 'administrator') {
           navigate('/admin');
@@ -65,7 +61,7 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await authService.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/set-password`,
       });
 

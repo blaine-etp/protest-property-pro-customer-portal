@@ -339,58 +339,96 @@ export function PropertiesSection() {
               <CardDescription>Detailed table view of all properties</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Assessed Value</TableHead>
-                    <TableHead>Market Value</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Potential Savings</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProperties.map((property) => (
-                    <TableRow key={property.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{property.address}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{property.owner}</TableCell>
-                      <TableCell>{property.assessedValue}</TableCell>
-                      <TableCell>{property.marketValue}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(property.status) as any}>
-                          {property.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold text-green-600">
-                        {property.potentialSavings}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Property
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Address</TableHead>
+                <TableHead>County</TableHead>
+                <TableHead>Protest</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>IDs</TableHead>
+                <TableHead>Documents</TableHead>
+                <TableHead>Last Updated</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProperties.map((property) => (
+                <TableRow key={property.id}>
+                  <TableCell className="font-medium">{property.address}</TableCell>
+                  <TableCell>Travis</TableCell>
+                  <TableCell>
+                    <span 
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={() => console.log('Navigate to protest:', property.protestId)}
+                    >
+                      {property.protestStatus === 'filed' ? 'active, filed' : 
+                       property.protestStatus === 'settled' ? 'settled' : 
+                       'none'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {property.contactId && (
+                      <span 
+                        className="text-blue-600 cursor-pointer hover:underline"
+                        onClick={() => console.log('Navigate to contact:', property.contactId)}
+                      >
+                        John Smith
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span 
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={() => console.log('Navigate to owner:', property.ownerId)}
+                    >
+                      {property.owner}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-xs">
+                      {property.propertyId}, {property.etpPid || 'N/A'}, {property.countyPid || 'N/A'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span 
+                      className="text-blue-600 cursor-pointer hover:underline"
+                      onClick={() => console.log('Navigate to document:', property.documentId)}
+                    >
+                      {property.documentId === "1" ? "Form 50-162 - Property Tax Protest" :
+                       property.documentId === "2" ? "Evidence Package - Market Analysis" :
+                       property.documentId === "3" ? "Hearing Notice - County Appeal" :
+                       property.documentId === "4" ? "Settlement Agreement" : 
+                       "No documents"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-500">{property.lastUpdated}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Property
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Generate Report
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
                 </TableBody>
               </Table>
             </CardContent>

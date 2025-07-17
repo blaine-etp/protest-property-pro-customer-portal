@@ -219,72 +219,85 @@ export function ProtestSection() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {statusProtests.map((protest) => (
-                    <Card key={protest.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="space-y-2">
-                        <div className="flex items-start justify-between">
-                          <h4 className="font-medium text-sm leading-tight">{protest.propertyAddress}</h4>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                <MoreHorizontal className="h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Protest
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Download className="h-4 w-4 mr-2" />
-                                Download Documents
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          {protest.owner}
-                        </p>
-                        
-                        <div className="text-xs space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">Current:</span>
-                            <span>{protest.assessedValue}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">Target:</span>
-                            <span>{protest.targetValue}</span>
-                          </div>
-                        </div>
+                   {statusProtests.map((protest) => (
+                     <Card 
+                       key={protest.id} 
+                       className="p-3 hover:shadow-md transition-shadow cursor-pointer"
+                       onClick={() => {
+                         // Navigate to protest detail page
+                         console.log(`Navigate to protest detail: ${protest.id}`);
+                       }}
+                     >
+                       <div className="space-y-2">
+                         <div className="flex items-start justify-between">
+                           <div className="flex-1">
+                             <h4 className="font-medium text-sm leading-tight text-slate-900">
+                               Situs Address: {protest.propertyAddress}
+                             </h4>
+                           </div>
+                           <DropdownMenu>
+                             <DropdownMenuTrigger asChild>
+                               <Button 
+                                 variant="ghost" 
+                                 size="sm" 
+                                 className="h-6 w-6 p-0"
+                                 onClick={(e) => e.stopPropagation()}
+                               >
+                                 <MoreHorizontal className="h-3 w-3" />
+                               </Button>
+                             </DropdownMenuTrigger>
+                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem>
+                                 <Eye className="h-4 w-4 mr-2" />
+                                 View Details
+                               </DropdownMenuItem>
+                               <DropdownMenuItem>
+                                 <Edit className="h-4 w-4 mr-2" />
+                                 Edit Protest
+                               </DropdownMenuItem>
+                               <DropdownMenuItem>
+                                 <Download className="h-4 w-4 mr-2" />
+                                 Download Documents
+                               </DropdownMenuItem>
+                             </DropdownMenuContent>
+                           </DropdownMenu>
+                         </div>
+                         
+                         <div className="text-xs space-y-1">
+                           <div className="flex justify-between">
+                             <span className="text-slate-500">Protest Year:</span>
+                             <span className="font-medium">{protest.protestYear}</span>
+                           </div>
+                           <div className="flex justify-between">
+                             <span className="text-slate-500">County:</span>
+                             <span className="font-medium">{protest.county}</span>
+                           </div>
+                           <div className="flex justify-between">
+                             <span className="text-slate-500">Contact:</span>
+                             <span className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+                               {protest.contactId}
+                             </span>
+                           </div>
+                           <div className="flex justify-between">
+                             <span className="text-slate-500">Owner:</span>
+                             <span className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+                               {protest.owner}
+                             </span>
+                           </div>
+                         </div>
 
-                        <div className="bg-green-50 p-2 rounded text-center">
-                          <p className="text-xs text-green-600 font-medium">
-                            Potential: {protest.potentialSavings}
-                          </p>
-                        </div>
-
-                        {protest.hearingDate && (
-                          <div className="flex items-center gap-1 text-xs text-slate-500">
-                            <Calendar className="h-3 w-3" />
-                            Hearing: {protest.hearingDate}
-                          </div>
-                        )}
-
-                        <div className="w-full bg-slate-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-500 h-2 rounded-full transition-all" 
-                            style={{ width: `${protest.progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+                         <div className="bg-slate-50 p-2 rounded">
+                           <div className="flex items-center justify-between">
+                             <span className="text-xs text-slate-500">Status:</span>
+                             <Badge variant={getStatusColor(protest.status) as any} className="text-xs">
+                               {getStatusIcon(protest.status)}
+                               <span className="ml-1">{protest.status}</span>
+                             </Badge>
+                           </div>
+                         </div>
+                       </div>
+                     </Card>
+                   ))}
                 </CardContent>
               </Card>
             ))}

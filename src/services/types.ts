@@ -55,6 +55,9 @@ export interface Protest {
   potentialSavings: string;
   agent: string;
   progress: number;
+  protestYear: number;
+  county: string;
+  contactId: string;
 }
 
 export interface Bill {

@@ -192,7 +192,10 @@ export const mockProtests: Protest[] = [
     targetValue: "$420,000",
     potentialSavings: "$2,100",
     agent: "Jane Doe",
-    progress: 25
+    progress: 25,
+    protestYear: 2024,
+    county: "Travis County",
+    contactId: "contact-1"
   },
   {
     id: "2",
@@ -205,7 +208,10 @@ export const mockProtests: Protest[] = [
     targetValue: "$305,000",
     potentialSavings: "$1,650",
     agent: "Mike Wilson",
-    progress: 60
+    progress: 60,
+    protestYear: 2024,
+    county: "Travis County",
+    contactId: "contact-2"
   },
   {
     id: "3",
@@ -218,7 +224,10 @@ export const mockProtests: Protest[] = [
     targetValue: "$640,000",
     potentialSavings: "$3,200",
     agent: "Sarah Lee",
-    progress: 100
+    progress: 100,
+    protestYear: 2024,
+    county: "Travis County",
+    contactId: "contact-3"
   },
   {
     id: "4",
@@ -231,7 +240,10 @@ export const mockProtests: Protest[] = [
     targetValue: "$260,000",
     potentialSavings: "$0",
     agent: "Tom Garcia",
-    progress: 100
+    progress: 100,
+    protestYear: 2023,
+    county: "Travis County",
+    contactId: "contact-4"
   }
 ];
 

@@ -41,10 +41,14 @@ export const useAuthenticatedCustomerData = () => {
       setError(null);
 
       // Check if user is authenticated  
+      console.log('🔍 Checking authentication...');
       const { data: { session } } = await authService.getSession();
+      console.log('🔍 Session result:', session);
       if (!session?.user) {
+        console.log('🔍 No session or user found, session:', session);
         throw new Error('User not authenticated');
       }
+      console.log('🔍 User authenticated:', session.user);
 
       // Fetch the profile for the authenticated user
       const { data: profileData, error: profileError } = await authService.getProfile(session.user.id);

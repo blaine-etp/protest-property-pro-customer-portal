@@ -168,8 +168,11 @@ class MockAuthService {
 
   // Simulate supabase.auth.getSession
   async getSession() {
+    console.log('🔍 MockAuthService.getSession called');
     const sessionData = localStorage.getItem(this.MOCK_SESSION_KEY);
+    console.log('🔍 Session data from localStorage:', sessionData);
     const session = sessionData ? JSON.parse(sessionData) : null;
+    console.log('🔍 Parsed session:', session);
 
     return {
       data: { session },

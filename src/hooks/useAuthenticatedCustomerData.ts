@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { authService, formService } from '@/services';
+import { mockAuthService } from '@/services/mockAuthService';
+import { mockFormService } from '@/services/mockFormService';
 
 interface CustomerProfile {
   id: string;
@@ -42,7 +43,7 @@ export const useAuthenticatedCustomerData = () => {
 
       // Check if user is authenticated  
       console.log('🔍 Checking authentication...');
-      const { data: { session } } = await authService.getSession();
+      const { data: { session } } = await mockAuthService.getSession();
       console.log('🔍 Session result:', session);
       if (!session?.user) {
         console.log('🔍 No session or user found, session:', session);
@@ -51,7 +52,7 @@ export const useAuthenticatedCustomerData = () => {
       console.log('🔍 User authenticated:', session.user);
 
       // Fetch the profile for the authenticated user
-      const { data: profileData, error: profileError } = await authService.getProfile(session.user.id);
+      const { data: profileData, error: profileError } = await mockAuthService.getProfile(session.user.id);
 
       if (profileError || !profileData) {
         throw new Error('Profile not found');
@@ -60,7 +61,7 @@ export const useAuthenticatedCustomerData = () => {
       setProfile(profileData);
 
       // Fetch properties for this user (using mock form service)
-      const propertiesData = await formService.getPropertiesForUser(session.user.id);
+      const propertiesData = await mockFormService.getPropertiesForUser(session.user.id);
 
       setProperties(propertiesData);
     } catch (err: any) {
@@ -78,7 +79,7 @@ export const useAuthenticatedCustomerData = () => {
 
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
 
-      const { error } = await formService.toggleAutoAppeal(propertyId);
+      const { error } = await mockFormService.toggleAutoAppeal(propertyId);
 
       if (error) {
         throw new Error(`Failed to update auto-appeal: ${error.message}`);

@@ -142,7 +142,7 @@ export default function AdminCustomers() {
     property.associatedIds.parcelNumber.includes(searchTerm)
   );
 
-  const getProtestStatusBadge = (protest: any) => {
+  const getProtestStatusBadge = (protest: any, propertyId: string) => {
     if (!protest.hasOpenProtest) {
       return (
         <Badge variant="outline" className="text-slate-600">
@@ -155,21 +155,33 @@ export default function AdminCustomers() {
     switch (protest.status) {
       case "filed":
         return (
-          <Badge variant="destructive">
+          <Badge 
+            variant="destructive" 
+            className="cursor-pointer hover:bg-red-700"
+            onClick={() => console.log(`Navigate to protest for property: ${propertyId}`)}
+          >
             <Gavel className="h-3 w-3 mr-1" />
             Filed - {protest.filedDate}
           </Badge>
         );
       case "settled":
         return (
-          <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+          <Badge 
+            variant="default" 
+            className="bg-green-600 hover:bg-green-700 cursor-pointer"
+            onClick={() => console.log(`Navigate to protest for property: ${propertyId}`)}
+          >
             <CheckCircle className="h-3 w-3 mr-1" />
             Settled - ${protest.savingsAmount?.toLocaleString()} saved
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline">
+          <Badge 
+            variant="outline"
+            className="cursor-pointer hover:bg-slate-100"
+            onClick={() => console.log(`Navigate to protest for property: ${propertyId}`)}
+          >
             <AlertCircle className="h-3 w-3 mr-1" />
             {protest.status}
           </Badge>
@@ -277,20 +289,53 @@ export default function AdminCustomers() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Primary Contact & Protest Status - Most Important Info */}
+              {/* Contact, Owner, and Protest Information */}
               <div className="space-y-3">
+                {/* Associated Profile/Contact */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center gap-2 p-0 h-auto hover:bg-blue-50 hover:text-blue-700"
+                    onClick={() => console.log(`Navigate to contact: ${property.profile.id}`)}
+                  >
                     <Users className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium text-slate-900">{property.profile.name}</span>
-                  </div>
-                  {getProtestStatusBadge(property.protest)}
+                    <span className="font-medium underline decoration-dotted">{property.profile.name}</span>
+                  </Button>
+                  {getProtestStatusBadge(property.protest, property.id)}
                 </div>
                 
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <Building className="h-4 w-4" />
-                  <span>{property.owner.name}</span>
+                {/* Owner Information */}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center gap-2 p-0 h-auto hover:bg-orange-50 hover:text-orange-700"
+                    onClick={() => console.log(`Navigate to owner: ${property.owner.name}`)}
+                  >
+                    <Building className="h-4 w-4" />
+                    <span className="underline decoration-dotted">{property.owner.name}</span>
+                  </Button>
                   {getOwnerTypeBadge(property.owner)}
+                </div>
+
+                {/* Associated IDs */}
+                <div className="space-y-1 text-sm text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-3 w-3" />
+                    <span className="font-medium">Property ID:</span>
+                    <span className="font-mono">{property.id}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-3 w-3" />
+                    <span className="font-medium">ETP PID:</span>
+                    <span className="font-mono">{property.associatedIds.etpPid}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-3 w-3" />
+                    <span className="font-medium">County ID:</span>
+                    <span className="font-mono">{property.associatedIds.countyPid}</span>
+                  </div>
                 </div>
               </div>
 

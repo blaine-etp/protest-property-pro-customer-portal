@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/components/MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
+import { mockAuthService } from '@/services/mockAuthService';
 
 interface AddPropertySubmissionProps {
   existingUserId: string;
@@ -16,6 +17,37 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
     setIsSubmitting(true);
     
     try {
+      // Check if we're using mock auth (mock user IDs have UUID format starting with 550e8400)
+      const isMockMode = existingUserId.startsWith('550e8400');
+      
+      if (isMockMode) {
+        // Simulate mock property addition
+        console.log('🎭 Mock mode: Simulating property addition...');
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Mock successful property creation
+        const mockPropertyId = `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12).padStart(12, '0')}`;
+        
+        console.log('🎭 Mock property created:', {
+          id: mockPropertyId,
+          address: formData.address,
+          user_id: existingUserId
+        });
+        
+        toast({
+          title: "Property Added Successfully",
+          description: "Your new property has been added to your account!",
+        });
+
+        return { 
+          success: true, 
+          propertyId: mockPropertyId 
+        };
+      }
+
+      // Real Supabase implementation for non-mock users
       // 1. Update existing profile with any changed personal info (except email/phone)
       const { error: profileError } = await supabase
         .from('profiles')

@@ -89,7 +89,9 @@ export const useFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 3. Create owner record (always created, but name depends on entity status)
+      // 3. Wait briefly for profile to be committed, then create owner record
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second wait
+      
       let ownerName = '';
       let ownerType = 'individual';
       

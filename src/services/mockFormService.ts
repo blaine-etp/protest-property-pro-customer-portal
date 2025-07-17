@@ -59,18 +59,13 @@ class MockFormService {
   }
 
   private initializeMockData() {
-    // Initialize with some sample data if none exists
-    const existingProperties = this.getMockProperties();
-    
-    // Check if we need to update to UUID format
-    const hasOldFormat = existingProperties.some(p => p.user_id && !p.user_id.includes('-'));
-    if (hasOldFormat) {
-      console.log('🔍 Clearing old format property data...');
-      localStorage.removeItem(this.MOCK_PROPERTIES_KEY);
-      localStorage.removeItem(this.MOCK_OWNERS_KEY);
-    }
+    // Force clear properties to ensure UUID format
+    console.log('🔍 Force clearing property data to ensure UUID format...');
+    localStorage.removeItem(this.MOCK_PROPERTIES_KEY);
+    localStorage.removeItem(this.MOCK_OWNERS_KEY);
     
     const properties = this.getMockProperties();
+    console.log('🔍 Properties after clearing:', properties);
     if (properties.length === 0) {
       const sampleProperties: MockProperty[] = [
         {
@@ -265,7 +260,11 @@ class MockFormService {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     const properties = this.getMockProperties();
-    return properties.filter(p => p.user_id === userId);
+    console.log('🔍 All properties in localStorage:', properties);
+    console.log('🔍 Looking for user ID:', userId);
+    const userProperties = properties.filter(p => p.user_id === userId);
+    console.log('🔍 Properties found for user:', userProperties);
+    return userProperties;
   }
 
   // Toggle auto appeal (replaces Supabase update)

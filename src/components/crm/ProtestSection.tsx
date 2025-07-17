@@ -277,13 +277,6 @@ export function ProtestSection() {
                     </div>
                   </div>
                   
-                  {protest.potentialSavings && (
-                    <div className="bg-green-50 p-3 rounded-lg">
-                      <span className="text-xs text-green-700">Potential Savings</span>
-                      <p className="font-semibold text-lg text-green-600">{protest.potentialSavings}</p>
-                    </div>
-                  )}
-                  
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>Filed: {protest.filedDate}</span>
                     {protest.hearingDate && (

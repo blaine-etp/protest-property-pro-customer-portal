@@ -300,10 +300,17 @@ export default function AdminCustomers() {
                   <FileText className="h-4 w-4 mr-1" />
                   View 50-162
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Gavel className="h-4 w-4 mr-1" />
-                  Protest
-                </Button>
+                {property.protest.hasOpenProtest ? (
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Gavel className="h-4 w-4 mr-1" />
+                    View Protest
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="flex-1">
+                    <Gavel className="h-4 w-4 mr-1" />
+                    Start Protest
+                  </Button>
+                )}
               </div>
 
               {/* Additional Details - Collapsible */}

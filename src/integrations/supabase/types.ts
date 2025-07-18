@@ -407,6 +407,65 @@ export type Database = {
         }
         Relationships: []
       }
+      county_pages: {
+        Row: {
+          content: string | null
+          county_id: string
+          created_at: string
+          featured: boolean
+          id: string
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
+          page_type: string
+          slug: string
+          sort_order: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          county_id: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          page_type: string
+          slug: string
+          sort_order?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          county_id?: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          page_type?: string
+          slug?: string
+          sort_order?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "county_pages_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number

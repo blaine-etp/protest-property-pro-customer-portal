@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { CountyForm } from "./CountyForm";
-import { Search, Plus, Edit, Trash2, Eye, Globe, MapPin, FileText, Info, Video } from "lucide-react";
+import { CountyPageForm } from "./CountyPageForm";
+import { Search, Plus, Edit, Trash2, Eye, Globe, MapPin, FileText, Info, Video, ExternalLink } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -38,17 +39,36 @@ interface County {
   contentType?: string;
 }
 
+interface CountyPage {
+  id: string;
+  county_id: string;
+  page_type: string;
+  title: string;
+  slug: string;
+  content: string;
+  status: string;
+  featured: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export function CountyManagement() {
   const [counties, setCounties] = useState<County[]>([]);
+  const [countyPages, setCountyPages] = useState<CountyPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCounty, setEditingCounty] = useState<County | null>(null);
+  const [editingCountyPage, setEditingCountyPage] = useState<CountyPage | null>(null);
+  const [selectedCountyForPage, setSelectedCountyForPage] = useState<County | null>(null);
+  const [showPageForm, setShowPageForm] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCounties();
+    fetchCountyPages();
   }, []);
 
   const fetchCounties = async () => {
@@ -69,6 +89,20 @@ export function CountyManagement() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCountyPages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('county_pages')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setCountyPages(data || []);
+    } catch (error) {
+      console.error('Error fetching county pages:', error);
     }
   };
 
@@ -168,6 +202,36 @@ export function CountyManagement() {
     drafts: counties.filter(c => c.status === 'draft').length,
     featured: counties.filter(c => c.featured).length,
   };
+
+  const getCountyPages = (countyId: string) => {
+    return countyPages.filter(page => page.county_id === countyId);
+  };
+
+  const handleEditPage = (county: County, page?: CountyPage) => {
+    setSelectedCountyForPage(county);
+    setEditingCountyPage(page || null);
+    setShowPageForm(true);
+  };
+
+  if (showPageForm && selectedCountyForPage) {
+    return (
+      <CountyPageForm
+        county={selectedCountyForPage}
+        countyPage={editingCountyPage}
+        onSuccess={() => {
+          setShowPageForm(false);
+          setSelectedCountyForPage(null);
+          setEditingCountyPage(null);
+          fetchCountyPages();
+        }}
+        onCancel={() => {
+          setShowPageForm(false);
+          setSelectedCountyForPage(null);
+          setEditingCountyPage(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -324,104 +388,80 @@ export function CountyManagement() {
                     </div>
 
                     <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Content Management</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingCounty(county)}
-                              className="text-xs justify-start"
-                            >
-                              <Edit className="mr-1 h-3 w-3" />
-                              Basic Info
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                            <CountyForm
-                              county={editingCounty}
-                              onSuccess={() => {
-                                setEditingCounty(null);
-                                fetchCounties();
-                              }}
-                              onCancel={() => setEditingCounty(null)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingCounty({...county, contentType: 'how-to'} as County)}
-                              className="text-xs justify-start"
-                            >
-                              <FileText className="mr-1 h-3 w-3" />
-                              How-To Guide
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                            <CountyForm
-                              county={editingCounty ? {...editingCounty, contentType: 'how-to'} as County : null}
-                              onSuccess={() => {
-                                setEditingCounty(null);
-                                fetchCounties();
-                              }}
-                              onCancel={() => setEditingCounty(null)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingCounty({...county, contentType: 'info'} as County)}
-                              className="text-xs justify-start"
-                            >
-                              <Info className="mr-1 h-3 w-3" />
-                              County Info
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                            <CountyForm
-                              county={editingCounty ? {...editingCounty, contentType: 'info'} as County : null}
-                              onSuccess={() => {
-                                setEditingCounty(null);
-                                fetchCounties();
-                              }}
-                              onCancel={() => setEditingCounty(null)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingCounty({...county, contentType: 'media'} as County)}
-                              className="text-xs justify-start"
-                            >
-                              <Video className="mr-1 h-3 w-3" />
-                              Media
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                            <CountyForm
-                              county={editingCounty ? {...editingCounty, contentType: 'media'} as County : null}
-                              onSuccess={() => {
-                                setEditingCounty(null);
-                                fetchCounties();
-                              }}
-                              onCancel={() => setEditingCounty(null)}
-                            />
-                          </DialogContent>
-                        </Dialog>
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-medium text-sm">County Pages</h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditPage(county)}
+                          className="text-xs h-7"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add Page
+                        </Button>
                       </div>
+                      
+                      <div className="space-y-2">
+                        {getCountyPages(county.id).length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No pages created yet</p>
+                        ) : (
+                          getCountyPages(county.id).map((page) => (
+                            <div key={page.id} className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Badge variant="outline" className="text-xs">
+                                  {page.page_type}
+                                </Badge>
+                                <span className="truncate text-xs">{page.title}</span>
+                                <Badge variant={page.status === 'published' ? 'default' : 'secondary'} className="text-xs">
+                                  {page.status}
+                                </Badge>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditPage(county, page)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(`/county/${page.slug}`, '_blank')}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingCounty(county)}
+                            className="text-xs w-full"
+                          >
+                            <Edit className="mr-1 h-3 w-3" />
+                            Edit County Settings
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                          <CountyForm
+                            county={editingCounty}
+                            onSuccess={() => {
+                              setEditingCounty(null);
+                              fetchCounties();
+                            }}
+                            onCancel={() => setEditingCounty(null)}
+                          />
+                        </DialogContent>
+                      </Dialog>
                       
                       <div className="flex gap-2 pt-2 border-t">
                         <Button

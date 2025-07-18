@@ -500,15 +500,6 @@ export function CountyManagement() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleToggleStatus(county)}
-                          className="text-xs flex-1"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          {county.status === 'published' ? 'Unpublish' : 'Publish'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
                           onClick={() => handleDeleteCounty(county.id)}
                           className="text-xs"
                         >

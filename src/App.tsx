@@ -27,6 +27,7 @@ import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
 import Resources from "./pages/Resources";
 import { CountyPage } from "./pages/CountyPage";
+import CountyTemplate from "./pages/CountyTemplate";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,8 @@ const App = () => (
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
+          {/* County Template Preview */}
+          <Route path="/county-template" element={<CountyTemplate />} />
           {/* County Pages Route */}
           <Route path="/county/:slug" element={<CountyPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

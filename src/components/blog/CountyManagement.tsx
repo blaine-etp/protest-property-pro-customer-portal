@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { CountyForm } from "./CountyForm";
-import { Search, Plus, Edit, Trash2, Eye, Globe, MapPin } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Eye, Globe, MapPin, FileText, Info, Video } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,7 @@ interface County {
   featured: boolean;
   created_at: string;
   updated_at: string;
+  contentType?: string;
 }
 
 export function CountyManagement() {
@@ -289,94 +290,161 @@ export function CountyManagement() {
               No counties found matching your criteria.
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredCounties.map((county) => (
-                <div key={county.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">{county.name}</h3>
-                        <Badge variant={county.status === 'published' ? 'default' : 'secondary'}>
-                          {county.status}
-                        </Badge>
-                        {county.featured && (
-                          <Badge variant="outline">Featured</Badge>
-                        )}
-                        <Badge variant="outline" className="text-xs">
-                          <MapPin className="w-3 h-3 mr-1" />
+                <Card key={county.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{county.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
                           {county.state}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground mb-2">
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Globe className="w-3 h-3" />
-                            /county/{county.slug}
-                          </span>
-                          {county.current_tax_year && (
-                            <span>Tax Year: {county.current_tax_year}</span>
-                          )}
-                          {county.protest_deadline && (
-                            <span>Deadline: {new Date(county.protest_deadline).toLocaleDateString()}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {county.meta_description && (
-                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                          {county.meta_description}
                         </p>
+                      </div>
+                      <Badge variant={county.status === 'published' ? 'default' : 'secondary'}>
+                        {county.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    <div className="text-sm space-y-1">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Globe className="w-3 h-3" />
+                        <span>/county/{county.slug}</span>
+                      </div>
+                      {county.current_tax_year && (
+                        <p><span className="font-medium">Tax Year:</span> {county.current_tax_year}</p>
                       )}
+                      {county.protest_deadline && (
+                        <p><span className="font-medium">Deadline:</span> {new Date(county.protest_deadline).toLocaleDateString()}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Updated: {new Date(county.updated_at).toLocaleDateString()}</p>
+                    </div>
 
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Updated: {new Date(county.updated_at).toLocaleDateString()}</span>
-                        {county.appraisal_district_name && (
-                          <span>District: {county.appraisal_district_name}</span>
-                        )}
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm">Content Management</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingCounty(county)}
+                              className="text-xs justify-start"
+                            >
+                              <Edit className="mr-1 h-3 w-3" />
+                              Basic Info
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                            <CountyForm
+                              county={editingCounty}
+                              onSuccess={() => {
+                                setEditingCounty(null);
+                                fetchCounties();
+                              }}
+                              onCancel={() => setEditingCounty(null)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingCounty({...county, contentType: 'how-to'} as County)}
+                              className="text-xs justify-start"
+                            >
+                              <FileText className="mr-1 h-3 w-3" />
+                              How-To Guide
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                            <CountyForm
+                              county={editingCounty ? {...editingCounty, contentType: 'how-to'} as County : null}
+                              onSuccess={() => {
+                                setEditingCounty(null);
+                                fetchCounties();
+                              }}
+                              onCancel={() => setEditingCounty(null)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingCounty({...county, contentType: 'info'} as County)}
+                              className="text-xs justify-start"
+                            >
+                              <Info className="mr-1 h-3 w-3" />
+                              County Info
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                            <CountyForm
+                              county={editingCounty ? {...editingCounty, contentType: 'info'} as County : null}
+                              onSuccess={() => {
+                                setEditingCounty(null);
+                                fetchCounties();
+                              }}
+                              onCancel={() => setEditingCounty(null)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingCounty({...county, contentType: 'media'} as County)}
+                              className="text-xs justify-start"
+                            >
+                              <Video className="mr-1 h-3 w-3" />
+                              Media
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                            <CountyForm
+                              county={editingCounty ? {...editingCounty, contentType: 'media'} as County : null}
+                              onSuccess={() => {
+                                setEditingCounty(null);
+                                fetchCounties();
+                              }}
+                              onCancel={() => setEditingCounty(null)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
+                      <div className="flex gap-2 pt-2 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleStatus(county)}
+                          className="text-xs flex-1"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          {county.status === 'published' ? 'Unpublish' : 'Publish'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteCounty(county.id)}
+                          className="text-xs"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleStatus(county)}
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        {county.status === 'published' ? 'Unpublish' : 'Publish'}
-                      </Button>
-                      
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" onClick={() => setEditingCounty(county)}>
-                            <Edit className="w-4 h-4 mr-1" />
-                            Edit
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                          <CountyForm
-                            county={editingCounty}
-                            onSuccess={() => {
-                              setEditingCounty(null);
-                              fetchCounties();
-                            }}
-                            onCancel={() => setEditingCounty(null)}
-                          />
-                        </DialogContent>
-                      </Dialog>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteCounty(county.id)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}

@@ -26,6 +26,7 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
 import Resources from "./pages/Resources";
+import { CountyPage } from "./pages/CountyPage";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,8 @@ const App = () => (
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
+          {/* County Pages Route */}
+          <Route path="/county/:slug" element={<CountyPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

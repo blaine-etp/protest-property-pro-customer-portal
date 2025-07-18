@@ -9,6 +9,7 @@ import { CountyPageForm } from "./CountyPageForm";
 import { Search, Plus, Edit, Trash2, Eye, Globe, MapPin, FileText, Info, Video, ExternalLink } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 
 interface County {
@@ -153,6 +154,32 @@ export function CountyManagement() {
       toast({
         title: "Error",
         description: "Failed to update county status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTogglePageStatus = async (page: CountyPage) => {
+    const newStatus = page.status === 'published' ? 'draft' : 'published';
+
+    try {
+      const { error } = await supabase
+        .from('county_pages')
+        .update({ status: newStatus })
+        .eq('id', page.id);
+
+      if (error) throw error;
+
+      setCountyPages(countyPages.map(p => p.id === page.id ? { ...p, status: newStatus } : p));
+      toast({
+        title: "Success",
+        description: `Page ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating page status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update page status",
         variant: "destructive",
       });
     }
@@ -406,17 +433,23 @@ export function CountyManagement() {
                           <p className="text-xs text-muted-foreground">No pages created yet</p>
                         ) : (
                           getCountyPages(county.id).map((page) => (
-                            <div key={page.id} className="flex items-center justify-between py-1 px-2 bg-muted/30 rounded text-xs">
+                            <div key={page.id} className="flex items-center justify-between py-2 px-3 bg-muted/30 rounded text-xs">
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 <Badge variant="outline" className="text-xs">
                                   {page.page_type}
                                 </Badge>
                                 <span className="truncate text-xs">{page.title}</span>
-                                <Badge variant={page.status === 'published' ? 'default' : 'secondary'} className="text-xs">
-                                  {page.status}
-                                </Badge>
                               </div>
-                              <div className="flex gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-muted-foreground">
+                                    {page.status === 'published' ? 'Live' : 'Draft'}
+                                  </span>
+                                  <Switch
+                                    checked={page.status === 'published'}
+                                    onCheckedChange={() => handleTogglePageStatus(page)}
+                                  />
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"

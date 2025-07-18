@@ -200,12 +200,6 @@ export function BlogPostForm({ post, onSuccess, onCancel }: BlogPostFormProps) {
     setSaving(true);
 
     try {
-      // Get current user for author_id
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
       let thumbnailUrl = post?.thumbnail_image_url;
       if (thumbnailFile) {
         thumbnailUrl = await uploadThumbnail();
@@ -215,7 +209,7 @@ export function BlogPostForm({ post, onSuccess, onCancel }: BlogPostFormProps) {
       const postData = {
         ...formData,
         thumbnail_image_url: thumbnailUrl,
-        author_id: user.id,
+        author_id: null, // No authentication, so no author
         published_at: formData.status === 'published' && !post?.published_at 
           ? new Date().toISOString() 
           : post?.published_at,

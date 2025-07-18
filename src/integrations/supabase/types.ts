@@ -165,7 +165,7 @@ export type Database = {
       }
       blog_posts: {
         Row: {
-          author_id: string
+          author_id: string | null
           category: string
           content: string
           created_at: string
@@ -181,7 +181,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           category: string
           content: string
           created_at?: string
@@ -197,7 +197,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           category?: string
           content?: string
           created_at?: string

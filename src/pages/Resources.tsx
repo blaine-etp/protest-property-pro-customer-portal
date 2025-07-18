@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Clock, User, ArrowRight, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,107 +8,77 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
-interface Article {
+interface BlogPost {
   id: string;
   title: string;
   excerpt: string;
   content: string;
   category: string;
-  author: string;
-  publishedAt: string;
-  readTime: number;
+  post_type: string;
+  status: string;
   featured: boolean;
-  image?: string;
+  thumbnail_image_url: string | null;
+  published_at: string | null;
+  created_at: string;
+  read_time_minutes: number;
+  author_id: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
 }
-
-const mockArticles: Article[] = [
-  {
-    id: "1",
-    title: "Understanding Texas Property Tax Appeals: A Complete Guide",
-    excerpt: "Everything you need to know about appealing your property tax assessment in Texas, including deadlines, requirements, and strategies for success.",
-    content: "",
-    category: "Tax Appeals",
-    author: "Sarah Johnson",
-    publishedAt: "2024-01-15",
-    readTime: 8,
-    featured: true,
-    image: "https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=400&fit=crop"
-  },
-  {
-    id: "2",
-    title: "Success Story: How We Saved $12,000 in Property Taxes",
-    excerpt: "Read how one homeowner successfully challenged their property assessment and achieved significant savings through our expert representation.",
-    content: "",
-    category: "Success Stories",
-    author: "Mike Rodriguez",
-    publishedAt: "2024-01-12",
-    readTime: 5,
-    featured: true,
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&h=400&fit=crop"
-  },
-  {
-    id: "3",
-    title: "2024 Property Market Trends: What Homeowners Need to Know",
-    excerpt: "Market analysis showing how changing property values affect tax assessments and what homeowners can expect in the coming year.",
-    content: "",
-    category: "Market News",
-    author: "Emily Chen",
-    publishedAt: "2024-01-10",
-    readTime: 6,
-    featured: false,
-    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop"
-  },
-  {
-    id: "4",
-    title: "New County Assessment Guidelines Released",
-    excerpt: "Breaking down the latest changes to property assessment methodologies and how they impact homeowners across different counties.",
-    content: "",
-    category: "County News",
-    author: "David Park",
-    publishedAt: "2024-01-08",
-    readTime: 4,
-    featured: false,
-    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop"
-  },
-  {
-    id: "5",
-    title: "Common Property Tax Appeal Mistakes to Avoid",
-    excerpt: "Learn from the most frequent errors homeowners make during the appeal process and how to increase your chances of success.",
-    content: "",
-    category: "Tax Appeals",
-    author: "Lisa Thompson",
-    publishedAt: "2024-01-05",
-    readTime: 7,
-    featured: false
-  },
-  {
-    id: "6",
-    title: "Real Estate Boom Impact on Tax Assessments",
-    excerpt: "How the recent surge in property values has led to higher assessments and what homeowners can do to protect themselves.",
-    content: "",
-    category: "Market News",
-    author: "Robert Kim",
-    publishedAt: "2024-01-03",
-    readTime: 6,
-    featured: false
-  }
-];
 
 const categories = ["All", "Tax Appeals", "Success Stories", "Market News", "County News"];
 
 export default function Resources() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredArticles = mockArticles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || article.category === selectedCategory;
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select(`
+          *,
+          profiles (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredArticles = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (post.excerpt?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const featuredArticles = filteredArticles.filter(article => article.featured);
-  const regularArticles = filteredArticles.filter(article => !article.featured);
+  const featuredArticles = filteredArticles.filter(post => post.featured);
+  const regularArticles = filteredArticles.filter(post => !post.featured);
+
+  const getAuthorName = (post: BlogPost) => {
+    if (post.profiles) {
+      return `${post.profiles.first_name} ${post.profiles.last_name}`;
+    }
+    return "Admin";
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -116,6 +87,23 @@ export default function Resources() {
       day: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-16">
+          <div className="container mx-auto px-4 py-16">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Loading Resources...</h1>
+              <p className="text-muted-foreground">Please wait while we fetch the latest articles.</p>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -182,28 +170,26 @@ export default function Resources() {
             <div className="container mx-auto px-4">
               <h2 className="text-3xl font-bold text-foreground mb-8 text-center">Featured Articles</h2>
               <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                {featuredArticles.map((article) => (
-                  <Card key={article.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-                    {article.image && (
-                      <div className="relative h-48 overflow-hidden">
-                        <img 
-                          src={article.image} 
-                          alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute top-4 left-4">
-                          <Badge className={getCategoryColor(article.category)}>
-                            {article.category}
-                          </Badge>
-                        </div>
+                {featuredArticles.map((post) => (
+                  <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={post.thumbnail_image_url || "https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=400&fit=crop"} 
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <Badge className={getCategoryColor(post.category)}>
+                          {post.category}
+                        </Badge>
                       </div>
-                    )}
+                    </div>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-xl group-hover:text-primary transition-colors line-clamp-2">
-                        {article.title}
+                        {post.title}
                       </CardTitle>
                       <CardDescription className="text-base line-clamp-3">
-                        {article.excerpt}
+                        {post.excerpt}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
@@ -211,15 +197,15 @@ export default function Resources() {
                         <div className="flex items-center space-x-4">
                           <div className="flex items-center">
                             <User className="h-4 w-4 mr-1" />
-                            {article.author}
+                            {getAuthorName(post)}
                           </div>
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1" />
-                            {formatDate(article.publishedAt)}
+                            {formatDate(post.published_at || post.created_at)}
                           </div>
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
-                            {article.readTime} min read
+                            {post.read_time_minutes} min read
                           </div>
                         </div>
                       </div>
@@ -256,43 +242,41 @@ export default function Resources() {
               </div>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                {regularArticles.map((article) => (
-                  <Card key={article.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden h-full flex flex-col">
-                    {article.image && (
-                      <div className="relative h-40 overflow-hidden">
-                        <img 
-                          src={article.image} 
-                          alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute top-3 left-3">
-                          <Badge className={getCategoryColor(article.category)} variant="secondary">
-                            {article.category}
-                          </Badge>
-                        </div>
+                {regularArticles.map((post) => (
+                  <Card key={post.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden h-full flex flex-col">
+                    <div className="relative h-40 overflow-hidden">
+                      <img 
+                        src={post.thumbnail_image_url || "https://images.unsplash.com/photo-1560472355-536de3962603?w=800&h=400&fit=crop"} 
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 left-3">
+                        <Badge className={getCategoryColor(post.category)} variant="secondary">
+                          {post.category}
+                        </Badge>
                       </div>
-                    )}
+                    </div>
                     <CardHeader className="pb-3 flex-grow">
                       <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
-                        {article.title}
+                        {post.title}
                       </CardTitle>
                       <CardDescription className="line-clamp-3 text-sm">
-                        {article.excerpt}
+                        {post.excerpt}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0 mt-auto">
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
                         <div className="flex items-center">
                           <User className="h-3 w-3 mr-1" />
-                          {article.author}
+                          {getAuthorName(post)}
                         </div>
                         <div className="flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
-                          {article.readTime} min
+                          {post.read_time_minutes} min
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground mb-3">
-                        {formatDate(article.publishedAt)}
+                        {formatDate(post.published_at || post.created_at)}
                       </div>
                       <Button variant="ghost" size="sm" className="group/btn p-0 h-auto text-primary hover:text-primary/80">
                         Read More

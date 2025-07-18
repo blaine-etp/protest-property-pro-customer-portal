@@ -326,6 +326,87 @@ export type Database = {
           },
         ]
       }
+      counties: {
+        Row: {
+          appraisal_district_address: string | null
+          appraisal_district_city: string | null
+          appraisal_district_name: string | null
+          appraisal_district_phone: string | null
+          appraisal_district_website: string | null
+          appraisal_district_zip: string | null
+          county_code: string | null
+          county_info_content: string | null
+          created_at: string
+          current_tax_year: number | null
+          featured: boolean
+          hearing_period_end: string | null
+          hearing_period_start: string | null
+          how_to_content: string | null
+          id: string
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
+          name: string
+          protest_deadline: string | null
+          slug: string
+          state: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appraisal_district_address?: string | null
+          appraisal_district_city?: string | null
+          appraisal_district_name?: string | null
+          appraisal_district_phone?: string | null
+          appraisal_district_website?: string | null
+          appraisal_district_zip?: string | null
+          county_code?: string | null
+          county_info_content?: string | null
+          created_at?: string
+          current_tax_year?: number | null
+          featured?: boolean
+          hearing_period_end?: string | null
+          hearing_period_start?: string | null
+          how_to_content?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          name: string
+          protest_deadline?: string | null
+          slug: string
+          state?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appraisal_district_address?: string | null
+          appraisal_district_city?: string | null
+          appraisal_district_name?: string | null
+          appraisal_district_phone?: string | null
+          appraisal_district_website?: string | null
+          appraisal_district_zip?: string | null
+          county_code?: string | null
+          county_info_content?: string | null
+          created_at?: string
+          current_tax_year?: number | null
+          featured?: boolean
+          hearing_period_end?: string | null
+          hearing_period_start?: string | null
+          how_to_content?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          name?: string
+          protest_deadline?: string | null
+          slug?: string
+          state?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number

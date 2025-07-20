@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Building,
@@ -25,6 +26,7 @@ import {
   Gavel,
   Database,
   User,
+  X,
 } from "lucide-react";
 import { dataService } from "@/services";
 import type { Property } from "@/services/types";
@@ -32,6 +34,8 @@ import type { Property } from "@/services/types";
 export function PropertiesSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid");
+  const [selectedCounty, setSelectedCounty] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,11 +58,16 @@ export function PropertiesSection() {
     }
   };
 
-  const filteredProperties = properties.filter(property =>
-    property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.parcelNumber.includes(searchTerm)
-  );
+  const filteredProperties = properties.filter(property => {
+    const matchesSearch = property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         property.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         property.parcelNumber.includes(searchTerm);
+    
+    const matchesCounty = selectedCounty === "" || selectedCounty === "Travis"; // Mock county filter
+    const matchesStatus = selectedStatus === "" || property.status === selectedStatus;
+    
+    return matchesSearch && matchesCounty && matchesStatus;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -192,20 +201,107 @@ export function PropertiesSection() {
       {/* Search and Filter */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search properties by address, owner, or parcel number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search properties by address, owner, or parcel number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" />
+                Advanced Filter
+              </Button>
             </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+            
+            {/* Filter Controls */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-600">County:</label>
+                <Select value={selectedCounty} onValueChange={setSelectedCounty}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All Counties" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Counties</SelectItem>
+                    <SelectItem value="Travis">Travis</SelectItem>
+                    <SelectItem value="Harris">Harris</SelectItem>
+                    <SelectItem value="Dallas">Dallas</SelectItem>
+                    <SelectItem value="Collin">Collin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-600">Status:</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Statuses</SelectItem>
+                    <SelectItem value="Active Protest">Active Protest</SelectItem>
+                    <SelectItem value="Review Needed">Review Needed</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Monitoring">Monitoring</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Clear Filters */}
+              {(selectedCounty || selectedStatus || searchTerm) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCounty("");
+                    setSelectedStatus("");
+                    setSearchTerm("");
+                  }}
+                  className="text-slate-500 hover:text-slate-700"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear All
+                </Button>
+              )}
+            </div>
+            
+            {/* Active Filters Display */}
+            {(selectedCounty || selectedStatus) && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-600">Active filters:</span>
+                {selectedCounty && (
+                  <Badge variant="secondary" className="gap-1">
+                    County: {selectedCounty}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => setSelectedCounty("")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+                {selectedStatus && (
+                  <Badge variant="secondary" className="gap-1">
+                    Status: {selectedStatus}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => setSelectedStatus("")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

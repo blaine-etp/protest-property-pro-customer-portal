@@ -30,15 +30,44 @@ import {
 } from "lucide-react";
 import { dataService } from "@/services";
 import type { Property } from "@/services/types";
+import { FilterPanel } from "./filters/FilterPanel";
+import { MultiSelectFilter } from "./filters/MultiSelectFilter";
+import { DateRangeFilter } from "./filters/DateRangeFilter";
+import { NumericRangeFilter } from "./filters/NumericRangeFilter";
+
+interface PropertyFilters {
+  search: string;
+  counties: string[];
+  statuses: string[];
+  protestStatuses: string[];
+  protestDeadlineStart?: Date;
+  protestDeadlineEnd?: Date;
+  lastUpdatedStart?: Date;
+  lastUpdatedEnd?: Date;
+  assessedValueMin?: number;
+  assessedValueMax?: number;
+  marketValueMin?: number;
+  marketValueMax?: number;
+  taxAmountMin?: number;
+  taxAmountMax?: number;
+  potentialSavingsMin?: number;
+  potentialSavingsMax?: number;
+}
+
+const defaultFilters: PropertyFilters = {
+  search: "",
+  counties: [],
+  statuses: [],
+  protestStatuses: [],
+};
 
 export function PropertiesSection() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<PropertyFilters>(defaultFilters);
   const [viewMode, setViewMode] = useState("grid");
-  const [selectedCounty, setSelectedCounty] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     loadProperties();
@@ -59,15 +88,93 @@ export function PropertiesSection() {
   };
 
   const filteredProperties = properties.filter(property => {
-    const matchesSearch = property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         property.parcelNumber.includes(searchTerm);
-    
-    const matchesCounty = selectedCounty === "" || selectedCounty === "Travis"; // Mock county filter
-    const matchesStatus = selectedStatus === "" || property.status === selectedStatus;
-    
-    return matchesSearch && matchesCounty && matchesStatus;
+    // Search filter
+    if (filters.search && !property.address.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !property.owner.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !property.parcelNumber.includes(filters.search)) {
+      return false;
+    }
+
+    // County filter
+    if (filters.counties.length > 0 && !filters.counties.includes("Travis")) { // Mock county
+      return false;
+    }
+
+    // Status filter
+    if (filters.statuses.length > 0 && !filters.statuses.includes(property.status)) {
+      return false;
+    }
+
+    // Protest Status filter
+    if (filters.protestStatuses.length > 0 && property.protestStatus && !filters.protestStatuses.includes(property.protestStatus)) {
+      return false;
+    }
+
+    // Assessed value filter
+    if (filters.assessedValueMin !== undefined) {
+      const assessedValue = parseFloat(property.assessedValue.replace(/[$,]/g, ''));
+      if (assessedValue < filters.assessedValueMin) return false;
+    }
+    if (filters.assessedValueMax !== undefined) {
+      const assessedValue = parseFloat(property.assessedValue.replace(/[$,]/g, ''));
+      if (assessedValue > filters.assessedValueMax) return false;
+    }
+
+    // Market value filter
+    if (filters.marketValueMin !== undefined) {
+      const marketValue = parseFloat(property.marketValue.replace(/[$,]/g, ''));
+      if (marketValue < filters.marketValueMin) return false;
+    }
+    if (filters.marketValueMax !== undefined) {
+      const marketValue = parseFloat(property.marketValue.replace(/[$,]/g, ''));
+      if (marketValue > filters.marketValueMax) return false;
+    }
+
+    // Tax amount filter
+    if (filters.taxAmountMin !== undefined) {
+      const taxAmount = parseFloat(property.taxAmount.replace(/[$,]/g, ''));
+      if (taxAmount < filters.taxAmountMin) return false;
+    }
+    if (filters.taxAmountMax !== undefined) {
+      const taxAmount = parseFloat(property.taxAmount.replace(/[$,]/g, ''));
+      if (taxAmount > filters.taxAmountMax) return false;
+    }
+
+    // Potential savings filter
+    if (filters.potentialSavingsMin !== undefined) {
+      const potentialSavings = parseFloat(property.potentialSavings.replace(/[$,]/g, ''));
+      if (potentialSavings < filters.potentialSavingsMin) return false;
+    }
+    if (filters.potentialSavingsMax !== undefined) {
+      const potentialSavings = parseFloat(property.potentialSavings.replace(/[$,]/g, ''));
+      if (potentialSavings > filters.potentialSavingsMax) return false;
+    }
+
+    return true;
   });
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (filters.search) count++;
+    if (filters.counties.length > 0) count++;
+    if (filters.statuses.length > 0) count++;
+    if (filters.protestStatuses.length > 0) count++;
+    if (filters.protestDeadlineStart || filters.protestDeadlineEnd) count++;
+    if (filters.lastUpdatedStart || filters.lastUpdatedEnd) count++;
+    if (filters.assessedValueMin !== undefined || filters.assessedValueMax !== undefined) count++;
+    if (filters.marketValueMin !== undefined || filters.marketValueMax !== undefined) count++;
+    if (filters.taxAmountMin !== undefined || filters.taxAmountMax !== undefined) count++;
+    if (filters.potentialSavingsMin !== undefined || filters.potentialSavingsMax !== undefined) count++;
+    return count;
+  };
+
+  const clearAllFilters = () => {
+    setFilters(defaultFilters);
+  };
+
+  const updateFilter = (key: keyof PropertyFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -88,6 +195,27 @@ export function PropertiesSection() {
       default: return <Clock className="h-4 w-4" />;
     }
   };
+
+  const countyOptions = [
+    { value: "Travis", label: "Travis County" },
+    { value: "Harris", label: "Harris County" },
+    { value: "Dallas", label: "Dallas County" },
+    { value: "Collin", label: "Collin County" },
+    { value: "Williamson", label: "Williamson County" },
+  ];
+
+  const statusOptions = [
+    { value: "Active Protest", label: "Active Protest", color: "orange" },
+    { value: "Review Needed", label: "Review Needed", color: "red" },
+    { value: "Completed", label: "Completed", color: "green" },
+    { value: "Monitoring", label: "Monitoring", color: "blue" },
+  ];
+
+  const protestStatusOptions = [
+    { value: "filed", label: "Filed", color: "blue" },
+    { value: "settled", label: "Settled", color: "green" },
+    { value: "none", label: "None", color: "gray" },
+  ];
 
   if (isLoading) {
     return (
@@ -179,7 +307,9 @@ export function PropertiesSection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Potential Savings</p>
-                <p className="text-2xl font-bold text-green-600">$7,400</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ${filteredProperties.reduce((sum, p) => sum + parseFloat(p.potentialSavings.replace(/[$,]/g, '')), 0).toLocaleString()}
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
@@ -190,7 +320,9 @@ export function PropertiesSection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Avg. Assessment</p>
-                <p className="text-2xl font-bold">$432K</p>
+                <p className="text-2xl font-bold">
+                  ${Math.round(filteredProperties.reduce((sum, p) => sum + parseFloat(p.assessedValue.replace(/[$,]/g, '')), 0) / filteredProperties.length / 1000)}K
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-purple-500" />
             </div>
@@ -198,113 +330,114 @@ export function PropertiesSection() {
         </Card>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search Bar */}
       <Card>
         <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Search properties by address, owner, or parcel number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline">
-                <Filter className="h-4 w-4 mr-2" />
-                Advanced Filter
-              </Button>
-            </div>
-            
-            {/* Filter Controls */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-slate-600">County:</label>
-                <Select value={selectedCounty} onValueChange={setSelectedCounty}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="All Counties" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Counties</SelectItem>
-                    <SelectItem value="Travis">Travis</SelectItem>
-                    <SelectItem value="Harris">Harris</SelectItem>
-                    <SelectItem value="Dallas">Dallas</SelectItem>
-                    <SelectItem value="Collin">Collin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-slate-600">Status:</label>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All Statuses</SelectItem>
-                    <SelectItem value="Active Protest">Active Protest</SelectItem>
-                    <SelectItem value="Review Needed">Review Needed</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Monitoring">Monitoring</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Clear Filters */}
-              {(selectedCounty || selectedStatus || searchTerm) && (
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCounty("");
-                    setSelectedStatus("");
-                    setSearchTerm("");
-                  }}
-                  className="text-slate-500 hover:text-slate-700"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Clear All
-                </Button>
-              )}
-            </div>
-            
-            {/* Active Filters Display */}
-            {(selectedCounty || selectedStatus) && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-600">Active filters:</span>
-                {selectedCounty && (
-                  <Badge variant="secondary" className="gap-1">
-                    County: {selectedCounty}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => setSelectedCounty("")}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                )}
-                {selectedStatus && (
-                  <Badge variant="secondary" className="gap-1">
-                    Status: {selectedStatus}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
-                      onClick={() => setSelectedStatus("")}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                )}
-              </div>
-            )}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Search properties by address, owner, or parcel number..."
+              value={filters.search}
+              onChange={(e) => updateFilter("search", e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Filters */}
+      <FilterPanel
+        title="Advanced Filters"
+        isOpen={filtersOpen}
+        onToggle={() => setFiltersOpen(!filtersOpen)}
+        activeFiltersCount={getActiveFiltersCount()}
+        onClearAll={clearAllFilters}
+      >
+        <MultiSelectFilter
+          label="County"
+          options={countyOptions}
+          selectedValues={filters.counties}
+          onSelectionChange={(values) => updateFilter("counties", values)}
+        />
+        
+        <MultiSelectFilter
+          label="Status"
+          options={statusOptions}
+          selectedValues={filters.statuses}
+          onSelectionChange={(values) => updateFilter("statuses", values)}
+        />
+        
+        <MultiSelectFilter
+          label="Protest Status"
+          options={protestStatusOptions}
+          selectedValues={filters.protestStatuses}
+          onSelectionChange={(values) => updateFilter("protestStatuses", values)}
+        />
+
+        <DateRangeFilter
+          label="Protest Deadline"
+          startDate={filters.protestDeadlineStart}
+          endDate={filters.protestDeadlineEnd}
+          onDateChange={(start, end) => {
+            updateFilter("protestDeadlineStart", start);
+            updateFilter("protestDeadlineEnd", end);
+          }}
+        />
+
+        <DateRangeFilter
+          label="Last Updated"
+          startDate={filters.lastUpdatedStart}
+          endDate={filters.lastUpdatedEnd}
+          onDateChange={(start, end) => {
+            updateFilter("lastUpdatedStart", start);
+            updateFilter("lastUpdatedEnd", end);
+          }}
+        />
+
+        <NumericRangeFilter
+          label="Assessed Value"
+          min={filters.assessedValueMin}
+          max={filters.assessedValueMax}
+          onRangeChange={(min, max) => {
+            updateFilter("assessedValueMin", min);
+            updateFilter("assessedValueMax", max);
+          }}
+          formatValue={(value) => `$${value.toLocaleString()}`}
+        />
+
+        <NumericRangeFilter
+          label="Market Value"
+          min={filters.marketValueMin}
+          max={filters.marketValueMax}
+          onRangeChange={(min, max) => {
+            updateFilter("marketValueMin", min);
+            updateFilter("marketValueMax", max);
+          }}
+          formatValue={(value) => `$${value.toLocaleString()}`}
+        />
+
+        <NumericRangeFilter
+          label="Tax Amount"
+          min={filters.taxAmountMin}
+          max={filters.taxAmountMax}
+          onRangeChange={(min, max) => {
+            updateFilter("taxAmountMin", min);
+            updateFilter("taxAmountMax", max);
+          }}
+          formatValue={(value) => `$${value.toLocaleString()}`}
+        />
+
+        <NumericRangeFilter
+          label="Potential Savings"
+          min={filters.potentialSavingsMin}
+          max={filters.potentialSavingsMax}
+          onRangeChange={(min, max) => {
+            updateFilter("potentialSavingsMin", min);
+            updateFilter("potentialSavingsMax", max);
+          }}
+          formatValue={(value) => `$${value.toLocaleString()}`}
+        />
+      </FilterPanel>
 
       <Tabs value={viewMode} onValueChange={setViewMode}>
         <TabsList>

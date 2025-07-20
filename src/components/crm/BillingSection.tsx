@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FilterPanel } from "@/components/crm/filters/FilterPanel";
+import { MultiSelectFilter } from "@/components/crm/filters/MultiSelectFilter";
+import { DateRangeFilter } from "@/components/crm/filters/DateRangeFilter";
+import { NumericRangeFilter } from "@/components/crm/filters/NumericRangeFilter";
 import {
   CreditCard,
   Search,
@@ -24,6 +28,7 @@ import {
   User,
   Upload,
   Database,
+  X,
 } from "lucide-react";
 import { dataService } from "@/services";
 import type { Bill, Invoice } from "@/services/types";
@@ -35,6 +40,13 @@ export function BillingSection() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filter states
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [dueDateStart, setDueDateStart] = useState<Date | undefined>();
+  const [dueDateEnd, setDueDateEnd] = useState<Date | undefined>();
+  const [minTaxAmount, setMinTaxAmount] = useState<number | undefined>();
+  const [maxTaxAmount, setMaxTaxAmount] = useState<number | undefined>();
 
   useEffect(() => {
     loadBillingData();
@@ -58,11 +70,44 @@ export function BillingSection() {
     }
   };
 
-  const filteredBills = bills.filter(bill =>
-    bill.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBills = bills.filter(bill => {
+    // Text search
+    const matchesSearch = bill.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(bill.status);
+    
+    // Tax amount filter (convert $X,XXX to number)
+    const taxValue = parseFloat(bill.taxAmount.replace(/[$,]/g, ''));
+    const matchesTaxAmount = (minTaxAmount === undefined || taxValue >= minTaxAmount) &&
+      (maxTaxAmount === undefined || taxValue <= maxTaxAmount);
+    
+    // Date filter (basic check for now)
+    const matchesDate = true; // Would need proper date parsing for real implementation
+    
+    return matchesSearch && matchesStatus && matchesTaxAmount && matchesDate;
+  });
+
+  // Get unique statuses for filter
+  const uniqueStatuses = Array.from(new Set(bills.map(b => b.status)));
+
+  // Count active filters
+  const activeFiltersCount = 
+    selectedStatuses.length +
+    (dueDateStart || dueDateEnd ? 1 : 0) +
+    (minTaxAmount !== undefined || maxTaxAmount !== undefined ? 1 : 0) +
+    (searchTerm ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedStatuses([]);
+    setDueDateStart(undefined);
+    setDueDateEnd(undefined);
+    setMinTaxAmount(undefined);
+    setMaxTaxAmount(undefined);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -226,13 +271,50 @@ export function BillingSection() {
                     className="pl-10"
                   />
                 </div>
-                <Button variant="outline">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
+                {activeFiltersCount > 0 && (
+                  <Button variant="outline" onClick={clearAllFilters}>
+                    <X className="h-4 w-4 mr-2" />
+                    Clear All ({activeFiltersCount})
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
+
+          {/* Advanced Filters */}
+          <FilterPanel
+            title="Advanced Filters"
+            activeFiltersCount={activeFiltersCount}
+            onClearAll={clearAllFilters}
+          >
+            <MultiSelectFilter
+              label="Status"
+              options={uniqueStatuses}
+              selectedValues={selectedStatuses}
+              onSelectionChange={setSelectedStatuses}
+              placeholder="All statuses"
+            />
+            
+            <DateRangeFilter
+              label="Due Date"
+              startDate={dueDateStart}
+              endDate={dueDateEnd}
+              onDateChange={setDueDateStart}
+              placeholder="Any date"
+            />
+            
+            <NumericRangeFilter
+              label="Tax Amount"
+              min={minTaxAmount}
+              max={maxTaxAmount}
+              onRangeChange={(min, max) => {
+                setMinTaxAmount(min);
+                setMaxTaxAmount(max);
+              }}
+              placeholder="Any amount"
+              formatValue={(value) => `$${value.toLocaleString()}`}
+            />
+          </FilterPanel>
 
           {/* Bills Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

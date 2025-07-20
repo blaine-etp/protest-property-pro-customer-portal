@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FilterPanel } from "@/components/crm/filters/FilterPanel";
+import { MultiSelectFilter } from "@/components/crm/filters/MultiSelectFilter";
+import { DateRangeFilter } from "@/components/crm/filters/DateRangeFilter";
+import { NumericRangeFilter } from "@/components/crm/filters/NumericRangeFilter";
 import {
   Users,
   Search,
@@ -21,12 +25,22 @@ import {
   MessageSquare,
   UserCheck,
   Clock,
+  X,
 } from "lucide-react";
 
 export function ContactsSection() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
+  
+  // Filter states
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [lastContactStart, setLastContactStart] = useState<Date | undefined>();
+  const [lastContactEnd, setLastContactEnd] = useState<Date | undefined>();
+  const [minProperties, setMinProperties] = useState<number | undefined>();
+  const [maxProperties, setMaxProperties] = useState<number | undefined>();
+  const [minSavings, setMinSavings] = useState<number | undefined>();
+  const [maxSavings, setMaxSavings] = useState<number | undefined>();
 
   const contacts = [
     {
@@ -83,10 +97,48 @@ export function ContactsSection() {
     },
   ];
 
-  const filteredContacts = contacts.filter(contact =>
-    `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContacts = contacts.filter(contact => {
+    // Text search
+    const matchesSearch = `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(contact.status);
+    
+    // Property count filter
+    const matchesProperties = (minProperties === undefined || contact.properties >= minProperties) &&
+      (maxProperties === undefined || contact.properties <= maxProperties);
+    
+    // Savings amount filter (convert $X,XXX to number)
+    const savingsValue = parseFloat(contact.totalSavings.replace(/[$,]/g, ''));
+    const matchesSavings = (minSavings === undefined || savingsValue >= minSavings) &&
+      (maxSavings === undefined || savingsValue <= maxSavings);
+    
+    // Date filter (basic check for now)
+    const matchesDate = true; // Would need proper date parsing for real implementation
+    
+    return matchesSearch && matchesStatus && matchesProperties && matchesSavings && matchesDate;
+  });
+
+  // Get unique statuses for filter
+  const uniqueStatuses = Array.from(new Set(contacts.map(c => c.status)));
+
+  // Count active filters
+  const activeFiltersCount = 
+    selectedStatuses.length +
+    (lastContactStart || lastContactEnd ? 1 : 0) +
+    (minProperties !== undefined || maxProperties !== undefined ? 1 : 0) +
+    (minSavings !== undefined || maxSavings !== undefined ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSelectedStatuses([]);
+    setLastContactStart(undefined);
+    setLastContactEnd(undefined);
+    setMinProperties(undefined);
+    setMaxProperties(undefined);
+    setMinSavings(undefined);
+    setMaxSavings(undefined);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -128,13 +180,61 @@ export function ContactsSection() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+            {activeFiltersCount > 0 && (
+              <Button variant="outline" onClick={clearAllFilters}>
+                <X className="h-4 w-4 mr-2" />
+                Clear All ({activeFiltersCount})
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Filters */}
+      <FilterPanel
+        title="Advanced Filters"
+        activeFiltersCount={activeFiltersCount}
+        onClearAll={clearAllFilters}
+      >
+        <MultiSelectFilter
+          label="Status"
+          options={uniqueStatuses}
+          selectedValues={selectedStatuses}
+          onSelectionChange={setSelectedStatuses}
+          placeholder="All statuses"
+        />
+        
+        <DateRangeFilter
+          label="Last Contact Date"
+          startDate={lastContactStart}
+          endDate={lastContactEnd}
+          onDateChange={setLastContactStart}
+          placeholder="Any date"
+        />
+        
+        <NumericRangeFilter
+          label="Properties Count"
+          min={minProperties}
+          max={maxProperties}
+          onRangeChange={(min, max) => {
+            setMinProperties(min);
+            setMaxProperties(max);
+          }}
+          placeholder="Any count"
+        />
+        
+        <NumericRangeFilter
+          label="Total Savings"
+          min={minSavings}
+          max={maxSavings}
+          onRangeChange={(min, max) => {
+            setMinSavings(min);
+            setMaxSavings(max);
+          }}
+          placeholder="Any amount"
+          formatValue={(value) => `$${value.toLocaleString()}`}
+        />
+      </FilterPanel>
 
       {/* Contacts Grid View */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

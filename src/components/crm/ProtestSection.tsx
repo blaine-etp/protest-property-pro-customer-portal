@@ -3,9 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FilterPanel } from "@/components/crm/filters/FilterPanel";
+import { MultiSelectFilter } from "@/components/crm/filters/MultiSelectFilter";
+import { DateRangeFilter } from "@/components/crm/filters/DateRangeFilter";
+import { NumericRangeFilter } from "@/components/crm/filters/NumericRangeFilter";
 import {
   Gavel,
   Calendar,
@@ -24,6 +29,8 @@ import {
   Building,
   User,
   Database,
+  Search,
+  X,
 } from "lucide-react";
 import { dataService } from "@/services";
 import type { Protest } from "@/services/types";
@@ -34,6 +41,15 @@ export function ProtestSection() {
   const [protests, setProtests] = useState<Protest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedCounties, setSelectedCounties] = useState<string[]>([]);
+  const [filingDateStart, setFilingDateStart] = useState<Date | undefined>();
+  const [filingDateEnd, setFilingDateEnd] = useState<Date | undefined>();
+  const [minAssessedValue, setMinAssessedValue] = useState<number | undefined>();
+  const [maxAssessedValue, setMaxAssessedValue] = useState<number | undefined>();
 
   useEffect(() => {
     loadProtests();
@@ -53,10 +69,56 @@ export function ProtestSection() {
     }
   };
 
+  // Filter protests
+  const filteredProtests = protests.filter(protest => {
+    // Text search
+    const matchesSearch = protest.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      protest.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      protest.county.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(protest.status);
+    
+    // County filter
+    const matchesCounty = selectedCounties.length === 0 || selectedCounties.includes(protest.county);
+    
+    // Assessed value filter (convert $X,XXX to number)
+    const assessedValue = parseFloat(protest.assessedValue.replace(/[$,]/g, ''));
+    const matchesAssessedValue = (minAssessedValue === undefined || assessedValue >= minAssessedValue) &&
+      (maxAssessedValue === undefined || assessedValue <= maxAssessedValue);
+    
+    // Date filter (basic check for now)
+    const matchesDate = true; // Would need proper date parsing for real implementation
+    
+    return matchesSearch && matchesStatus && matchesCounty && matchesAssessedValue && matchesDate;
+  });
+
+  // Get unique values for filters
+  const uniqueStatuses = Array.from(new Set(protests.map(p => p.status)));
+  const uniqueCounties = Array.from(new Set(protests.map(p => p.county)));
+
+  // Count active filters
+  const activeFiltersCount = 
+    selectedStatuses.length +
+    selectedCounties.length +
+    (filingDateStart || filingDateEnd ? 1 : 0) +
+    (minAssessedValue !== undefined || maxAssessedValue !== undefined ? 1 : 0) +
+    (searchTerm ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedStatuses([]);
+    setSelectedCounties([]);
+    setFilingDateStart(undefined);
+    setFilingDateEnd(undefined);
+    setMinAssessedValue(undefined);
+    setMaxAssessedValue(undefined);
+  };
+
   const protestsByStatus = {
-    "Filed": protests.filter(p => p.status === "Filed"),
-    "Hearing Date Scheduled": protests.filter(p => p.status === "Hearing Date Scheduled"),
-    "Settled": protests.filter(p => p.status === "Settled"),
+    "Filed": filteredProtests.filter(p => p.status === "Filed"),
+    "Hearing Date Scheduled": filteredProtests.filter(p => p.status === "Hearing Date Scheduled"),
+    "Settled": filteredProtests.filter(p => p.status === "Settled"),
   };
 
   const getStatusColor = (status: string) => {
@@ -205,9 +267,75 @@ export function ProtestSection() {
         </TabsList>
 
         <TabsContent value="pipeline" className="space-y-6">
+          {/* Search and Filter */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search protests by property, owner, or county..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {activeFiltersCount > 0 && (
+                  <Button variant="outline" onClick={clearAllFilters}>
+                    <X className="h-4 w-4 mr-2" />
+                    Clear All ({activeFiltersCount})
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Advanced Filters */}
+          <FilterPanel
+            title="Advanced Filters"
+            activeFiltersCount={activeFiltersCount}
+            onClearAll={clearAllFilters}
+          >
+            <MultiSelectFilter
+              label="Status"
+              options={uniqueStatuses}
+              selectedValues={selectedStatuses}
+              onSelectionChange={setSelectedStatuses}
+              placeholder="All statuses"
+            />
+            
+            <MultiSelectFilter
+              label="County"
+              options={uniqueCounties}
+              selectedValues={selectedCounties}
+              onSelectionChange={setSelectedCounties}
+              placeholder="All counties"
+            />
+            
+            <DateRangeFilter
+              label="Filing Date"
+              startDate={filingDateStart}
+              endDate={filingDateEnd}
+              onDateChange={setFilingDateStart}
+              placeholder="Any date"
+            />
+            
+            <NumericRangeFilter
+              label="Assessed Value"
+              min={minAssessedValue}
+              max={maxAssessedValue}
+              onRangeChange={(min, max) => {
+                setMinAssessedValue(min);
+                setMaxAssessedValue(max);
+              }}
+              placeholder="Any amount"
+              formatValue={(value) => `$${value.toLocaleString()}`}
+            />
+          </FilterPanel>
+
           {/* Direct Protest Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {protests.map((protest) => (
+            {filteredProtests.map((protest) => (
               <Card 
                 key={protest.id} 
                 className="p-6 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
@@ -309,7 +437,7 @@ export function ProtestSection() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {protests.map((protest) => (
+                  {filteredProtests.map((protest) => (
                     <TableRow key={protest.id}>
                       <TableCell>
                         <div>
@@ -369,7 +497,7 @@ export function ProtestSection() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {protests.map((protest, index) => (
+                {filteredProtests.map((protest, index) => (
                   <div key={protest.id} className="flex gap-4">
                     <div className="flex flex-col items-center">
                        <div className={`w-3 h-3 rounded-full ${
@@ -377,7 +505,7 @@ export function ProtestSection() {
                          protest.status === "Filed" ? "bg-blue-500" :
                          "bg-orange-500"
                        }`}></div>
-                      {index < protests.length - 1 && (
+                      {index < filteredProtests.length - 1 && (
                         <div className="w-px h-16 bg-slate-200 mt-2"></div>
                       )}
                     </div>

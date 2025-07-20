@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -15,7 +15,7 @@ interface MultiSelectOption {
 
 interface MultiSelectFilterProps {
   label: string;
-  options: MultiSelectOption[];
+  options: MultiSelectOption[] | string[];
   selectedValues: string[];
   onSelectionChange: (values: string[]) => void;
   placeholder?: string;
@@ -28,26 +28,39 @@ export function MultiSelectFilter({
   selectedValues,
   onSelectionChange,
   placeholder = "Select options...",
-  searchPlaceholder = "Search options..."
+  searchPlaceholder = "Search options...",
 }: MultiSelectFilterProps) {
   const [open, setOpen] = useState(false);
 
-  const toggleOption = (value: string) => {
-    const newSelection = selectedValues.includes(value)
-      ? selectedValues.filter(v => v !== value)
-      : [...selectedValues, value];
+  // Normalize options to MultiSelectOption format
+  const normalizedOptions: MultiSelectOption[] = options.map(option => 
+    typeof option === 'string' 
+      ? { value: option, label: option }
+      : option
+  );
+
+  const handleSelect = (optionValue: string) => {
+    const newSelection = selectedValues.includes(optionValue)
+      ? selectedValues.filter(value => value !== optionValue)
+      : [...selectedValues, optionValue];
+    
     onSelectionChange(newSelection);
   };
 
-  const clearSelection = () => {
+  const getSelectedLabels = () => {
+    return selectedValues
+      .map(value => normalizedOptions.find(opt => opt.value === value)?.label || value)
+      .filter(Boolean);
+  };
+
+  const clearAll = () => {
     onSelectionChange([]);
   };
 
   const getDisplayText = () => {
     if (selectedValues.length === 0) return placeholder;
     if (selectedValues.length === 1) {
-      const option = options.find(opt => opt.value === selectedValues[0]);
-      return option?.label || selectedValues[0];
+      return getSelectedLabels()[0];
     }
     return `${selectedValues.length} selected`;
   };
@@ -73,23 +86,33 @@ export function MultiSelectFilter({
             <CommandList>
               <CommandEmpty>No options found.</CommandEmpty>
               <CommandGroup>
-                {options.map((option) => (
-                  <CommandItem
-                    key={option.value}
-                    onSelect={() => toggleOption(option.value)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        selectedValues.includes(option.value) ? "opacity-100" : "opacity-0"
+                {normalizedOptions.map((option) => {
+                  const isSelected = selectedValues.includes(option.value);
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => handleSelect(option.value)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          isSelected ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {option.icon && (
+                        <option.icon className="mr-2 h-4 w-4" />
                       )}
-                    />
-                    {option.icon && <option.icon className="mr-2 h-4 w-4" />}
-                    <span className={option.color ? `text-${option.color}-600` : ""}>
-                      {option.label}
-                    </span>
-                  </CommandItem>
-                ))}
+                      <span>{option.label}</span>
+                      {option.color && (
+                        <div
+                          className="ml-auto h-3 w-3 rounded-full"
+                          style={{ backgroundColor: option.color }}
+                        />
+                      )}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>
@@ -99,7 +122,7 @@ export function MultiSelectFilter({
       {selectedValues.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {selectedValues.map((value) => {
-            const option = options.find(opt => opt.value === value);
+            const option = normalizedOptions.find(opt => opt.value === value);
             return (
               <Badge key={value} variant="secondary" className="text-xs">
                 {option?.label || value}
@@ -107,21 +130,23 @@ export function MultiSelectFilter({
                   variant="ghost"
                   size="sm"
                   className="ml-1 h-3 w-3 p-0 hover:bg-transparent"
-                  onClick={() => toggleOption(value)}
+                  onClick={() => handleSelect(value)}
                 >
-                  ×
+                  <X className="h-2 w-2" />
                 </Button>
               </Badge>
             );
           })}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-5 text-xs text-slate-500 hover:text-slate-700"
-            onClick={clearSelection}
-          >
-            Clear all
-          </Button>
+          {selectedValues.length > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 text-xs text-slate-500 hover:text-slate-700"
+              onClick={clearAll}
+            >
+              Clear all
+            </Button>
+          )}
         </div>
       )}
     </div>

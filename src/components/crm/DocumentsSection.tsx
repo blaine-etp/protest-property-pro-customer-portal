@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FilterPanel } from "@/components/crm/filters/FilterPanel";
+import { MultiSelectFilter } from "@/components/crm/filters/MultiSelectFilter";
+import { DateRangeFilter } from "@/components/crm/filters/DateRangeFilter";
 import {
   FileText,
   Search,
@@ -23,6 +26,7 @@ import {
   Clock,
   Settings,
   Database,
+  X,
 } from "lucide-react";
 import { dataService } from "@/services";
 import type { Document, DocumentTemplate } from "@/services/types";
@@ -34,6 +38,12 @@ export function DocumentsSection() {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filter states
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [createdDateStart, setCreatedDateStart] = useState<Date | undefined>();
+  const [createdDateEnd, setCreatedDateEnd] = useState<Date | undefined>();
 
   useEffect(() => {
     loadDocumentsData();
@@ -57,11 +67,42 @@ export function DocumentsSection() {
     }
   };
 
-  const filteredDocuments = documents.filter(doc =>
-    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.property.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDocuments = documents.filter(doc => {
+    // Text search
+    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.property.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(doc.status);
+    
+    // Type filter
+    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(doc.type);
+    
+    // Date filter (basic check for now)
+    const matchesDate = true; // Would need proper date parsing for real implementation
+    
+    return matchesSearch && matchesStatus && matchesType && matchesDate;
+  });
+
+  // Get unique values for filters
+  const uniqueStatuses = Array.from(new Set(documents.map(d => d.status)));
+  const uniqueTypes = Array.from(new Set(documents.map(d => d.type)));
+
+  // Count active filters
+  const activeFiltersCount = 
+    selectedStatuses.length +
+    selectedTypes.length +
+    (createdDateStart || createdDateEnd ? 1 : 0) +
+    (searchTerm ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedStatuses([]);
+    setSelectedTypes([]);
+    setCreatedDateStart(undefined);
+    setCreatedDateEnd(undefined);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -223,13 +264,46 @@ export function DocumentsSection() {
                     className="pl-10"
                   />
                 </div>
-                <Button variant="outline">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
+                {activeFiltersCount > 0 && (
+                  <Button variant="outline" onClick={clearAllFilters}>
+                    <X className="h-4 w-4 mr-2" />
+                    Clear All ({activeFiltersCount})
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
+
+          {/* Advanced Filters */}
+          <FilterPanel
+            title="Advanced Filters"
+            activeFiltersCount={activeFiltersCount}
+            onClearAll={clearAllFilters}
+          >
+            <MultiSelectFilter
+              label="Status"
+              options={uniqueStatuses}
+              selectedValues={selectedStatuses}
+              onSelectionChange={setSelectedStatuses}
+              placeholder="All statuses"
+            />
+            
+            <MultiSelectFilter
+              label="Document Type"
+              options={uniqueTypes}
+              selectedValues={selectedTypes}
+              onSelectionChange={setSelectedTypes}
+              placeholder="All types"
+            />
+            
+            <DateRangeFilter
+              label="Created Date"
+              startDate={createdDateStart}
+              endDate={createdDateEnd}
+              onDateChange={setCreatedDateStart}
+              placeholder="Any date"
+            />
+          </FilterPanel>
 
           {/* Documents Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

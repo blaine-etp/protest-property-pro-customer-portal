@@ -56,7 +56,7 @@ const navigationItems = [
     icon: Shield,
   },
   {
-    title: "Bulk Uploader",
+    title: "Concierge Onboarding",
     url: "/admin/bulk-upload",
     icon: Upload,
   },

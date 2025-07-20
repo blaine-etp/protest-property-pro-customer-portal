@@ -37,8 +37,8 @@ const adminTools = [
     category: "Business Tools",
   },
   {
-    title: "Bulk Uploader",
-    description: "Process multiple properties and applications at once",
+    title: "Concierge Onboarding",
+    description: "Onboard new customers via phone and generate documents for signature",
     icon: Upload,
     route: "/admin/bulk-upload",
     category: "Business Tools",

@@ -55,8 +55,9 @@ export const CustomerSearch: React.FC<CustomerSearchProps> = ({
 
     try {
       const searchTerm = values.searchTerm.trim();
+      console.log('Searching for:', searchTerm);
       
-      // Search for customers by email or phone
+      // Search for customers by email or phone with case-insensitive matching
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -68,11 +69,14 @@ export const CustomerSearch: React.FC<CustomerSearchProps> = ({
         `)
         .or(`email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
 
+      console.log('Profiles search result:', profiles, 'Error:', profilesError);
+
       if (profilesError) {
         throw new Error(`Search error: ${profilesError.message}`);
       }
 
       if (!profiles || profiles.length === 0) {
+        console.log('No profiles found for search term:', searchTerm);
         setSearchResults([]);
         return;
       }
@@ -80,6 +84,7 @@ export const CustomerSearch: React.FC<CustomerSearchProps> = ({
       // Get property counts for each customer
       const customersWithCounts = await Promise.all(
         profiles.map(async (profile) => {
+          console.log('Getting property count for user:', profile.user_id);
           const { count, error: countError } = await supabase
             .from('properties')
             .select('*', { count: 'exact', head: true })
@@ -89,6 +94,8 @@ export const CustomerSearch: React.FC<CustomerSearchProps> = ({
             console.error('Error counting properties:', countError);
           }
 
+          console.log('Property count for user', profile.user_id, ':', count);
+
           return {
             ...profile,
             property_count: count || 0,
@@ -96,6 +103,7 @@ export const CustomerSearch: React.FC<CustomerSearchProps> = ({
         })
       );
 
+      console.log('Final search results:', customersWithCounts);
       setSearchResults(customersWithCounts);
 
     } catch (error: any) {

@@ -396,16 +396,19 @@ export default function AdminProtestDetail() {
                       </div>
                       <div className="flex gap-4">
                         <div className="flex-1">
-                          <label className="text-sm font-medium text-muted-foreground">County Evidence Packet</label>
-                          <div className="mt-1">
+                          <label className="text-sm font-medium text-muted-foreground">County Evidence</label>
+                          <div className="font-medium">
                             {protest.evidence_packet_url ? (
                               <a 
                                 href={protest.evidence_packet_url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-primary hover:underline"
+                                className="text-primary hover:underline inline-flex items-center gap-1"
                               >
-                                View Evidence Packet
+                                View Evidence
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
                               </a>
                             ) : (
                               <span className="text-muted-foreground">Not available</span>
@@ -413,12 +416,12 @@ export default function AdminProtestDetail() {
                           </div>
                         </div>
                         <div className="flex-1">
-                          <label className="text-sm font-medium text-muted-foreground">AI Recommendation</label>
-                          <p className="font-medium">{hasValidOffer() ? 'Accept Offer' : 'No Recommendation'}</p>
+                          <label className="text-sm font-medium text-muted-foreground">AI Recco</label>
+                          <p className="font-medium">{hasValidOffer() ? 'Accept' : 'No Recommendation'}</p>
                         </div>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">AI Recco Reason:</label>
+                        <label className="text-sm font-medium text-muted-foreground">AI Recco Reasoning</label>
                         <p className="text-sm text-muted-foreground mt-1">
                           {hasValidOffer() 
                             ? 'The county offer represents a significant reduction in assessed value that would benefit the property owner.'

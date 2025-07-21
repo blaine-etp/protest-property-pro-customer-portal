@@ -50,6 +50,7 @@ interface ProtestDetail {
   offer_received_date: string | null;
   offer_amount?: number | null;
   resolution_date?: string | null;
+  county_confirmation_date: string | null;
   created_at: string;
 }
 
@@ -152,18 +153,15 @@ export default function AdminProtestDetail() {
   };
 
   const formatDate = (date: string | null) => {
-    if (!date) return 'Not set';
+    if (!date) return 'N/A';
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
-  // Helper function to get numeric offer amount
   const getOfferAmount = () => {
-    // First try offer_amount if it exists
     if (protest?.offer_amount && typeof protest.offer_amount === 'number') {
       return protest.offer_amount;
     }
     
-    // Try to parse numeric value from recommendation
     if (protest?.recommendation) {
       const numericMatch = protest.recommendation.match(/\$?[\d,]+\.?\d*/);
       if (numericMatch) {
@@ -468,18 +466,22 @@ export default function AdminProtestDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Protest Filed</label>
                     <p className="font-medium">{formatDate(protest.protest_date)}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Hearing Date</label>
-                    <p className="font-medium">{formatDate(protest.hearing_date)}</p>
+                    <label className="text-sm font-medium text-muted-foreground">County Confirmation</label>
+                    <p className="font-medium">{formatDate(protest.county_confirmation_date)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Offer Received</label>
                     <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Hearing Date</label>
+                    <p className="font-medium">{formatDate(protest.hearing_date)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -552,6 +554,21 @@ export default function AdminProtestDetail() {
                       <div className="bg-muted/50 p-4 rounded-lg">
                         <h4 className="font-medium">Protest Filed</h4>
                         <p className="text-sm text-muted-foreground">Filed on {formatDate(protest.protest_date)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {protest.county_confirmation_date && (
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <div className="w-px h-16 bg-muted"></div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h4 className="font-medium">County Confirmation</h4>
+                        <p className="text-sm text-muted-foreground">Confirmed on {formatDate(protest.county_confirmation_date)}</p>
                       </div>
                     </div>
                   </div>

@@ -48,6 +48,7 @@ interface ProtestDetail {
   documents_generated: boolean;
   evidence_packet_url: string | null;
   offer_received_date: string | null;
+  offer_amount?: number | null;
   resolution_date?: string | null;
   created_at: string;
 }
@@ -97,7 +98,7 @@ export default function AdminProtestDetail() {
         .single();
 
       if (error) throw error;
-      setProtest(data);
+      setProtest(data as ProtestDetail);
     } catch (error) {
       console.error('Error fetching protest:', error);
       toast({
@@ -337,10 +338,10 @@ export default function AdminProtestDetail() {
                         <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
                         <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
                       </div>
-                      {protest.recommendation && (
+                      {protest.offer_amount && (
                         <div>
-                          <label className="text-sm font-medium text-muted-foreground">County Recommendation</label>
-                          <p className="font-medium">{protest.recommendation}</p>
+                          <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
+                          <p className="font-medium text-lg">{formatCurrency(protest.offer_amount)}</p>
                         </div>
                       )}
                     </div>

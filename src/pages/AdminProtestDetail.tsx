@@ -156,6 +156,43 @@ export default function AdminProtestDetail() {
     return format(new Date(date), 'MMM dd, yyyy');
   };
 
+  // Helper function to get numeric offer amount
+  const getOfferAmount = () => {
+    // First try offer_amount if it exists
+    if (protest?.offer_amount && typeof protest.offer_amount === 'number') {
+      return protest.offer_amount;
+    }
+    
+    // Try to parse numeric value from recommendation
+    if (protest?.recommendation) {
+      const numericMatch = protest.recommendation.match(/\$?[\d,]+\.?\d*/);
+      if (numericMatch) {
+        const cleanNumber = numericMatch[0].replace(/[$,]/g, '');
+        const parsed = parseFloat(cleanNumber);
+        if (!isNaN(parsed)) {
+          return parsed;
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  const formatOfferAmount = () => {
+    const amount = getOfferAmount();
+    if (amount !== null) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(amount);
+    }
+    return 'N/A';
+  };
+
+  const hasValidOffer = () => {
+    return getOfferAmount() !== null;
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 p-6">
@@ -338,18 +375,16 @@ export default function AdminProtestDetail() {
                         <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
                         <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
                       </div>
-                      {protest.recommendation && (
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
-                          <p className="font-medium text-lg">{formatCurrency(Number(protest.recommendation))}</p>
-                        </div>
-                      )}
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
+                        <p className="font-medium text-lg">{formatOfferAmount()}</p>
+                      </div>
                     </div>
                     <Separator />
                     <div className="flex gap-2">
                       <Button 
                         onClick={() => updateStatus('accepted')}
-                        disabled={statusUpdating || !protest.recommendation}
+                        disabled={statusUpdating || !hasValidOffer()}
                         className="flex-1"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
@@ -357,7 +392,7 @@ export default function AdminProtestDetail() {
                       </Button>
                       <Button 
                         onClick={() => updateStatus('rejected')}
-                        disabled={statusUpdating || !protest.recommendation}
+                        disabled={statusUpdating || !hasValidOffer()}
                         variant="destructive"
                         className="flex-1"
                       >

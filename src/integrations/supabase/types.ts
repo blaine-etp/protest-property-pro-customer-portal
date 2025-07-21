@@ -795,6 +795,7 @@ export type Database = {
           auto_appeal_enabled: boolean | null
           bill_id: string | null
           contingency_fee_percent: number | null
+          county: string | null
           created_at: string
           documents_generated: boolean | null
           evidence_packet_url: string | null
@@ -820,6 +821,7 @@ export type Database = {
           auto_appeal_enabled?: boolean | null
           bill_id?: string | null
           contingency_fee_percent?: number | null
+          county?: string | null
           created_at?: string
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
@@ -845,6 +847,7 @@ export type Database = {
           auto_appeal_enabled?: boolean | null
           bill_id?: string | null
           contingency_fee_percent?: number | null
+          county?: string | null
           created_at?: string
           documents_generated?: boolean | null
           evidence_packet_url?: string | null

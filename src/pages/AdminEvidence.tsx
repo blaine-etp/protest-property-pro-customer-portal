@@ -12,6 +12,7 @@ interface Protest {
   id: string;
   situs_address: string | null;
   owner_name: string | null;
+  county: string | null;
   appeal_status: string | null;
   hearing_date: string | null;
   assessed_value: number | null;
@@ -117,6 +118,7 @@ export default function AdminEvidence() {
                 <TableRow>
                   <TableHead>Situs Address</TableHead>
                   <TableHead>Owner</TableHead>
+                  <TableHead>County</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Hearing Date</TableHead>
                   <TableHead>Assessed Value</TableHead>
@@ -132,6 +134,7 @@ export default function AdminEvidence() {
                       {protest.situs_address || '-'}
                     </TableCell>
                     <TableCell>{protest.owner_name || '-'}</TableCell>
+                    <TableCell>{protest.county || '-'}</TableCell>
                     <TableCell>
                       <Badge 
                         className={statusColors[protest.appeal_status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}
@@ -187,7 +190,7 @@ export default function AdminEvidence() {
                 ))}
                 {protests.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-slate-500">
                       No protests found. Create some test data to see the interface in action.
                     </TableCell>
                   </TableRow>

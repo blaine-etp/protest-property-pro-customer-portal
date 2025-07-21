@@ -331,10 +331,18 @@ export default function AdminProtestDetail() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {protest.offer_received_date ? (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
-                      <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
+                        <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
+                      </div>
+                      {protest.recommendation && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">County Recommendation</label>
+                          <p className="font-medium">{protest.recommendation}</p>
+                        </div>
+                      )}
                     </div>
                     <Separator />
                     <div className="flex gap-2">

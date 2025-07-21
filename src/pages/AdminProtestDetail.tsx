@@ -50,7 +50,7 @@ interface ProtestDetail {
   offer_received_date: string | null;
   offer_amount?: number | null;
   resolution_date?: string | null;
-  county_confirmation_date: string | null;
+  county_confirmation_date?: string | null;
   created_at: string;
 }
 

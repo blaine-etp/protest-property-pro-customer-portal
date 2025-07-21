@@ -394,6 +394,38 @@ export default function AdminProtestDetail() {
                           return 'N/A';
                         })()}</p>
                       </div>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <label className="text-sm font-medium text-muted-foreground">County Evidence Packet</label>
+                          <div className="mt-1">
+                            {protest.evidence_packet_url ? (
+                              <a 
+                                href={protest.evidence_packet_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                View Evidence Packet
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">Not available</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-sm font-medium text-muted-foreground">AI Recommendation</label>
+                          <p className="font-medium">{hasValidOffer() ? 'Accept Offer' : 'No Recommendation'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">AI Recco Reason:</label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {hasValidOffer() 
+                            ? 'The county offer represents a significant reduction in assessed value that would benefit the property owner.'
+                            : 'No county offer available to evaluate at this time.'
+                          }
+                        </p>
+                      </div>
                     </div>
                     <Separator />
                     <div className="flex gap-2">

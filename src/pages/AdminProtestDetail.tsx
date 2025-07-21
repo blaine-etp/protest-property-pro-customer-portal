@@ -379,6 +379,21 @@ export default function AdminProtestDetail() {
                         <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
                         <p className="font-medium text-lg">{formatOfferAmount()}</p>
                       </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Assessed Value</label>
+                        <p className="font-medium">{formatCurrency(protest.assessed_value || 0)}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Recommendation Reduction</label>
+                        <p className="font-medium">{(() => {
+                          const assessedValue = protest.assessed_value || 0;
+                          const offerAmount = getOfferAmount();
+                          if (offerAmount !== null) {
+                            return formatCurrency(assessedValue - offerAmount);
+                          }
+                          return 'N/A';
+                        })()}</p>
+                      </div>
                     </div>
                     <Separator />
                     <div className="flex gap-2">

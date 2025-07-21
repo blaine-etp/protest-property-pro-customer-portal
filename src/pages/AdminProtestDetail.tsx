@@ -338,10 +338,10 @@ export default function AdminProtestDetail() {
                         <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
                         <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
                       </div>
-                      {protest.offer_amount && (
+                      {protest.recommendation && (
                         <div>
                           <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
-                          <p className="font-medium text-lg">{formatCurrency(protest.offer_amount)}</p>
+                          <p className="font-medium text-lg">{formatCurrency(Number(protest.recommendation))}</p>
                         </div>
                       )}
                     </div>

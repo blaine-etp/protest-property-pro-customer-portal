@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ const statusLabels = {
 };
 
 export default function AdminEvidence() {
+  const navigate = useNavigate();
   const [protests, setProtests] = useState<Protest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -129,7 +131,11 @@ export default function AdminEvidence() {
               </TableHeader>
               <TableBody>
                 {protests.map((protest) => (
-                  <TableRow key={protest.id}>
+                  <TableRow 
+                    key={protest.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/admin/protest/${protest.id}`)}
+                  >
                     <TableCell className="font-medium">
                       {protest.situs_address || '-'}
                     </TableCell>
@@ -151,7 +157,10 @@ export default function AdminEvidence() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleAcceptReject(protest.id, 'accepted')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAcceptReject(protest.id, 'accepted');
+                            }}
                             className="text-green-600 hover:text-green-700"
                           >
                             <Check className="h-4 w-4" />
@@ -159,7 +168,10 @@ export default function AdminEvidence() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleAcceptReject(protest.id, 'rejected')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAcceptReject(protest.id, 'rejected');
+                            }}
                             className="text-red-600 hover:text-red-700"
                           >
                             <X className="h-4 w-4" />
@@ -170,11 +182,19 @@ export default function AdminEvidence() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
+                          <Button 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => navigate(`/admin/protest/${protest.id}`)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Download className="mr-2 h-4 w-4" />
                             Download Documents

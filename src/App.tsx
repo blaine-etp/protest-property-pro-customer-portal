@@ -25,6 +25,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
+import AdminProtestDetail from "./pages/AdminProtestDetail";
 import Resources from "./pages/Resources";
 import { CountyPage } from "./pages/CountyPage";
 import CountyTemplate from "./pages/CountyTemplate";
@@ -54,7 +55,7 @@ const App = () => (
             <Route index element={<Admin />} />
             <Route path="customers" element={<AdminCRM />} />
             <Route path="customers/:contactId" element={<AdminContactDetail />} />
-            <Route path="protest/:protestId" element={<ProtestDetail />} />
+            <Route path="protest/:protestId" element={<AdminProtestDetail />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="evidence" element={<AdminEvidence />} />
             <Route path="bulk-upload" element={<AdminBulkUpload />} />

@@ -54,6 +54,11 @@ interface NewCustomerFormProps {
 
 export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationData, setVerificationData] = useState<{
+    legalOwnerName: string;
+    parcelNumber: string;
+  } | null>(null);
+  const [isLookingUp, setIsLookingUp] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<NewCustomerFormData>({
@@ -75,6 +80,30 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
   });
 
   const isTrustEntity = form.watch('isTrustEntity');
+
+  const handleAddressLookup = async (address: string) => {
+    if (!address || address.length < 5) {
+      setVerificationData(null);
+      return;
+    }
+
+    setIsLookingUp(true);
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock property verification data
+      setVerificationData({
+        legalOwnerName: "Smith Family Trust",
+        parcelNumber: "1234567890"
+      });
+    } catch (error) {
+      console.error('Property lookup error:', error);
+      setVerificationData(null);
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
 
   const onSubmit = async (values: NewCustomerFormData) => {
     setIsSubmitting(true);
@@ -287,12 +316,58 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
                           <Input
                             placeholder="Enter property address"
                             {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              handleAddressLookup(e.target.value);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  {/* Property Verification Section */}
+                  {(isLookingUp || verificationData) && (
+                    <div className="md:col-span-2">
+                      <Card className="border-blue-200 bg-blue-50/50">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base text-blue-900">
+                            Property Verification
+                          </CardTitle>
+                          <CardDescription className="text-blue-700">
+                            Please verify these details with the customer
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          {isLookingUp ? (
+                            <div className="flex items-center gap-2 text-blue-800">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              Looking up property information...
+                            </div>
+                          ) : verificationData ? (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="text-sm font-medium text-blue-900">Legal Owner Name</label>
+                                  <p className="text-blue-800 font-medium">{verificationData.legalOwnerName}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-blue-900">Parcel Number</label>
+                                  <p className="text-blue-800 font-medium">{verificationData.parcelNumber}</p>
+                                </div>
+                              </div>
+                              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-3">
+                                <p className="text-sm text-yellow-800">
+                                  ⚠️ Please confirm these details match what the customer expects before proceeding.
+                                </p>
+                              </div>
+                            </div>
+                          ) : null}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                   
                   <FormField
                     control={form.control}

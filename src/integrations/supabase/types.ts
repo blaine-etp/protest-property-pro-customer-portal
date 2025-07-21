@@ -796,15 +796,21 @@ export type Database = {
           bill_id: string | null
           contingency_fee_percent: number | null
           created_at: string
+          documents_generated: boolean | null
+          evidence_packet_url: string | null
           exemption_status: string | null
           hearing_date: string | null
           id: string
           market_value: number | null
+          offer_received_date: string | null
+          owner_name: string | null
           property_id: string
           protest_amount: number | null
           protest_date: string | null
+          recommendation: string | null
           resolution_date: string | null
           savings_amount: number | null
+          situs_address: string | null
           tax_year: number | null
           updated_at: string
         }
@@ -815,15 +821,21 @@ export type Database = {
           bill_id?: string | null
           contingency_fee_percent?: number | null
           created_at?: string
+          documents_generated?: boolean | null
+          evidence_packet_url?: string | null
           exemption_status?: string | null
           hearing_date?: string | null
           id?: string
           market_value?: number | null
+          offer_received_date?: string | null
+          owner_name?: string | null
           property_id: string
           protest_amount?: number | null
           protest_date?: string | null
+          recommendation?: string | null
           resolution_date?: string | null
           savings_amount?: number | null
+          situs_address?: string | null
           tax_year?: number | null
           updated_at?: string
         }
@@ -834,15 +846,21 @@ export type Database = {
           bill_id?: string | null
           contingency_fee_percent?: number | null
           created_at?: string
+          documents_generated?: boolean | null
+          evidence_packet_url?: string | null
           exemption_status?: string | null
           hearing_date?: string | null
           id?: string
           market_value?: number | null
+          offer_received_date?: string | null
+          owner_name?: string | null
           property_id?: string
           protest_amount?: number | null
           protest_date?: string | null
+          recommendation?: string | null
           resolution_date?: string | null
           savings_amount?: number | null
+          situs_address?: string | null
           tax_year?: number | null
           updated_at?: string
         }

@@ -349,7 +349,7 @@ export default function AdminProtestDetail() {
                     <div className="flex gap-2">
                       <Button 
                         onClick={() => updateStatus('accepted')}
-                        disabled={statusUpdating}
+                        disabled={statusUpdating || !protest.recommendation}
                         className="flex-1"
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
@@ -357,7 +357,7 @@ export default function AdminProtestDetail() {
                       </Button>
                       <Button 
                         onClick={() => updateStatus('rejected')}
-                        disabled={statusUpdating}
+                        disabled={statusUpdating || !protest.recommendation}
                         variant="destructive"
                         className="flex-1"
                       >

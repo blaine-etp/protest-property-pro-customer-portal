@@ -39,10 +39,21 @@ const newCustomerSchema = z.object({
   if (data.isTrustEntity && !data.entityName) {
     return false;
   }
+  if (data.isTrustEntity && !data.entityType) {
+    return false;
+  }
   return true;
 }, {
-  message: "Entity name is required when representing a trust/entity",
+  message: "Entity name and type are required when representing a trust/entity",
   path: ["entityName"],
+}).refine((data) => {
+  if (data.isTrustEntity && !data.entityType) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Entity type is required when representing a trust/entity",
+  path: ["entityType"],
 });
 
 type NewCustomerFormData = z.infer<typeof newCustomerSchema>;
@@ -182,11 +193,27 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
       }
 
       // Create owner record
+      const getOwnerType = () => {
+        if (!values.isTrustEntity) {
+          return 'individual';
+        }
+        // Map entity type to lowercase database values
+        const typeMap: Record<string, string> = {
+          'LLC': 'llc',
+          'Corporation': 'corporation',
+          'Partnership': 'partnership',
+          'Estate': 'estate',
+          'Trust': 'trust',
+          'Other': 'other'
+        };
+        return typeMap[values.entityType!] || 'other';
+      };
+
       const { data: owner, error: ownerError } = await supabase
         .from('owners')
         .insert([{
           name: values.isTrustEntity ? values.entityName : `${values.firstName} ${values.lastName}`,
-          owner_type: values.isTrustEntity ? 'entity' : 'individual',
+          owner_type: getOwnerType(),
           form_entity_type: values.isTrustEntity ? values.entityType : null,
           form_entity_name: values.isTrustEntity ? values.entityName : null,
           entity_relationship: values.isTrustEntity ? values.relationshipToEntity : null,

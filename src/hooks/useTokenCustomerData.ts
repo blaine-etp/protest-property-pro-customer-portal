@@ -62,16 +62,12 @@ export const useTokenCustomerData = (token: string) => {
       const property = properties.find(p => p.id === propertyId);
       if (!property?.appeal_status) return;
 
+      // Auto appeal functionality not implemented yet
+      console.log('Auto appeal toggle requested for property:', propertyId);
+      
+      // Placeholder for future auto-appeal implementation
+      // For now, just toggle the local state
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
-
-      const { error } = await supabase
-        .from('protests')
-        .update({ auto_appeal_enabled: newAutoAppealStatus })
-        .eq('property_id', propertyId);
-
-      if (error) {
-        throw new Error(`Failed to update auto-appeal: ${error.message}`);
-      }
 
       // Update local state
       setProperties(prev => prev.map(p => 

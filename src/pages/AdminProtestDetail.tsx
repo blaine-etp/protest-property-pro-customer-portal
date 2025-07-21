@@ -48,7 +48,7 @@ interface ProtestDetail {
   documents_generated: boolean;
   evidence_packet_url: string | null;
   offer_received_date: string | null;
-  resolution_date: string | null;
+  resolution_date?: string | null;
   created_at: string;
 }
 
@@ -321,24 +321,47 @@ export default function AdminProtestDetail() {
               </CardContent>
             </Card>
 
-            {/* Owner & Contact Info */}
+            {/* Offer Management */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Owner & Contact Information
+                  <CheckCircle className="h-5 w-5" />
+                  Offer Management
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Property Owner</label>
-                  <p className="font-medium">{protest.owner_name || 'Not provided'}</p>
-                </div>
-                <Separator />
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Recommendation</label>
-                  <p className="text-sm">{protest.recommendation || 'No recommendation yet'}</p>
-                </div>
+                {protest.offer_received_date ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
+                      <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
+                    </div>
+                    <Separator />
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => updateStatus('accepted')}
+                        disabled={statusUpdating}
+                        className="flex-1"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Accept Offer
+                      </Button>
+                      <Button 
+                        onClick={() => updateStatus('rejected')}
+                        disabled={statusUpdating}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Reject Offer
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground">No offer received yet</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -363,6 +386,28 @@ export default function AdminProtestDetail() {
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Offer Received</label>
                     <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Owner & Contact Info - Moved to bottom */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <User className="h-4 w-4" />
+                  Owner & Contact Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Property Owner</label>
+                    <p className="text-sm font-medium">{protest.owner_name || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">Recommendation</label>
+                    <p className="text-xs">{protest.recommendation || 'No recommendation yet'}</p>
                   </div>
                 </div>
               </CardContent>

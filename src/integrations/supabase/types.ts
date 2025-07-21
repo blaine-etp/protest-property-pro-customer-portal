@@ -792,11 +792,8 @@ export type Database = {
         Row: {
           appeal_status: string | null
           assessed_value: number | null
-          auto_appeal_enabled: boolean | null
-          bill_id: string | null
-          contingency_fee_percent: number | null
           county: string | null
-          created_at: string
+          created_at: string | null
           documents_generated: boolean | null
           evidence_packet_url: string | null
           exemption_status: string | null
@@ -805,24 +802,20 @@ export type Database = {
           market_value: number | null
           offer_received_date: string | null
           owner_name: string | null
-          property_id: string
+          property_id: string | null
           protest_amount: number | null
           protest_date: string | null
           recommendation: string | null
-          resolution_date: string | null
           savings_amount: number | null
           situs_address: string | null
           tax_year: number | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           appeal_status?: string | null
           assessed_value?: number | null
-          auto_appeal_enabled?: boolean | null
-          bill_id?: string | null
-          contingency_fee_percent?: number | null
           county?: string | null
-          created_at?: string
+          created_at?: string | null
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
           exemption_status?: string | null
@@ -831,24 +824,20 @@ export type Database = {
           market_value?: number | null
           offer_received_date?: string | null
           owner_name?: string | null
-          property_id: string
+          property_id?: string | null
           protest_amount?: number | null
           protest_date?: string | null
           recommendation?: string | null
-          resolution_date?: string | null
           savings_amount?: number | null
           situs_address?: string | null
           tax_year?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           appeal_status?: string | null
           assessed_value?: number | null
-          auto_appeal_enabled?: boolean | null
-          bill_id?: string | null
-          contingency_fee_percent?: number | null
           county?: string | null
-          created_at?: string
+          created_at?: string | null
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
           exemption_status?: string | null
@@ -857,32 +846,16 @@ export type Database = {
           market_value?: number | null
           offer_received_date?: string | null
           owner_name?: string | null
-          property_id?: string
+          property_id?: string | null
           protest_amount?: number | null
           protest_date?: string | null
           recommendation?: string | null
-          resolution_date?: string | null
           savings_amount?: number | null
           situs_address?: string | null
           tax_year?: number | null
-          updated_at?: string
+          updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_appeal_status_property"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_protests_bill"
-            columns: ["bill_id"]
-            isOneToOne: false
-            referencedRelation: "bills"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       referral_relationships: {
         Row: {

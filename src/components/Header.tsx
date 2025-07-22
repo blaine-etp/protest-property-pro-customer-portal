@@ -53,21 +53,21 @@ export const Header = () => {
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/#services" className="text-foreground hover:text-primary transition-colors">
+            <a href="#services" className="text-foreground hover:text-primary transition-colors">
               Services
-            </Link>
-            <Link to="/#how-it-works" className="text-foreground hover:text-primary transition-colors">
+            </a>
+            <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">
               How It Works
-            </Link>
+            </a>
             <Link to="/resources" className="text-foreground hover:text-primary transition-colors">
               Resources
             </Link>
-            <Link to="/#about" className="text-foreground hover:text-primary transition-colors">
+            <a href="#about" className="text-foreground hover:text-primary transition-colors">
               About
-            </Link>
-            <Link to="/#contact" className="text-foreground hover:text-primary transition-colors">
+            </a>
+            <a href="#contact" className="text-foreground hover:text-primary transition-colors">
               Contact
-            </Link>
+            </a>
           </nav>
 
           <div className="flex items-center space-x-4">

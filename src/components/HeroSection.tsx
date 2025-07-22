@@ -25,6 +25,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
     }
   };
 
+  const handleMultiPropertyClick = () => {
+    navigate('/multi-property-contact');
+  };
+
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-hero overflow-hidden">
       {/* Austin Skyline Background */}
@@ -142,6 +146,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
               <Button 
                 variant="ghost" 
                 size="sm"
+                onClick={handleMultiPropertyClick}
                 className="text-muted-foreground hover:text-white border border-muted-foreground/30 hover:border-white transition-all duration-200"
               >
                 <Building2 className="mr-2 h-4 w-4" />

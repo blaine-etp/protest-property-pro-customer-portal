@@ -17,6 +17,7 @@ import ReferFriend from "./pages/ReferFriend";
 import ProtestDetail from "./pages/ProtestDetail";
 import SetPassword from "./pages/SetPassword";
 import NotFound from "./pages/NotFound";
+import MultiPropertyContact from "./pages/MultiPropertyContact";
 import { AdminLayout } from "./components/AdminLayout";
 import Admin from "./pages/Admin";
 import AdminCustomers from "./pages/AdminCustomers";
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/documents" element={<Documents />} />
           <Route path="/refer-friend" element={<ReferFriend />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/multi-property-contact" element={<MultiPropertyContact />} />
           <Route path="/protest/:protestId" element={<ProtestDetail />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>

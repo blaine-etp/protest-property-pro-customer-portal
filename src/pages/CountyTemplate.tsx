@@ -47,7 +47,7 @@ const CountyTemplate = () => {
           </p>
         </div>
         
-        <CountyBasicsTemplate county={sampleCounty} page={samplePage} />
+        <CountyBasicsTemplate county={sampleCounty} />
       </div>
     </div>
   );

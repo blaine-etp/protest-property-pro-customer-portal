@@ -30,7 +30,7 @@ import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
 import AdminProtestDetail from "./pages/AdminProtestDetail";
 import Resources from "./pages/Resources";
-import { CountyPage } from "./pages/CountyPage";
+import CountyPage from "./pages/CountyPage";
 import { BlogPost } from "./pages/BlogPost";
 import CountyTemplate from "./pages/CountyTemplate";
 

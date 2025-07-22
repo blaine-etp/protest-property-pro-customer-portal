@@ -334,28 +334,39 @@ export type Database = {
           appraisal_district_phone: string | null
           appraisal_district_website: string | null
           appraisal_district_zip: string | null
+          canonical_url: string | null
           county_code: string | null
           county_info_content: string | null
+          courthouse_image_alt: string | null
           courthouse_image_url: string | null
           created_at: string
           current_tax_year: number | null
           featured: boolean
           hearing_period_end: string | null
           hearing_period_start: string | null
+          hero_image_alt: string | null
           hero_image_url: string | null
           how_to_content: string | null
           id: string
+          landscape_image_alt: string | null
           landscape_image_url: string | null
           meta_description: string | null
           meta_keywords: string | null
           meta_title: string | null
           name: string
+          og_description: string | null
+          og_image: string | null
+          og_title: string | null
           page_content: string | null
           page_title: string | null
           protest_deadline: string | null
           slug: string
           state: string
           status: string
+          structured_data: Json | null
+          twitter_description: string | null
+          twitter_image: string | null
+          twitter_title: string | null
           updated_at: string
         }
         Insert: {
@@ -365,28 +376,39 @@ export type Database = {
           appraisal_district_phone?: string | null
           appraisal_district_website?: string | null
           appraisal_district_zip?: string | null
+          canonical_url?: string | null
           county_code?: string | null
           county_info_content?: string | null
+          courthouse_image_alt?: string | null
           courthouse_image_url?: string | null
           created_at?: string
           current_tax_year?: number | null
           featured?: boolean
           hearing_period_end?: string | null
           hearing_period_start?: string | null
+          hero_image_alt?: string | null
           hero_image_url?: string | null
           how_to_content?: string | null
           id?: string
+          landscape_image_alt?: string | null
           landscape_image_url?: string | null
           meta_description?: string | null
           meta_keywords?: string | null
           meta_title?: string | null
           name: string
+          og_description?: string | null
+          og_image?: string | null
+          og_title?: string | null
           page_content?: string | null
           page_title?: string | null
           protest_deadline?: string | null
           slug: string
           state?: string
           status?: string
+          structured_data?: Json | null
+          twitter_description?: string | null
+          twitter_image?: string | null
+          twitter_title?: string | null
           updated_at?: string
         }
         Update: {
@@ -396,28 +418,39 @@ export type Database = {
           appraisal_district_phone?: string | null
           appraisal_district_website?: string | null
           appraisal_district_zip?: string | null
+          canonical_url?: string | null
           county_code?: string | null
           county_info_content?: string | null
+          courthouse_image_alt?: string | null
           courthouse_image_url?: string | null
           created_at?: string
           current_tax_year?: number | null
           featured?: boolean
           hearing_period_end?: string | null
           hearing_period_start?: string | null
+          hero_image_alt?: string | null
           hero_image_url?: string | null
           how_to_content?: string | null
           id?: string
+          landscape_image_alt?: string | null
           landscape_image_url?: string | null
           meta_description?: string | null
           meta_keywords?: string | null
           meta_title?: string | null
           name?: string
+          og_description?: string | null
+          og_image?: string | null
+          og_title?: string | null
           page_content?: string | null
           page_title?: string | null
           protest_deadline?: string | null
           slug?: string
           state?: string
           status?: string
+          structured_data?: Json | null
+          twitter_description?: string | null
+          twitter_image?: string | null
+          twitter_title?: string | null
           updated_at?: string
         }
         Relationships: []

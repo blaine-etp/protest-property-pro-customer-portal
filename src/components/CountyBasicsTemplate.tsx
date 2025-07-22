@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,8 @@ import {
   Save,
   X
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 interface County {
   id: string;
@@ -43,7 +44,20 @@ interface County {
   hero_image_url?: string;
   courthouse_image_url?: string;
   landscape_image_url?: string;
+  hero_image_alt?: string;
+  courthouse_image_alt?: string;
+  landscape_image_alt?: string;
+  meta_title?: string;
   meta_description?: string;
+  meta_keywords?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  twitter_title?: string;
+  twitter_description?: string;
+  twitter_image?: string;
+  canonical_url?: string;
+  structured_data?: any;
 }
 
 interface CountyBasicsTemplateProps {
@@ -124,7 +138,7 @@ export function CountyBasicsTemplate({
         {editedCounty.hero_image_url ? (
           <img 
             src={editedCounty.hero_image_url} 
-            alt={`${county.name} County`}
+            alt={editedCounty.hero_image_alt || `${county.name} County`}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -258,26 +272,169 @@ export function CountyBasicsTemplate({
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-8">
                 {editMode ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="page_title">Page Title</Label>
-                      <Input
-                        id="page_title"
-                        value={editedCounty.page_title || ''}
-                        onChange={(e) => setEditedCounty(prev => ({ ...prev, page_title: e.target.value }))}
-                        placeholder="County Property Tax Information"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="page_content">Page Content</Label>
-                      <RichTextEditor
-                        content={editedCounty.page_content || ''}
-                        onChange={(content) => setEditedCounty(prev => ({ ...prev, page_content: content }))}
-                        placeholder="Enter the main content for this county page..."
-                        className="min-h-[300px]"
-                      />
-                    </div>
-                  </div>
+                  <Tabs defaultValue="content" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="content">Content</TabsTrigger>
+                      <TabsTrigger value="seo">SEO</TabsTrigger>
+                      <TabsTrigger value="social">Social</TabsTrigger>
+                      <TabsTrigger value="images">Images</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="content" className="space-y-4">
+                      <div>
+                        <Label htmlFor="page_title">Page Title</Label>
+                        <Input
+                          id="page_title"
+                          value={editedCounty.page_title || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, page_title: e.target.value }))}
+                          placeholder="County Property Tax Information"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="page_content">Page Content</Label>
+                        <RichTextEditor
+                          content={editedCounty.page_content || ''}
+                          onChange={(content) => setEditedCounty(prev => ({ ...prev, page_content: content }))}
+                          placeholder="Enter the main content for this county page..."
+                          className="min-h-[300px]"
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="seo" className="space-y-4">
+                      <div>
+                        <Label htmlFor="meta_title">Meta Title</Label>
+                        <Input
+                          id="meta_title"
+                          value={editedCounty.meta_title || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, meta_title: e.target.value }))}
+                          placeholder="SEO-optimized title for search engines"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="meta_description">Meta Description</Label>
+                        <Textarea
+                          id="meta_description"
+                          value={editedCounty.meta_description || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, meta_description: e.target.value }))}
+                          placeholder="Brief description for search results (160 characters max)"
+                          maxLength={160}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="meta_keywords">Meta Keywords</Label>
+                        <Input
+                          id="meta_keywords"
+                          value={editedCounty.meta_keywords || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, meta_keywords: e.target.value }))}
+                          placeholder="property tax, protest, appraisal, county name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="canonical_url">Canonical URL</Label>
+                        <Input
+                          id="canonical_url"
+                          value={editedCounty.canonical_url || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, canonical_url: e.target.value }))}
+                          placeholder="https://example.com/county/slug"
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="social" className="space-y-4">
+                      <div className="space-y-4">
+                        <h4 className="font-semibold">Open Graph</h4>
+                        <div>
+                          <Label htmlFor="og_title">OG Title</Label>
+                          <Input
+                            id="og_title"
+                            value={editedCounty.og_title || ''}
+                            onChange={(e) => setEditedCounty(prev => ({ ...prev, og_title: e.target.value }))}
+                            placeholder="Title for social media sharing"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="og_description">OG Description</Label>
+                          <Textarea
+                            id="og_description"
+                            value={editedCounty.og_description || ''}
+                            onChange={(e) => setEditedCounty(prev => ({ ...prev, og_description: e.target.value }))}
+                            placeholder="Description for social media sharing"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="og_image">OG Image URL</Label>
+                          <Input
+                            id="og_image"
+                            value={editedCounty.og_image || ''}
+                            onChange={(e) => setEditedCounty(prev => ({ ...prev, og_image: e.target.value }))}
+                            placeholder="https://example.com/image.jpg"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4 pt-4 border-t">
+                        <h4 className="font-semibold">Twitter Cards</h4>
+                        <div>
+                          <Label htmlFor="twitter_title">Twitter Title</Label>
+                          <Input
+                            id="twitter_title"
+                            value={editedCounty.twitter_title || ''}
+                            onChange={(e) => setEditedCounty(prev => ({ ...prev, twitter_title: e.target.value }))}
+                            placeholder="Title for Twitter sharing"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="twitter_description">Twitter Description</Label>
+                          <Textarea
+                            id="twitter_description"
+                            value={editedCounty.twitter_description || ''}
+                            onChange={(e) => setEditedCounty(prev => ({ ...prev, twitter_description: e.target.value }))}
+                            placeholder="Description for Twitter sharing"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="twitter_image">Twitter Image URL</Label>
+                          <Input
+                            id="twitter_image"
+                            value={editedCounty.twitter_image || ''}
+                            onChange={(e) => setEditedCounty(prev => ({ ...prev, twitter_image: e.target.value }))}
+                            placeholder="https://example.com/twitter-image.jpg"
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="images" className="space-y-4">
+                      <div>
+                        <Label htmlFor="hero_image_alt">Hero Image Alt Text</Label>
+                        <Input
+                          id="hero_image_alt"
+                          value={editedCounty.hero_image_alt || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, hero_image_alt: e.target.value }))}
+                          placeholder="Descriptive alt text for hero image"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="courthouse_image_alt">Courthouse Image Alt Text</Label>
+                        <Input
+                          id="courthouse_image_alt"
+                          value={editedCounty.courthouse_image_alt || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, courthouse_image_alt: e.target.value }))}
+                          placeholder="Descriptive alt text for courthouse image"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="landscape_image_alt">Landscape Image Alt Text</Label>
+                        <Input
+                          id="landscape_image_alt"
+                          value={editedCounty.landscape_image_alt || ''}
+                          onChange={(e) => setEditedCounty(prev => ({ ...prev, landscape_image_alt: e.target.value }))}
+                          placeholder="Descriptive alt text for landscape image"
+                        />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 ) : (
                   <div>
                     <h2 className="text-3xl font-bold mb-6">
@@ -311,7 +468,7 @@ export function CountyBasicsTemplate({
                       {editedCounty[`${section}_image_url` as keyof County] ? (
                         <img
                           src={editedCounty[`${section}_image_url` as keyof County] as string}
-                          alt={`${county.name} ${section}`}
+                          alt={editedCounty[`${section}_image_alt` as keyof County] as string || `${county.name} ${section}`}
                           className="w-full h-48 object-cover rounded-lg"
                         />
                       ) : (

@@ -21,14 +21,12 @@ interface County {
   appraisal_district_city?: string;
   appraisal_district_zip?: string;
   county_info_content?: string;
-  meta_description?: string;
-  status: string;
-}
-
-interface CountyPage {
-  id: string;
-  title: string;
-  content: string;
+  page_title?: string;
+  page_content?: string;
+  hero_image_url?: string;
+  courthouse_image_url?: string;
+  landscape_image_url?: string;
+  meta_title?: string;
   meta_description?: string;
   status: string;
 }
@@ -36,96 +34,47 @@ interface CountyPage {
 export function CountyPage() {
   const { slug } = useParams<{ slug: string }>();
   const [county, setCounty] = useState<County | null>(null);
-  const [page, setPage] = useState<CountyPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const { toast } = useToast();
 
-  // Move the document title and meta effect to the top level
   useEffect(() => {
-    if (page && county) {
-      document.title = page.meta_description ? 
-        `${page.title} | ${page.meta_description}` : 
-        `${page.title} | ${county.name} County Tax Information`;
+    if (county) {
+      document.title = county.page_title || `${county.name} County Property Tax Information`;
       
       // Set meta description
       const metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) {
         metaDescription.setAttribute('content', 
-          page.meta_description || `Property tax information for ${county.name} County, Texas.`
+          county.meta_description || `Property tax information for ${county.name} County, Texas.`
         );
       }
     }
-  }, [page, county]);
+  }, [county]);
 
   useEffect(() => {
     if (slug) {
-      fetchCountyAndPage(slug);
+      fetchCounty(slug);
     }
   }, [slug]);
 
-  const fetchCountyAndPage = async (pageSlug: string) => {
+  const fetchCounty = async (pageSlug: string) => {
     try {
-      // First, try to find the page by slug
-      const { data: pageData, error: pageError } = await supabase
-        .from('county_pages')
-        .select(`
-          *,
-          counties (*)
-        `)
+      const { data: countyData, error: countyError } = await supabase
+        .from('counties')
+        .select('*')
         .eq('slug', pageSlug)
         .eq('status', 'published')
         .single();
 
-      if (pageError || !pageData) {
-        // If no direct page match, try to find county by slug for basics page
-        const { data: countyData, error: countyError } = await supabase
-          .from('counties')
-          .select('*')
-          .eq('slug', pageSlug)
-          .eq('status', 'published')
-          .single();
-
-        if (countyError || !countyData) {
-          setNotFound(true);
-          return;
-        }
-
-        // Look for a basics page for this county
-        const { data: basicsPage, error: basicsError } = await supabase
-          .from('county_pages')
-          .select('*')
-          .eq('county_id', countyData.id)
-          .eq('page_type', 'basics')
-          .eq('status', 'published')
-          .single();
-
-        if (basicsError || !basicsPage) {
-          // Create a default basics page structure
-          setCounty(countyData);
-          setPage({
-            id: 'default',
-            title: `${countyData.name} County Property Tax Basics`,
-            content: countyData.county_info_content || '',
-            meta_description: countyData.meta_description,
-            status: 'published'
-          });
-        } else {
-          setCounty(countyData);
-          setPage(basicsPage);
-        }
-      } else {
-        setCounty(pageData.counties);
-        setPage({
-          id: pageData.id,
-          title: pageData.title,
-          content: pageData.content,
-          meta_description: pageData.meta_description,
-          status: pageData.status
-        });
+      if (countyError || !countyData) {
+        setNotFound(true);
+        return;
       }
+
+      setCounty(countyData);
     } catch (error) {
-      console.error('Error fetching county page:', error);
+      console.error('Error fetching county:', error);
       toast({
         title: "Error",
         description: "Failed to load county information",
@@ -137,30 +86,33 @@ export function CountyPage() {
     }
   };
 
-  const handleSavePage = async (updatedPage: CountyPage) => {
-    if (!county || !page || page.id === 'default') return;
+  const handleSaveCounty = async (updatedCounty: County) => {
+    if (!county) return;
 
     try {
       const { error } = await supabase
-        .from('county_pages')
+        .from('counties')
         .update({
-          content: updatedPage.content,
-          title: updatedPage.title
+          page_title: updatedCounty.page_title,
+          page_content: updatedCounty.page_content,
+          hero_image_url: updatedCounty.hero_image_url,
+          courthouse_image_url: updatedCounty.courthouse_image_url,
+          landscape_image_url: updatedCounty.landscape_image_url
         })
-        .eq('id', page.id);
+        .eq('id', county.id);
 
       if (error) throw error;
 
-      setPage(updatedPage);
+      setCounty(updatedCounty);
       toast({
         title: "Success",
-        description: "Page updated successfully",
+        description: "County page updated successfully",
       });
     } catch (error: any) {
-      console.error('Error updating page:', error);
+      console.error('Error updating county:', error);
       toast({
         title: "Error",
-        description: "Failed to update page",
+        description: "Failed to update county page",
         variant: "destructive",
       });
     }
@@ -174,15 +126,14 @@ export function CountyPage() {
     );
   }
 
-  if (notFound || !county || !page) {
+  if (notFound || !county) {
     return <Navigate to="/404" replace />;
   }
 
   return (
     <CountyBasicsTemplate
       county={county}
-      page={page}
-      onSave={handleSavePage}
+      onSave={handleSaveCounty}
     />
   );
 }

@@ -336,17 +336,22 @@ export type Database = {
           appraisal_district_zip: string | null
           county_code: string | null
           county_info_content: string | null
+          courthouse_image_url: string | null
           created_at: string
           current_tax_year: number | null
           featured: boolean
           hearing_period_end: string | null
           hearing_period_start: string | null
+          hero_image_url: string | null
           how_to_content: string | null
           id: string
+          landscape_image_url: string | null
           meta_description: string | null
           meta_keywords: string | null
           meta_title: string | null
           name: string
+          page_content: string | null
+          page_title: string | null
           protest_deadline: string | null
           slug: string
           state: string
@@ -362,17 +367,22 @@ export type Database = {
           appraisal_district_zip?: string | null
           county_code?: string | null
           county_info_content?: string | null
+          courthouse_image_url?: string | null
           created_at?: string
           current_tax_year?: number | null
           featured?: boolean
           hearing_period_end?: string | null
           hearing_period_start?: string | null
+          hero_image_url?: string | null
           how_to_content?: string | null
           id?: string
+          landscape_image_url?: string | null
           meta_description?: string | null
           meta_keywords?: string | null
           meta_title?: string | null
           name: string
+          page_content?: string | null
+          page_title?: string | null
           protest_deadline?: string | null
           slug: string
           state?: string
@@ -388,17 +398,22 @@ export type Database = {
           appraisal_district_zip?: string | null
           county_code?: string | null
           county_info_content?: string | null
+          courthouse_image_url?: string | null
           created_at?: string
           current_tax_year?: number | null
           featured?: boolean
           hearing_period_end?: string | null
           hearing_period_start?: string | null
+          hero_image_url?: string | null
           how_to_content?: string | null
           id?: string
+          landscape_image_url?: string | null
           meta_description?: string | null
           meta_keywords?: string | null
           meta_title?: string | null
           name?: string
+          page_content?: string | null
+          page_title?: string | null
           protest_deadline?: string | null
           slug?: string
           state?: string
@@ -793,6 +808,7 @@ export type Database = {
           appeal_status: string | null
           assessed_value: number | null
           county: string | null
+          county_confirmation_date: string | null
           created_at: string | null
           documents_generated: boolean | null
           evidence_packet_url: string | null
@@ -800,6 +816,7 @@ export type Database = {
           hearing_date: string | null
           id: string
           market_value: number | null
+          offer_amount: number | null
           offer_received_date: string | null
           owner_name: string | null
           property_id: string | null
@@ -815,6 +832,7 @@ export type Database = {
           appeal_status?: string | null
           assessed_value?: number | null
           county?: string | null
+          county_confirmation_date?: string | null
           created_at?: string | null
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
@@ -822,6 +840,7 @@ export type Database = {
           hearing_date?: string | null
           id?: string
           market_value?: number | null
+          offer_amount?: number | null
           offer_received_date?: string | null
           owner_name?: string | null
           property_id?: string | null
@@ -837,6 +856,7 @@ export type Database = {
           appeal_status?: string | null
           assessed_value?: number | null
           county?: string | null
+          county_confirmation_date?: string | null
           created_at?: string | null
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
@@ -844,6 +864,7 @@ export type Database = {
           hearing_date?: string | null
           id?: string
           market_value?: number | null
+          offer_amount?: number | null
           offer_received_date?: string | null
           owner_name?: string | null
           property_id?: string | null

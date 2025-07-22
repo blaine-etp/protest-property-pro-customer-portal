@@ -1,10 +1,11 @@
+
 import { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -37,33 +38,27 @@ interface County {
   appraisal_district_city?: string;
   appraisal_district_zip?: string;
   county_info_content?: string;
-  meta_description?: string;
-}
-
-interface CountyPage {
-  id: string;
-  title: string;
-  content: string;
+  page_title?: string;
+  page_content?: string;
+  hero_image_url?: string;
+  courthouse_image_url?: string;
+  landscape_image_url?: string;
   meta_description?: string;
 }
 
 interface CountyBasicsTemplateProps {
   county: County;
-  page: CountyPage;
   isEditMode?: boolean;
-  onSave?: (updatedPage: CountyPage) => void;
+  onSave?: (updatedCounty: County) => void;
 }
 
 export function CountyBasicsTemplate({ 
   county, 
-  page, 
   isEditMode = false, 
   onSave 
 }: CountyBasicsTemplateProps) {
   const [editMode, setEditMode] = useState(isEditMode);
-  const [editedContent, setEditedContent] = useState(page.content);
-  const [heroImage, setHeroImage] = useState<string | null>(null);
-  const [sectionImages, setSectionImages] = useState<{[key: string]: string}>({});
+  const [editedCounty, setEditedCounty] = useState(county);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -85,11 +80,10 @@ export function CountyBasicsTemplate({
         .from('blog-images')
         .getPublicUrl(filePath);
 
-      if (section === 'hero') {
-        setHeroImage(publicUrl);
-      } else {
-        setSectionImages(prev => ({ ...prev, [section]: publicUrl }));
-      }
+      setEditedCounty(prev => ({
+        ...prev,
+        [`${section}_image_url`]: publicUrl
+      }));
 
       toast({
         title: "Success",
@@ -109,10 +103,7 @@ export function CountyBasicsTemplate({
 
   const handleSave = () => {
     if (onSave) {
-      onSave({
-        ...page,
-        content: editedContent
-      });
+      onSave(editedCounty);
     }
     setEditMode(false);
   };
@@ -130,9 +121,9 @@ export function CountyBasicsTemplate({
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Hero Section */}
       <div className="relative h-[60vh] overflow-hidden">
-        {heroImage ? (
+        {editedCounty.hero_image_url ? (
           <img 
-            src={heroImage} 
+            src={editedCounty.hero_image_url} 
             alt={`${county.name} County`}
             className="w-full h-full object-cover"
           />
@@ -143,23 +134,22 @@ export function CountyBasicsTemplate({
                 <ImageIcon className="w-16 h-16 mx-auto text-muted-foreground" />
                 <Button
                   variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) handleImageUpload(file, 'hero');
+                    };
+                    input.click();
+                  }}
                   disabled={uploading}
                   className="bg-background/80 backdrop-blur-sm"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {uploading ? 'Uploading...' : 'Upload Hero Image'}
                 </Button>
-                <Input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file, 'hero');
-                  }}
-                />
               </div>
             )}
           </div>
@@ -179,7 +169,7 @@ export function CountyBasicsTemplate({
               {county.name} County
             </h1>
             <p className="text-xl text-white/90 max-w-2xl">
-              {page.meta_description || county.meta_description || 
+              {county.meta_description || 
                `Everything you need to know about property taxes in ${county.name} County, Texas.`}
             </p>
             
@@ -267,30 +257,44 @@ export function CountyBasicsTemplate({
           <div className="lg:col-span-2 space-y-8">
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-8">
-                <h2 className="text-3xl font-bold mb-6">Property Tax Basics</h2>
-                
                 {editMode ? (
                   <div className="space-y-4">
-                    <Label htmlFor="content">Page Content</Label>
-                    <textarea
-                      id="content"
-                      value={editedContent}
-                      onChange={(e) => setEditedContent(e.target.value)}
-                      className="w-full min-h-[300px] p-4 border rounded-lg resize-none"
-                      placeholder="Enter the main content for this county's basics page..."
-                    />
+                    <div>
+                      <Label htmlFor="page_title">Page Title</Label>
+                      <Input
+                        id="page_title"
+                        value={editedCounty.page_title || ''}
+                        onChange={(e) => setEditedCounty(prev => ({ ...prev, page_title: e.target.value }))}
+                        placeholder="County Property Tax Information"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="page_content">Page Content</Label>
+                      <Textarea
+                        id="page_content"
+                        value={editedCounty.page_content || ''}
+                        onChange={(e) => setEditedCounty(prev => ({ ...prev, page_content: e.target.value }))}
+                        className="min-h-[300px] resize-none"
+                        placeholder="Enter the main content for this county page..."
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div className="prose max-w-none">
-                    {editedContent ? (
-                      <div className="whitespace-pre-wrap text-lg leading-relaxed">
-                        {editedContent}
-                      </div>
-                    ) : (
-                      <div className="text-muted-foreground italic text-center py-8">
-                        No content available. Click "Edit Page" to add content.
-                      </div>
-                    )}
+                  <div>
+                    <h2 className="text-3xl font-bold mb-6">
+                      {county.page_title || `${county.name} County Property Tax Information`}
+                    </h2>
+                    <div className="prose max-w-none">
+                      {county.page_content ? (
+                        <div className="whitespace-pre-wrap text-lg leading-relaxed">
+                          {county.page_content}
+                        </div>
+                      ) : (
+                        <div className="text-muted-foreground italic text-center py-8">
+                          No content available. Click "Edit Page" to add content.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -304,9 +308,9 @@ export function CountyBasicsTemplate({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {['courthouse', 'landscape'].map((section) => (
                     <div key={section} className="relative group">
-                      {sectionImages[section] ? (
+                      {editedCounty[`${section}_image_url` as keyof County] ? (
                         <img
-                          src={sectionImages[section]}
+                          src={editedCounty[`${section}_image_url` as keyof County] as string}
                           alt={`${county.name} ${section}`}
                           className="w-full h-48 object-cover rounded-lg"
                         />
@@ -418,31 +422,6 @@ export function CountyBasicsTemplate({
                       </Badge>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Links */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-4">Quick Links</h3>
-                
-                <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href={`/county/${county.slug}-how-to-protest-property-taxes`}>
-                      How to Protest Guide
-                    </a>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href={`/county/${county.slug}-tax-protest-deadlines`}>
-                      Deadlines & Dates
-                    </a>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href={`/county/${county.slug}-property-tax-exemptions`}>
-                      Tax Exemptions
-                    </a>
-                  </Button>
                 </div>
               </CardContent>
             </Card>

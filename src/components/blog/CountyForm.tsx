@@ -28,6 +28,11 @@ interface County {
   appraisal_district_zip?: string;
   how_to_content?: string;
   county_info_content?: string;
+  page_title?: string;
+  page_content?: string;
+  hero_image_url?: string;
+  courthouse_image_url?: string;
+  landscape_image_url?: string;
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string;
@@ -59,6 +64,11 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
     appraisal_district_zip: county?.appraisal_district_zip || "",
     how_to_content: county?.how_to_content || "",
     county_info_content: county?.county_info_content || "",
+    page_title: county?.page_title || "",
+    page_content: county?.page_content || "",
+    hero_image_url: county?.hero_image_url || "",
+    courthouse_image_url: county?.courthouse_image_url || "",
+    landscape_image_url: county?.landscape_image_url || "",
     meta_title: county?.meta_title || "",
     meta_description: county?.meta_description || "",
     meta_keywords: county?.meta_keywords || "",
@@ -86,6 +96,14 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
       setFormData(prev => ({ 
         ...prev, 
         slug: `${slug}-texas`
+      }));
+    }
+
+    // Auto-generate page title when name changes
+    if (field === 'name' && typeof value === 'string') {
+      setFormData(prev => ({ 
+        ...prev, 
+        page_title: `${value} County Property Tax Information`
       }));
     }
   };
@@ -157,9 +175,10 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
       </div>
 
       <Tabs defaultValue="basic" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="page-content">Page Content</TabsTrigger>
+          <TabsTrigger value="content">Additional Content</TabsTrigger>
           <TabsTrigger value="contact">Contact Info</TabsTrigger>
           <TabsTrigger value="seo">SEO Settings</TabsTrigger>
         </TabsList>
@@ -283,11 +302,71 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
           </Card>
         </TabsContent>
 
+        <TabsContent value="page-content" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Main Page Content</CardTitle>
+              <CardDescription>Content that appears on the county's main page</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="page_title">Page Title</Label>
+                <Input
+                  id="page_title"
+                  value={formData.page_title}
+                  onChange={(e) => handleChange('page_title', e.target.value)}
+                  placeholder="Harris County Property Tax Information"
+                />
+              </div>
+              <div>
+                <Label htmlFor="page_content">Main Page Content</Label>
+                <Textarea
+                  id="page_content"
+                  value={formData.page_content}
+                  onChange={(e) => handleChange('page_content', e.target.value)}
+                  placeholder="Main content about property taxes, protests, and important information for residents of this county..."
+                  rows={10}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="hero_image_url">Hero Image URL</Label>
+                  <Input
+                    id="hero_image_url"
+                    value={formData.hero_image_url}
+                    onChange={(e) => handleChange('hero_image_url', e.target.value)}
+                    placeholder="https://example.com/hero-image.jpg"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="courthouse_image_url">Courthouse Image URL</Label>
+                  <Input
+                    id="courthouse_image_url"
+                    value={formData.courthouse_image_url}
+                    onChange={(e) => handleChange('courthouse_image_url', e.target.value)}
+                    placeholder="https://example.com/courthouse.jpg"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="landscape_image_url">Landscape Image URL</Label>
+                  <Input
+                    id="landscape_image_url"
+                    value={formData.landscape_image_url}
+                    onChange={(e) => handleChange('landscape_image_url', e.target.value)}
+                    placeholder="https://example.com/landscape.jpg"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="content" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Content Sections</CardTitle>
-              <CardDescription>How-to guide and county information content</CardDescription>
+              <CardTitle>Additional Content Sections</CardTitle>
+              <CardDescription>How-to guide and additional county information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>

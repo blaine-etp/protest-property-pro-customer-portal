@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { CountyForm } from "./CountyForm";
 import { Search, Plus, Edit, Trash2, Eye, Globe, MapPin } from "lucide-react";
@@ -309,18 +311,19 @@ export function CountyManagement() {
                           {county.state}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <Badge variant={county.status === 'published' ? 'default' : 'secondary'}>
                           {county.status}
                         </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleStatus(county)}
-                          className="h-6 px-2 text-xs"
-                        >
-                          {county.status === 'published' ? 'Unpublish' : 'Publish'}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={county.status === 'published'}
+                            onCheckedChange={() => handleToggleStatus(county)}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {county.status === 'published' ? 'Live' : 'Draft'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>

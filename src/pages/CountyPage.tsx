@@ -6,22 +6,22 @@ import { CountyBasicsTemplate } from "@/components/CountyBasicsTemplate";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const CountyPage = () => {
-  const { countySlug } = useParams();
+  const { slug } = useParams();
   
   const { data: county, isLoading: isLoadingCounty } = useQuery({
-    queryKey: ['county', countySlug],
+    queryKey: ['county', slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('counties')
         .select('*')
-        .eq('slug', countySlug)
+        .eq('slug', slug)
         .eq('status', 'published')
         .single();
       
       if (error) throw error;
       return data;
     },
-    enabled: !!countySlug,
+    enabled: !!slug,
   });
 
   if (isLoadingCounty) {

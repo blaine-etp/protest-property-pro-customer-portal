@@ -46,6 +46,23 @@ export function CountyPage() {
     }
   }, [slug]);
 
+  // Set page title and meta description
+  useEffect(() => {
+    if (page && county) {
+      document.title = page.meta_description ? 
+        `${page.title} | ${page.meta_description}` : 
+        `${page.title} | ${county.name} County Tax Information`;
+      
+      // Set meta description
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.setAttribute('content', 
+          page.meta_description || `Property tax information for ${county.name} County, Texas.`
+        );
+      }
+    }
+  }, [page, county]);
+
   const fetchCountyAndPage = async (pageSlug: string) => {
     try {
       // First, try to find the page by slug
@@ -159,23 +176,6 @@ export function CountyPage() {
   if (notFound || !county || !page) {
     return <Navigate to="/404" replace />;
   }
-
-  // Set page title and meta description
-  useEffect(() => {
-    if (page && county) {
-      document.title = page.meta_description ? 
-        `${page.title} | ${page.meta_description}` : 
-        `${page.title} | ${county.name} County Tax Information`;
-      
-      // Set meta description
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute('content', 
-          page.meta_description || `Property tax information for ${county.name} County, Texas.`
-        );
-      }
-    }
-  }, [page, county]);
 
   return (
     <CountyBasicsTemplate

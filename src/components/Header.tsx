@@ -90,6 +90,12 @@ export const Header = () => {
               Contact Us
             </Button>
             
+            {isResourcesPage && (
+              <Button variant="default" size="sm" asChild>
+                <Link to="/auth">Sign Up</Link>
+              </Button>
+            )}
+            
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

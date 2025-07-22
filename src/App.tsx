@@ -31,6 +31,7 @@ import AdminContactDetail from "./pages/AdminContactDetail";
 import AdminProtestDetail from "./pages/AdminProtestDetail";
 import Resources from "./pages/Resources";
 import { CountyPage } from "./pages/CountyPage";
+import { BlogPost } from "./pages/BlogPost";
 import CountyTemplate from "./pages/CountyTemplate";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,8 @@ const App = () => (
           </Route>
           {/* County Template Preview */}
           <Route path="/county-template" element={<CountyTemplate />} />
+          {/* Blog Post Pages Route */}
+          <Route path="/blog/:slug" element={<BlogPost />} />
           {/* County Pages Route */}
           <Route path="/county/:slug" element={<CountyPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

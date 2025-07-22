@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import EmailVerification from "./pages/EmailVerification";
 import CustomerPortal from "./pages/CustomerPortal";
+import PropertyDetail from "./pages/PropertyDetail";
 import SetupAccount from "./pages/SetupAccount";
 import Account from "./pages/Account";
 import AddProperty from "./pages/AddProperty";
@@ -42,6 +44,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/email-verification" element={<EmailVerification />} />
           <Route path="/customer-portal" element={<CustomerPortal />} />
+          <Route path="/property/:propertyId" element={<PropertyDetail />} />
           <Route path="/setup-account" element={<SetupAccount />} />
           <Route path="/account" element={<Account />} />
           <Route path="/add-property" element={<AddProperty />} />

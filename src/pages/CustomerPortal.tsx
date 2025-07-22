@@ -95,6 +95,10 @@ const CustomerPortal = () => {
     handleToggleAutoAppeal(propertyId);
   };
 
+  const handleViewProperty = (propertyId: string) => {
+    navigate(`/property/${propertyId}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -235,7 +239,11 @@ const CustomerPortal = () => {
                           <div>
                             <h3 className="text-lg font-semibold">{property.address || 'No address available'}</h3>
                             <p className="text-sm text-muted-foreground">Austin, TX</p>
-                            <Button variant="link" className="p-0 h-auto text-blue-600 text-sm">
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto text-blue-600 text-sm"
+                              onClick={() => handleViewProperty(property.id)}
+                            >
                               View Property <ExternalLink className="h-3 w-3 ml-1" />
                             </Button>
                           </div>

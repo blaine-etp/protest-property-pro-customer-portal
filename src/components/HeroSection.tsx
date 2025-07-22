@@ -145,7 +145,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
                 className="text-muted-foreground hover:text-white border border-muted-foreground/30 hover:border-white transition-all duration-200"
               >
                 <Building2 className="mr-2 h-4 w-4" />
-                I have multiple properties
+                I have 3 or more properties
               </Button>
             </div>
 

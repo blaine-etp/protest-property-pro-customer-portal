@@ -1,3 +1,4 @@
+
 import { CountyBasicsTemplate } from "@/components/CountyBasicsTemplate";
 
 const CountyTemplate = () => {
@@ -21,20 +22,14 @@ const CountyTemplate = () => {
     appraisal_district_website: "https://samplecountyad.org",
     county_info_content: "This is sample content for the county information section. It would typically contain important details about the county's tax assessment process.",
     how_to_content: "This is sample content for the how-to section. It would provide step-by-step instructions for property tax protests in this county.",
+    page_title: "Property Tax Basics for Sample County",
+    page_content: "This is sample content for the county page. It would typically contain detailed information about property tax processes, deadlines, and procedures specific to this county.",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     meta_title: "Sample County Property Tax Information",
     meta_description: "Learn about property tax protests in Sample County, Texas",
     meta_keywords: "sample county, property tax, protest, texas",
     county_code: "SAM"
-  };
-
-  // Sample page data for the template preview
-  const samplePage = {
-    id: "sample-page-id",
-    title: "Property Tax Basics for Sample County",
-    content: "This is sample content for the county page. It would typically contain detailed information about property tax processes, deadlines, and procedures specific to this county.",
-    meta_description: "Learn about property tax basics in Sample County, Texas"
   };
 
   return (
@@ -47,7 +42,7 @@ const CountyTemplate = () => {
           </p>
         </div>
         
-        <CountyBasicsTemplate county={sampleCounty} page={samplePage} />
+        <CountyBasicsTemplate county={sampleCounty} />
       </div>
     </div>
   );

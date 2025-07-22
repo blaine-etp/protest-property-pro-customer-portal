@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -320,12 +321,11 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
               </div>
               <div>
                 <Label htmlFor="page_content">Main Page Content</Label>
-                <Textarea
-                  id="page_content"
-                  value={formData.page_content}
-                  onChange={(e) => handleChange('page_content', e.target.value)}
+                <RichTextEditor
+                  content={formData.page_content}
+                  onChange={(content) => handleChange('page_content', content)}
                   placeholder="Main content about property taxes, protests, and important information for residents of this county..."
-                  rows={10}
+                  className="min-h-[300px]"
                 />
               </div>
               
@@ -371,22 +371,20 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="how_to_content">How-To Content</Label>
-                <Textarea
-                  id="how_to_content"
-                  value={formData.how_to_content}
-                  onChange={(e) => handleChange('how_to_content', e.target.value)}
+                <RichTextEditor
+                  content={formData.how_to_content}
+                  onChange={(content) => handleChange('how_to_content', content)}
                   placeholder="Step-by-step process for property tax protests in this county..."
-                  rows={8}
+                  className="min-h-[250px]"
                 />
               </div>
               <div>
                 <Label htmlFor="county_info_content">County Information Content</Label>
-                <Textarea
-                  id="county_info_content"
-                  value={formData.county_info_content}
-                  onChange={(e) => handleChange('county_info_content', e.target.value)}
+                <RichTextEditor
+                  content={formData.county_info_content}
+                  onChange={(content) => handleChange('county_info_content', content)}
                   placeholder="General information about property taxes in this county..."
-                  rows={8}
+                  className="min-h-[250px]"
                 />
               </div>
             </CardContent>

@@ -1,6 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Scale, Phone, Mail, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { authService } from "@/services";
 import { User as SupabaseUser } from "@supabase/supabase-js";
@@ -16,6 +17,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const Header = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const location = useLocation();
+  const isResourcesPage = location.pathname === '/resources';
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -50,31 +53,38 @@ export const Header = () => {
                 className="h-12"
               />
             </Link>
+            {isResourcesPage && (
+              <span className="text-sm text-muted-foreground ml-4">/ Resources</span>
+            )}
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="#services" className="text-foreground hover:text-primary transition-colors">
-              Services
-            </a>
-            <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">
-              How It Works
-            </a>
-            <Link to="/resources" className="text-foreground hover:text-primary transition-colors">
-              Resources
-            </Link>
-            <a href="#about" className="text-foreground hover:text-primary transition-colors">
-              About
-            </a>
-            <a href="#contact" className="text-foreground hover:text-primary transition-colors">
-              Contact
-            </a>
-          </nav>
+          {!isResourcesPage && (
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#services" className="text-foreground hover:text-primary transition-colors">
+                Services
+              </a>
+              <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">
+                How It Works
+              </a>
+              <Link to="/resources" className="text-foreground hover:text-primary transition-colors">
+                Resources
+              </Link>
+              <a href="#about" className="text-foreground hover:text-primary transition-colors">
+                About
+              </a>
+              <a href="#contact" className="text-foreground hover:text-primary transition-colors">
+                Contact
+              </a>
+            </nav>
+          )}
 
           <div className="flex items-center space-x-4">
-            <a href="tel:555-0123" className="hidden sm:flex items-center text-muted-foreground hover:text-primary transition-colors">
-              <Phone className="h-4 w-4 mr-2" />
-              (555) 012-3456
-            </a>
+            {!isResourcesPage && (
+              <a href="tel:555-0123" className="hidden sm:flex items-center text-muted-foreground hover:text-primary transition-colors">
+                <Phone className="h-4 w-4 mr-2" />
+                (555) 012-3456
+              </a>
+            )}
             <Button variant="outline" size="sm">
               <Mail className="h-4 w-4 mr-2" />
               Contact Us

@@ -1,10 +1,11 @@
+
 import { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -269,11 +270,12 @@ export function CountyBasicsTemplate({
                     </div>
                     <div>
                       <Label htmlFor="page_content">Page Content</Label>
-                      <RichTextEditor
-                        content={editedCounty.page_content || ''}
-                        onChange={(content) => setEditedCounty(prev => ({ ...prev, page_content: content }))}
+                      <Textarea
+                        id="page_content"
+                        value={editedCounty.page_content || ''}
+                        onChange={(e) => setEditedCounty(prev => ({ ...prev, page_content: e.target.value }))}
+                        className="min-h-[300px] resize-none"
                         placeholder="Enter the main content for this county page..."
-                        className="min-h-[300px]"
                       />
                     </div>
                   </div>
@@ -282,12 +284,11 @@ export function CountyBasicsTemplate({
                     <h2 className="text-3xl font-bold mb-6">
                       {county.page_title || `${county.name} County Property Tax Information`}
                     </h2>
-                    <div className="prose prose-lg max-w-none">
+                    <div className="prose max-w-none">
                       {county.page_content ? (
-                        <div 
-                          className="leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: county.page_content }}
-                        />
+                        <div className="whitespace-pre-wrap text-lg leading-relaxed">
+                          {county.page_content}
+                        </div>
                       ) : (
                         <div className="text-muted-foreground italic text-center py-8">
                           No content available. Click "Edit Page" to add content.

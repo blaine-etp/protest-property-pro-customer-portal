@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,23 @@ export function CountyPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const { toast } = useToast();
+
+  // Move the document title and meta effect to the top level
+  useEffect(() => {
+    if (page && county) {
+      document.title = page.meta_description ? 
+        `${page.title} | ${page.meta_description}` : 
+        `${page.title} | ${county.name} County Tax Information`;
+      
+      // Set meta description
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.setAttribute('content', 
+          page.meta_description || `Property tax information for ${county.name} County, Texas.`
+        );
+      }
+    }
+  }, [page, county]);
 
   useEffect(() => {
     if (slug) {
@@ -159,23 +177,6 @@ export function CountyPage() {
   if (notFound || !county || !page) {
     return <Navigate to="/404" replace />;
   }
-
-  // Set page title and meta description
-  useEffect(() => {
-    if (page && county) {
-      document.title = page.meta_description ? 
-        `${page.title} | ${page.meta_description}` : 
-        `${page.title} | ${county.name} County Tax Information`;
-      
-      // Set meta description
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute('content', 
-          page.meta_description || `Property tax information for ${county.name} County, Texas.`
-        );
-      }
-    }
-  }, [page, county]);
 
   return (
     <CountyBasicsTemplate

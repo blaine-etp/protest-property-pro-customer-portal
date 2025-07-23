@@ -772,42 +772,63 @@ export type Database = {
       properties: {
         Row: {
           address: string
+          assessed_value: number | null
+          county: string | null
           county_pid: string | null
           created_at: string
           estimated_savings: number | null
           etp_pid: string | null
+          formatted_address: string | null
+          google_address_components: Json | null
           id: string
           include_all_properties: boolean | null
+          latitude: number | null
+          longitude: number | null
           owner_id: string | null
           parcel_number: string | null
+          place_id: string | null
           secondary_contact_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           address: string
+          assessed_value?: number | null
+          county?: string | null
           county_pid?: string | null
           created_at?: string
           estimated_savings?: number | null
           etp_pid?: string | null
+          formatted_address?: string | null
+          google_address_components?: Json | null
           id?: string
           include_all_properties?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           owner_id?: string | null
           parcel_number?: string | null
+          place_id?: string | null
           secondary_contact_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           address?: string
+          assessed_value?: number | null
+          county?: string | null
           county_pid?: string | null
           created_at?: string
           estimated_savings?: number | null
           etp_pid?: string | null
+          formatted_address?: string | null
+          google_address_components?: Json | null
           id?: string
           include_all_properties?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           owner_id?: string | null
           parcel_number?: string | null
+          place_id?: string | null
           secondary_contact_id?: string | null
           updated_at?: string
           user_id?: string

@@ -20,23 +20,38 @@
     <!-- Google Maps Places API -->
     <script>
       function initGooglePlaces() {
+        console.log('🗺️ Google Places API initialized successfully');
         window.googlePlacesLoaded = true;
         window.dispatchEvent(new Event('googlePlacesLoaded'));
       }
     </script>
     <script>
       // Load Google Maps API with the key from Supabase
-      fetch('/supabase/functions/v1/get-google-maps-key')
-        .then(response => response.text())
+      console.log('🔑 Starting Google Maps API key fetch...');
+      fetch('https://phxgvegpibyjdxsqtdwb.supabase.co/functions/v1/get-google-maps-key')
+        .then(response => {
+          console.log('🔑 API key fetch response status:', response.status);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.text();
+        })
         .then(apiKey => {
+          console.log('🔑 API key fetched successfully, length:', apiKey.length);
           const script = document.createElement('script');
           script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGooglePlaces`;
           script.async = true;
           script.defer = true;
+          script.onerror = function() {
+            console.error('❌ Failed to load Google Maps script');
+            window.googlePlacesLoaded = false;
+            window.dispatchEvent(new Event('googlePlacesLoaded'));
+          };
+          console.log('🗺️ Loading Google Maps script...');
           document.head.appendChild(script);
         })
         .catch(error => {
-          console.error('Failed to load Google Maps API key:', error);
+          console.error('❌ Failed to load Google Maps API key:', error);
           // Fallback: initialize without Google Maps
           window.googlePlacesLoaded = false;
           window.dispatchEvent(new Event('googlePlacesLoaded'));

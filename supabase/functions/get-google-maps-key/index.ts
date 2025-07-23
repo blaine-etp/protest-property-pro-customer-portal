@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -12,10 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    const googleMapsApiKey = Deno.env.get('GOOGLE_MAPS_API_KEY')
+    const googleMapsApiKey = Deno.env.get('GOOGLE_PLACES_API_KEY')
     
     if (!googleMapsApiKey) {
-      throw new Error('Google Maps API key not configured')
+      throw new Error('Google Places API key not configured')
     }
 
     return new Response(googleMapsApiKey, {

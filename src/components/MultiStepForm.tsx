@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { EnhancedAddressStep } from './form-steps/EnhancedAddressStep';
 import { SavingsStepContainer } from './form-steps/SavingsStepContainer';
 import { ContactStep } from './form-steps/ContactStep';
 import { ReviewStep } from './form-steps/ReviewStep';
@@ -9,6 +11,7 @@ export interface FormData {
   address: string;
   estimatedSavings?: number;
   parcelNumber?: string;
+  googlePlacesData?: any;
   firstName: string;
   lastName: string;
   isTrustEntity: boolean;
@@ -48,7 +51,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, on
     referralCode: referralCode || undefined,
   });
 
-  const totalSteps = 3;
+  const totalSteps = 4; // Added address step
   const progress = (currentStep / totalSteps) * 100;
 
   const updateFormData = (data: Partial<FormData>) => {
@@ -85,14 +88,22 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, on
     switch (currentStep) {
       case 1:
         return (
+          <EnhancedAddressStep
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+          />
+        );
+      case 2:
+        return (
           <SavingsStepContainer
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}
-            onPrev={() => onComplete?.(formData)}
+            onPrev={prevStep}
           />
         );
-      case 2:
+      case 3:
         return (
           <ContactStep
             formData={formData}
@@ -101,7 +112,7 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, on
             onPrev={prevStep}
           />
         );
-      case 3:
+      case 4:
         return (
           <ReviewStep
             formData={formData}

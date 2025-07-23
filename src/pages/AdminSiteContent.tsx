@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +14,8 @@ import { toast } from 'sonner';
 // Mock data structure matching current site content
 const initialSiteContent = {
   hero: {
-    headline: "Lower Your Property Taxes <span class='text-primary'>Guaranteed</span>",
+    mainHeadline: "Lower Your Property Taxes",
+    highlightText: "Guaranteed",
     subheadline: "Professional property tax protest services that save homeowners thousands. Enter your address below to see if you qualify for significant tax savings.",
     backgroundImage: "/assets/austin-skyline.jpg",
     primaryButtonText: "Check Savings",
@@ -267,16 +269,20 @@ export function AdminSiteContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="headline">Hero Headline</Label>
-                <HybridHtmlEditor
-                  content={content.hero.headline}
-                  onChange={(value) => handleContentChange('hero', 'headline', value)}
-                  placeholder="Enter your hero headline. Use HTML for styling: <span class='text-primary'>Guaranteed</span> for colored text, <strong>bold</strong> for emphasis, etc."
-                  className="mt-2"
+                <Label htmlFor="mainHeadline">Main Headline</Label>
+                <Input
+                  id="mainHeadline"
+                  value={content.hero.mainHeadline}
+                  onChange={(e) => handleContentChange('hero', 'mainHeadline', e.target.value)}
                 />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Tip: Use HTML classes like <code>text-primary</code>, <code>text-blue-600</code>, or formatting tags like <code>&lt;strong&gt;</code> for styling.
-                </p>
+              </div>
+              <div>
+                <Label htmlFor="highlightText">Highlight Text (colored)</Label>
+                <Input
+                  id="highlightText"
+                  value={content.hero.highlightText}
+                  onChange={(e) => handleContentChange('hero', 'highlightText', e.target.value)}
+                />
               </div>
               <div>
                 <Label htmlFor="subheadline">Subheadline</Label>

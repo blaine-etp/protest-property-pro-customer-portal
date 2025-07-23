@@ -24,7 +24,24 @@
         window.dispatchEvent(new Event('googlePlacesLoaded'));
       }
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCF-lHHSh9bU3TLZzlLFZ5VJOuHxGdOAII&libraries=places&callback=initGooglePlaces" async defer></script>
+    <script>
+      // Load Google Maps API with the key from Supabase
+      fetch('/supabase/functions/v1/get-google-maps-key')
+        .then(response => response.text())
+        .then(apiKey => {
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGooglePlaces`;
+          script.async = true;
+          script.defer = true;
+          document.head.appendChild(script);
+        })
+        .catch(error => {
+          console.error('Failed to load Google Maps API key:', error);
+          // Fallback: initialize without Google Maps
+          window.googlePlacesLoaded = false;
+          window.dispatchEvent(new Event('googlePlacesLoaded'));
+        });
+    </script>
   </head>
 
   <body>

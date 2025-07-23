@@ -231,7 +231,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
         .from('properties')
         .insert([{
           user_id: userId,
-          address: values.address,
+          situs_address: values.address,
           parcel_number: values.parcelNumber || null,
           include_all_properties: values.includeAllProperties,
           owner_id: owner.id,

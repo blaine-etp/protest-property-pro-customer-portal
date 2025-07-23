@@ -8,7 +8,8 @@ interface MockProperty {
   id: string;
   user_id: string;
   owner_id: string;
-  address: string;
+  address: string; // For backward compatibility
+  situs_address: string;
   parcel_number?: string;
   estimated_savings?: number;
   include_all_properties?: boolean;
@@ -73,6 +74,7 @@ class MockFormService {
           user_id: '550e8400-e29b-41d4-a716-446655440001', // UUID format matching mock auth
           owner_id: 'owner-1',
           address: '123 Main St, Austin, TX 78701',
+          situs_address: '123 Main St, Austin, TX 78701',
           parcel_number: 'PAR123456',
           estimated_savings: 2500,
           appeal_status: {
@@ -87,6 +89,7 @@ class MockFormService {
           user_id: '550e8400-e29b-41d4-a716-446655440001', // UUID format matching mock auth
           owner_id: 'owner-1',
           address: '456 Oak Ave, Austin, TX 78702',
+          situs_address: '456 Oak Ave, Austin, TX 78702',
           parcel_number: 'PAR654321',
           estimated_savings: 1800,
           appeal_status: {
@@ -191,6 +194,7 @@ class MockFormService {
         user_id: tempUserId,
         owner_id: ownerId,
         address: formData.address,
+        situs_address: formData.address,
         parcel_number: formData.parcelNumber,
         estimated_savings: formData.estimatedSavings,
         include_all_properties: formData.includeAllProperties,

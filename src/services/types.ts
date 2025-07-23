@@ -23,7 +23,8 @@ export interface Contact {
 
 export interface Property {
   id: string;
-  address: string;
+  address: string; // Keep for backward compatibility in CRM
+  situs_address?: string; // New field for database
   parcelNumber: string;
   etpPid?: string;
   countyPid?: string;

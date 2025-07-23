@@ -141,7 +141,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="flex justify-between">
-            <span className="font-medium">Address:</span>
+            <span className="font-medium">Situs Address:</span>
             <span>{formData.address}</span>
           </div>
           <div className="flex justify-between">

@@ -72,6 +72,7 @@ export const useCustomerData = (email: string) => {
         // Transform the data to match our Property interface
         const transformedProperties = (propertiesData || []).map(property => ({
           ...property,
+          address: property.situs_address || 'No address', // Map from situs_address to address for compatibility
           appeal_status: Array.isArray(property.protests) 
             ? property.protests[0] 
             : property.protests

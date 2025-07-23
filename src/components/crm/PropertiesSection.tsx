@@ -480,8 +480,8 @@ export function PropertiesSection() {
                   
                   <div className="space-y-2 mt-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600">Address:</span>
-                      <span className="text-sm">{property.address}</span>
+                       <span className="text-sm font-medium text-slate-600">Situs Address:</span>
+                       <span className="text-sm">{property.address}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-slate-600">County:</span>

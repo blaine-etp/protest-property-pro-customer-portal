@@ -130,7 +130,7 @@ export const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
         .from('properties')
         .insert([{
           user_id: customer.user_id,
-          address: values.address,
+          situs_address: values.address,
           parcel_number: values.parcelNumber || null,
           include_all_properties: values.includeAllProperties,
           owner_id: ownerId,

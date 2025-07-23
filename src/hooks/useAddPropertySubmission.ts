@@ -69,7 +69,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
         .from('properties')
         .insert({
           user_id: existingUserId,
-          address: formData.address,
+          situs_address: formData.address,
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
           include_all_properties: formData.includeAllProperties,

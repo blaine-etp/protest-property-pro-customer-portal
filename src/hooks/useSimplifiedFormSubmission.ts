@@ -107,6 +107,11 @@ export const useSimplifiedFormSubmission = () => {
           form_entity_name: formData.entityName,
           form_entity_type: formData.entityType,
           notes: `Relationship to property: ${formData.role || 'homeowner'}`,
+          // Default mailing address to situs address initially
+          mailing_address: formData.address,
+          mailing_city: formData.county ? `${formData.county.replace(' County', '')}, TX` : 'Austin, TX',
+          mailing_state: 'TX',
+          mailing_zip: '78701', // Default - will be updated by AWS integration
         })
         .select()
         .single();
@@ -121,7 +126,7 @@ export const useSimplifiedFormSubmission = () => {
         .insert({
           user_id: userId,
           owner_id: owner.id,
-          address: formData.address,
+          situs_address: formData.address,
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
           include_all_properties: formData.includeAllProperties,

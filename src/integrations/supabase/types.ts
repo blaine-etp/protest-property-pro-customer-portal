@@ -771,7 +771,6 @@ export type Database = {
       }
       properties: {
         Row: {
-          address: string
           assessed_value: number | null
           county: string | null
           county_pid: string | null
@@ -788,11 +787,11 @@ export type Database = {
           parcel_number: string | null
           place_id: string | null
           secondary_contact_id: string | null
+          situs_address: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          address: string
           assessed_value?: number | null
           county?: string | null
           county_pid?: string | null
@@ -809,11 +808,11 @@ export type Database = {
           parcel_number?: string | null
           place_id?: string | null
           secondary_contact_id?: string | null
+          situs_address: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          address?: string
           assessed_value?: number | null
           county?: string | null
           county_pid?: string | null
@@ -830,6 +829,7 @@ export type Database = {
           parcel_number?: string | null
           place_id?: string | null
           secondary_contact_id?: string | null
+          situs_address?: string
           updated_at?: string
           user_id?: string
         }

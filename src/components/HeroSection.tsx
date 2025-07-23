@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, MapPin, Building2 } from "lucide-react";
+import { Search, Building2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import austinSkyline from "@/assets/austin-skyline.jpg";
 import { AnimatedCounter } from "./AnimatedCounter";
 import MultiStepForm from "./MultiStepForm";
+import { GooglePlacesAutocomplete } from "./GooglePlacesAutocomplete";
 
 interface HeroSectionProps {
   showForm: boolean;
@@ -119,17 +119,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
 
             <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12">
               <div className="flex flex-col sm:flex-row gap-4 p-2 bg-card rounded-xl shadow-hero">
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-                  <Input
-                    type="text"
-                    placeholder="Enter your property address..."
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="pl-12 h-14 text-lg border-0 bg-transparent focus:ring-0"
-                    required
-                  />
-                </div>
+                <GooglePlacesAutocomplete
+                  value={address}
+                  onChange={setAddress}
+                  placeholder="Enter your property address..."
+                  required
+                />
                 <Button 
                   type="submit" 
                   variant="hero" 

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -15,6 +16,15 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <!-- Google Maps Places API -->
+    <script>
+      function initGooglePlaces() {
+        window.googlePlacesLoaded = true;
+        window.dispatchEvent(new Event('googlePlacesLoaded'));
+      }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCF-lHHSh9bU3TLZzlLFZ5VJOuHxGdOAII&libraries=places&callback=initGooglePlaces" async defer></script>
   </head>
 
   <body>

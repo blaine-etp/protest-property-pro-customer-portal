@@ -24,6 +24,7 @@ import {
   Settings,
   LogOut,
   Shield,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,11 @@ const navigationItems = [
     title: "Customer CRM",
     url: "/admin/customers",
     icon: Users,
+  },
+  {
+    title: "Site Content",
+    url: "/admin/site-content",
+    icon: Globe,
   },
   {
     title: "Blog Management",

@@ -9,12 +9,19 @@ import { HybridHtmlEditor } from "@/components/ui/hybrid-html-editor";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Save, RotateCcw } from "lucide-react";
 
-// Mock data structure for site content
+// Mock data structure matching actual homepage content
 const initialContent = {
   hero: {
-    headline: "Lower Your Property Taxes with Expert Appeals",
-    subtitle: "Professional property tax reduction services with no upfront costs. Only pay when we save you money.",
-    buttonText: "Get Started Today"
+    mainHeadline: "Lower Your Property Taxes",
+    highlightText: "Guaranteed", 
+    subtitle: "Professional property tax protest services that save homeowners thousands. Enter your address below to see if you qualify for significant tax savings.",
+    buttonText: "Check Savings",
+    multiPropertyText: "I have 3 or more properties",
+    stats: {
+      averageSavings: 2500,
+      successRate: 95,
+      propertiesProtested: 10000
+    }
   },
   benefits: {
     title: "Why Choose Our Property Tax Appeal Service?",
@@ -25,7 +32,7 @@ const initialContent = {
         description: "You only pay when we successfully reduce your property taxes. No risk, all reward."
       },
       {
-        title: "Expert Knowledge",
+        title: "Expert Knowledge", 
         description: "Our team of certified appraisers and tax professionals know exactly how to navigate the appeals process."
       },
       {
@@ -46,7 +53,7 @@ const initialContent = {
         description: "Our experts collect comprehensive evidence including photos, comparable sales, and market data."
       },
       {
-        title: "Appeal Filing",
+        title: "Appeal Filing", 
         description: "We prepare and file your appeal with the appropriate authorities, handling all paperwork and deadlines."
       },
       {
@@ -59,37 +66,34 @@ const initialContent = {
     items: [
       {
         name: "Sarah Johnson",
+        location: "Austin, TX",
+        savings: 2400,
         text: "They saved me $2,400 per year on my property taxes. The process was completely handled by their team.",
         rating: 5
       },
       {
-        name: "Mike Chen",
+        name: "Mike Chen", 
+        location: "Dallas, TX",
+        savings: 3200,
         text: "Professional service and great results. I recommend them to all my neighbors.",
         rating: 5
       },
       {
         name: "Lisa Rodriguez",
+        location: "Houston, TX", 
+        savings: 1800,
         text: "Easy process and significant savings. Worth every penny of their fee.",
         rating: 5
       }
     ]
   },
-  footer: {
-    contactInfo: {
-      phone: "(555) 123-4567",
-      email: "info@propertytaxappeals.com",
-      address: "123 Main Street, Austin, TX 78701"
-    },
-    quickLinks: [
-      { name: "About Us", url: "/about" },
-      { name: "Services", url: "/services" },
-      { name: "Contact", url: "/contact" }
-    ],
-    legalLinks: [
-      { name: "Privacy Policy", url: "/privacy" },
-      { name: "Terms of Service", url: "/terms" },
-      { name: "Disclaimer", url: "/disclaimer" }
-    ]
+  cta: {
+    headline: "Ready to Reduce Your Property Taxes?",
+    description: "Don't overpay on your property taxes. Get started today with our risk-free service and see how much you can save.",
+    buttonText: "Check Savings",
+    multiPropertyText: "I have multiple properties",
+    contactPhone: "(555) 012-3456",
+    guaranteeText: "No upfront fees • 100% risk-free • Results guaranteed"
   }
 };
 
@@ -108,7 +112,7 @@ export default function AdminSiteContent() {
 
   const handleReset = (section: string) => {
     const resetContent = { ...content };
-    resetContent[section as keyof typeof content] = initialContent[section as keyof typeof initialContent];
+    (resetContent as any)[section] = (initialContent as any)[section];
     setContent(resetContent);
     toast({
       title: "Content Reset",
@@ -121,7 +125,7 @@ export default function AdminSiteContent() {
     setContent(prev => ({
       ...prev,
       [section]: {
-        ...prev[section as keyof typeof prev],
+        ...(prev as any)[section],
         [field]: value
       }
     }));
@@ -131,10 +135,23 @@ export default function AdminSiteContent() {
     setContent(prev => ({
       ...prev,
       [section]: {
-        ...prev[section as keyof typeof prev],
-        items: (prev[section as keyof typeof prev] as any).items.map((item: any, i: number) => 
+        ...(prev as any)[section],
+        items: ((prev as any)[section] as any).items.map((item: any, i: number) => 
           i === index ? { ...item, [field]: value } : item
         )
+      }
+    }));
+  };
+
+  const updateNestedContent = (section: string, nestedField: string, field: string, value: any) => {
+    setContent(prev => ({
+      ...prev,
+      [section]: {
+        ...(prev as any)[section],
+        [nestedField]: {
+          ...((prev as any)[section] as any)[nestedField],
+          [field]: value
+        }
       }
     }));
   };
@@ -152,7 +169,7 @@ export default function AdminSiteContent() {
           <TabsTrigger value="benefits">Benefits</TabsTrigger>
           <TabsTrigger value="process">Process</TabsTrigger>
           <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-          <TabsTrigger value="footer">Footer</TabsTrigger>
+          <TabsTrigger value="cta">Call to Action</TabsTrigger>
         </TabsList>
 
         <TabsContent value="hero" className="space-y-4">
@@ -161,14 +178,25 @@ export default function AdminSiteContent() {
               <CardTitle>Hero Section</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="hero-headline">Headline</Label>
-                <Input
-                  id="hero-headline"
-                  value={content.hero.headline}
-                  onChange={(e) => updateContent('hero', 'headline', e.target.value)}
-                  placeholder="Enter hero headline"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hero-main-headline">Main Headline</Label>
+                  <Input
+                    id="hero-main-headline"
+                    value={content.hero.mainHeadline}
+                    onChange={(e) => updateContent('hero', 'mainHeadline', e.target.value)}
+                    placeholder="Main headline text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hero-highlight">Highlight Text</Label>
+                  <Input
+                    id="hero-highlight"
+                    value={content.hero.highlightText}
+                    onChange={(e) => updateContent('hero', 'highlightText', e.target.value)}
+                    placeholder="Highlighted text (colored)"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hero-subtitle">Subtitle</Label>
@@ -178,14 +206,62 @@ export default function AdminSiteContent() {
                   placeholder="Enter hero subtitle"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="hero-button">Button Text</Label>
-                <Input
-                  id="hero-button"
-                  value={content.hero.buttonText}
-                  onChange={(e) => updateContent('hero', 'buttonText', e.target.value)}
-                  placeholder="Enter button text"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hero-button">Primary Button Text</Label>
+                  <Input
+                    id="hero-button"
+                    value={content.hero.buttonText}
+                    onChange={(e) => updateContent('hero', 'buttonText', e.target.value)}
+                    placeholder="Main CTA button text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hero-multi-property">Multi-Property Text</Label>
+                  <Input
+                    id="hero-multi-property"
+                    value={content.hero.multiPropertyText}
+                    onChange={(e) => updateContent('hero', 'multiPropertyText', e.target.value)}
+                    placeholder="Multi-property link text"
+                  />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <Label>Statistics</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="average-savings">Average Savings ($)</Label>
+                    <Input
+                      id="average-savings"
+                      type="number"
+                      value={content.hero.stats.averageSavings}
+                      onChange={(e) => updateNestedContent('hero', 'stats', 'averageSavings', parseInt(e.target.value))}
+                      placeholder="2500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="success-rate">Success Rate (%)</Label>
+                    <Input
+                      id="success-rate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={content.hero.stats.successRate}
+                      onChange={(e) => updateNestedContent('hero', 'stats', 'successRate', parseInt(e.target.value))}
+                      placeholder="95"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="properties-protested">Properties Protested</Label>
+                    <Input
+                      id="properties-protested"
+                      type="number"
+                      value={content.hero.stats.propertiesProtested}
+                      onChange={(e) => updateNestedContent('hero', 'stats', 'propertiesProtested', parseInt(e.target.value))}
+                      placeholder="10000"
+                    />
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={() => handleSave('hero')}>
@@ -316,23 +392,38 @@ export default function AdminSiteContent() {
                 {content.testimonials.items.map((testimonial, index) => (
                   <Card key={index} className="p-4">
                     <div className="space-y-2">
-                      <Input
-                        value={testimonial.name}
-                        onChange={(e) => updateArrayItem('testimonials', index, 'name', e.target.value)}
-                        placeholder="Customer name"
-                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          value={testimonial.name}
+                          onChange={(e) => updateArrayItem('testimonials', index, 'name', e.target.value)}
+                          placeholder="Customer name"
+                        />
+                        <Input
+                          value={testimonial.location}
+                          onChange={(e) => updateArrayItem('testimonials', index, 'location', e.target.value)}
+                          placeholder="Location (e.g., Austin, TX)"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                          type="number"
+                          value={testimonial.savings}
+                          onChange={(e) => updateArrayItem('testimonials', index, 'savings', parseInt(e.target.value))}
+                          placeholder="Annual savings amount"
+                        />
+                        <Input
+                          type="number"
+                          min="1"
+                          max="5"
+                          value={testimonial.rating}
+                          onChange={(e) => updateArrayItem('testimonials', index, 'rating', parseInt(e.target.value))}
+                          placeholder="Rating (1-5)"
+                        />
+                      </div>
                       <HybridHtmlEditor
                         content={testimonial.text}
                         onChange={(value) => updateArrayItem('testimonials', index, 'text', value)}
                         placeholder="Testimonial text"
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={testimonial.rating}
-                        onChange={(e) => updateArrayItem('testimonials', index, 'rating', parseInt(e.target.value))}
-                        placeholder="Rating (1-5)"
                       />
                     </div>
                   </Card>
@@ -352,50 +443,75 @@ export default function AdminSiteContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="footer" className="space-y-4">
+        <TabsContent value="cta" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Footer Section</CardTitle>
+              <CardTitle>Call to Action Section</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <Label>Contact Information</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-phone">Phone</Label>
-                    <Input
-                      id="footer-phone"
-                      value={content.footer.contactInfo.phone}
-                      onChange={(e) => updateContent('footer', 'contactInfo', { ...content.footer.contactInfo, phone: e.target.value })}
-                      placeholder="Phone number"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-email">Email</Label>
-                    <Input
-                      id="footer-email"
-                      value={content.footer.contactInfo.email}
-                      onChange={(e) => updateContent('footer', 'contactInfo', { ...content.footer.contactInfo, email: e.target.value })}
-                      placeholder="Email address"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-address">Address</Label>
-                    <Input
-                      id="footer-address"
-                      value={content.footer.contactInfo.address}
-                      onChange={(e) => updateContent('footer', 'contactInfo', { ...content.footer.contactInfo, address: e.target.value })}
-                      placeholder="Physical address"
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="cta-headline">Headline</Label>
+                <Input
+                  id="cta-headline"
+                  value={content.cta.headline}
+                  onChange={(e) => updateContent('cta', 'headline', e.target.value)}
+                  placeholder="CTA section headline"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cta-description">Description</Label>
+                <HybridHtmlEditor
+                  content={content.cta.description}
+                  onChange={(value) => updateContent('cta', 'description', value)}
+                  placeholder="CTA section description"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cta-button">Button Text</Label>
+                  <Input
+                    id="cta-button"
+                    value={content.cta.buttonText}
+                    onChange={(e) => updateContent('cta', 'buttonText', e.target.value)}
+                    placeholder="CTA button text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cta-multi-property">Multi-Property Text</Label>
+                  <Input
+                    id="cta-multi-property"
+                    value={content.cta.multiPropertyText}
+                    onChange={(e) => updateContent('cta', 'multiPropertyText', e.target.value)}
+                    placeholder="Multi-property link text"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cta-phone">Contact Phone</Label>
+                  <Input
+                    id="cta-phone"
+                    value={content.cta.contactPhone}
+                    onChange={(e) => updateContent('cta', 'contactPhone', e.target.value)}
+                    placeholder="Phone number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cta-guarantee">Guarantee Text</Label>
+                  <Input
+                    id="cta-guarantee"
+                    value={content.cta.guaranteeText}
+                    onChange={(e) => updateContent('cta', 'guaranteeText', e.target.value)}
+                    placeholder="Guarantee/trust indicators"
+                  />
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={() => handleSave('footer')}>
+                <Button onClick={() => handleSave('cta')}>
                   <Save className="h-4 w-4 mr-2" />
                   Save Changes
                 </Button>
-                <Button variant="outline" onClick={() => handleReset('footer')}>
+                <Button variant="outline" onClick={() => handleReset('cta')}>
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Reset
                 </Button>

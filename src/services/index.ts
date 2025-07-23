@@ -1,4 +1,3 @@
-
 // Complete Service Factory and Configuration
 // Controls all backend integrations: data, auth, forms, and storage
 
@@ -14,14 +13,10 @@ const USE_AWS_DATA = false;
 const USE_SUPABASE_AUTH = false;
 const USE_SUPABASE_FORMS = false;
 const USE_SUPABASE_STORAGE = false;
-const USE_GOOGLE_PLACES = true; // Google Places API is now integrated
 
 // AWS Configuration (to be set when ready)
 const AWS_API_URL = 'https://your-aws-api-url.com/api';
 const AWS_API_KEY = 'your-aws-api-key';
-
-// Google Places API is configured via environment variable
-const GOOGLE_PLACES_API_KEY = import.meta.env.VITE_GOOGLE_PLACES_API_KEY;
 
 // Data service factory
 function createDataService(): DataService {
@@ -104,11 +99,6 @@ export const getServiceInfo = () => ({
   storage: {
     isUsingSupabase: USE_SUPABASE_STORAGE,
     source: USE_SUPABASE_STORAGE ? 'Supabase Storage' : 'Mock Storage'
-  },
-  googlePlaces: {
-    isEnabled: USE_GOOGLE_PLACES,
-    source: USE_GOOGLE_PLACES ? 'Google Places API' : 'Disabled',
-    configured: !!GOOGLE_PLACES_API_KEY
   }
 });
 
@@ -116,40 +106,27 @@ export const getServiceInfo = () => ({
 // DEVELOPER MIGRATION GUIDE
 // ============================================
 //
-// CURRENT STATUS: 
-// - Google Places API: INTEGRATED ✅
-// - All other services: MOCKED
-// 
-// The website now uses Google Places API for address autocomplete and validation.
-// AWS integration is stubbed and ready for implementation.
+// CURRENT STATUS: ALL SERVICES ARE MOCKED
+// The website is fully functional with mock data, no database required.
 //
 // TO ENABLE REAL BACKEND SERVICES:
 //
 // 1. DATA SERVICE (AWS):
 //    - Set USE_AWS_DATA = true
 //    - Configure AWS_API_URL and AWS_API_KEY
-//    - Implement actual AWS API calls in edge functions:
-//      * supabase/functions/lookup-property/index.ts
-//      * supabase/functions/lookup-all-properties/index.ts
-//      * supabase/functions/normalize-address/index.ts
+//    - Ensure AWS API endpoints match expected interface
 //
-// 2. AWS INTEGRATION POINTS:
-//    - Address normalization (fuzzy matching Google Places → AWS formats)
-//    - Single property lookup by situs_address
-//    - Multi-property lookup (situs_address → mailing_address → all properties)
-//    - County-specific address formatting rules
-//
-// 3. AUTHENTICATION (Supabase):
+// 2. AUTHENTICATION (Supabase):
 //    - Set USE_SUPABASE_AUTH = true
 //    - Replace mockAuthService calls with supabase.auth calls
 //    - Update Auth.tsx, useAuthenticatedCustomerData.ts, etc.
 //
-// 4. FORM SUBMISSIONS (Supabase):
+// 3. FORM SUBMISSIONS (Supabase):
 //    - Set USE_SUPABASE_FORMS = true
 //    - Replace mockFormService calls with supabase database calls
 //    - Update useFormSubmission.ts, useAddPropertySubmission.ts, etc.
 //
-// 5. FILE STORAGE (Supabase):
+// 4. FILE STORAGE (Supabase):
 //    - Set USE_SUPABASE_STORAGE = true
 //    - Replace mockStorageService calls with supabase.storage calls
 //    - Update DocumentsSection.tsx and related components
@@ -166,21 +143,14 @@ export const getServiceInfo = () => ({
 // - Storage data: localStorage 'mock_storage_*' keys
 // - CRM data: src/services/mockData.ts
 //
-// GOOGLE PLACES API:
-// - Integrated with address autocomplete
-// - Provides structured address data
-// - Includes place_id for consistent address references
-// - Handles address validation and normalization
-//
-// AWS API INTERFACE REQUIREMENTS:
+// API INTERFACE REQUIREMENTS:
 // AWS Data Service should implement REST endpoints for:
-// - Property lookup by normalized address
-// - Multi-property lookup by mailing address
-// - County data retrieval
-// - Address fuzzy matching
-// - Standard CRUD operations for all entities
-// 
-// EDGE FUNCTIONS READY FOR AWS INTEGRATION:
-// - normalize-address: Convert Google Places data to AWS format
-// - lookup-property: Single property lookup
-// - lookup-all-properties: Multi-property lookup with mailing address logic
+// - GET/POST/PUT/DELETE /contacts
+// - GET/POST/PUT/DELETE /properties  
+// - GET/POST/PUT/DELETE /protests
+// - GET/POST/PUT/DELETE /bills
+// - GET/POST/PUT/DELETE /invoices
+// - GET/POST/PUT/DELETE /documents
+// - GET/POST/PUT/DELETE /document-templates
+// - GET/POST/PUT/DELETE /communications
+// - GET/POST/PUT/DELETE /owners

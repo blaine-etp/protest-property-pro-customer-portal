@@ -24,6 +24,7 @@ import {
   Settings,
   LogOut,
   Shield,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,11 @@ const navigationItems = [
     title: "Blog Management",
     url: "/admin/blog",
     icon: FileText,
+  },
+  {
+    title: "Site Content",
+    url: "/admin/site-content",
+    icon: Globe,
   },
   {
     title: "Property Tax Tools",

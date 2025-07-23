@@ -22,6 +22,7 @@ import { AdminLayout } from "./components/AdminLayout";
 import Admin from "./pages/Admin";
 import AdminCustomers from "./pages/AdminCustomers";
 import AdminBlog from "./pages/AdminBlog";
+import AdminSiteContent from "./pages/AdminSiteContent";
 import AdminEvidence from "./pages/AdminEvidence";
 import AdminBulkUpload from "./pages/AdminBulkUpload";
 import AdminAnalytics from "./pages/AdminAnalytics";
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="customers/:contactId" element={<AdminContactDetail />} />
             <Route path="protest/:protestId" element={<AdminProtestDetail />} />
             <Route path="blog" element={<AdminBlog />} />
+            <Route path="site-content" element={<AdminSiteContent />} />
             <Route path="evidence" element={<AdminEvidence />} />
             <Route path="bulk-upload" element={<AdminBulkUpload />} />
             <Route path="analytics" element={<AdminAnalytics />} />

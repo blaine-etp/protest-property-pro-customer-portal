@@ -3,9 +3,23 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
+interface GooglePlacesData {
+  formattedAddress: string;
+  placeId?: string;
+  addressComponents?: Array<{
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }>;
+  latitude?: number;
+  longitude?: number;
+  county?: string;
+}
+
 interface GooglePlacesAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
+  onPlacesDataChange?: (data: GooglePlacesData) => void;
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -14,6 +28,7 @@ interface GooglePlacesAutocompleteProps {
 export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> = ({
   value,
   onChange,
+  onPlacesDataChange,
   placeholder = "Enter your property address...",
   className = "",
   required = false
@@ -45,7 +60,7 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           {
             types: ['address'],
             componentRestrictions: { country: 'us' },
-            fields: ['formatted_address', 'address_components', 'place_id']
+            fields: ['formatted_address', 'address_components', 'place_id', 'geometry']
           }
         );
 
@@ -57,6 +72,36 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
           if (place.formatted_address) {
             console.log('🔍 Setting address:', place.formatted_address);
             onChange(place.formatted_address);
+
+            // Extract county from address components
+            let county = '';
+            if (place.address_components) {
+              const countyComponent = place.address_components.find(component =>
+                component.types.includes('administrative_area_level_2')
+              );
+              county = countyComponent?.long_name || '';
+            }
+
+            // Extract coordinates
+            const latitude = place.geometry?.location?.lat();
+            const longitude = place.geometry?.location?.lng();
+
+            // Prepare comprehensive data
+            const placesData: GooglePlacesData = {
+              formattedAddress: place.formatted_address,
+              placeId: place.place_id,
+              addressComponents: place.address_components,
+              latitude,
+              longitude,
+              county
+            };
+
+            console.log('🔍 Places data extracted:', placesData);
+            
+            // Call the callback with all the data
+            if (onPlacesDataChange) {
+              onPlacesDataChange(placesData);
+            }
           }
         });
 

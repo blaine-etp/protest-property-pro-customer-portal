@@ -125,6 +125,13 @@ export const useSimplifiedFormSubmission = () => {
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
           include_all_properties: formData.includeAllProperties,
+          // Google Places data
+          place_id: formData.placeId,
+          formatted_address: formData.formattedAddress,
+          google_address_components: formData.addressComponents,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          county: formData.county,
         })
         .select()
         .single();

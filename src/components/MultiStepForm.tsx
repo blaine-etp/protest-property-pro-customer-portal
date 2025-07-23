@@ -23,15 +23,27 @@ export interface FormData {
   isOwnerVerified?: boolean;
   signature?: string;
   referralCode?: string;
+  // Google Places data
+  placeId?: string;
+  formattedAddress?: string;
+  addressComponents?: Array<{
+    long_name: string;
+    short_name: string;
+    types: string[];
+  }>;
+  latitude?: number;
+  longitude?: number;
+  county?: string;
 }
 
 interface MultiStepFormProps {
   address: string;
   referralCode?: string | null;
+  initialPlacesData?: Partial<FormData>;
   onComplete?: (formData: FormData) => void;
 }
 
-const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, onComplete }) => {
+const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, initialPlacesData, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [animationDirection, setAnimationDirection] = useState<'in' | 'out'>('in');
@@ -46,6 +58,8 @@ const MultiStepForm: React.FC<MultiStepFormProps> = ({ address, referralCode, on
     agreeToUpdates: true,
     includeAllProperties: false,
     referralCode: referralCode || undefined,
+    // Include Google Places data if provided
+    ...initialPlacesData,
   });
 
   const totalSteps = 3;

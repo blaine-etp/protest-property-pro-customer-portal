@@ -6,6 +6,7 @@ import austinSkyline from "@/assets/austin-skyline.jpg";
 import { AnimatedCounter } from "./AnimatedCounter";
 import MultiStepForm from "./MultiStepForm";
 import { GooglePlacesAutocomplete } from "./GooglePlacesAutocomplete";
+import type { FormData } from "./MultiStepForm";
 
 interface HeroSectionProps {
   showForm: boolean;
@@ -16,6 +17,7 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm, referralCode, initialAddress = "" }) => {
   const [address, setAddress] = useState(initialAddress);
+  const [placesData, setPlacesData] = useState<Partial<FormData>>({});
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -122,6 +124,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
                 <GooglePlacesAutocomplete
                   value={address}
                   onChange={setAddress}
+                  onPlacesDataChange={(data) => {
+                    setPlacesData({
+                      placeId: data.placeId,
+                      formattedAddress: data.formattedAddress,
+                      addressComponents: data.addressComponents,
+                      latitude: data.latitude,
+                      longitude: data.longitude,
+                      county: data.county,
+                    });
+                  }}
                   placeholder="Enter your property address..."
                   required
                 />
@@ -177,6 +189,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
             <MultiStepForm 
               address={address}
               referralCode={referralCode}
+              initialPlacesData={placesData}
               onComplete={(formData) => {
                 // Navigate to email verification with the email from form data
                 navigate(`/email-verification?email=${encodeURIComponent(formData.email)}`);

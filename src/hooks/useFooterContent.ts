@@ -76,11 +76,40 @@ export const useFooterContent = () => {
     loadFooterContent();
   }, []);
 
+  const migrateFooterData = (data: any): FooterContent => {
+    const migrated = { ...data };
+    
+    // Migrate services from string array to object array
+    if (migrated.services && Array.isArray(migrated.services)) {
+      migrated.services = migrated.services.map((service: any) => {
+        if (typeof service === 'string') {
+          return { name: service, url: '#' };
+        }
+        return service;
+      });
+    }
+    
+    // Add missing URL fields to legal object
+    if (migrated.legal && typeof migrated.legal === 'object') {
+      if (!migrated.legal.privacyUrl) migrated.legal.privacyUrl = '/privacy-policy';
+      if (!migrated.legal.termsUrl) migrated.legal.termsUrl = '/terms-of-service';
+      if (!migrated.legal.licenseUrl) migrated.legal.licenseUrl = '/license';
+    }
+    
+    return migrated as FooterContent;
+  };
+
   const loadFooterContent = async () => {
     try {
       const data = await siteContentService.getSiteContent('footer');
       if (data) {
-        setContent(data as FooterContent);
+        const migratedData = migrateFooterData(data);
+        setContent(migratedData);
+        
+        // Auto-save migrated data to update database structure
+        if (JSON.stringify(data) !== JSON.stringify(migratedData)) {
+          await siteContentService.updateSiteContent('footer', 'footer', migratedData);
+        }
       }
     } catch (error) {
       console.error('Error loading footer content:', error);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { HybridHtmlEditor } from "@/components/ui/hybrid-html-editor";
+import { SimpleHtmlEditor } from "@/components/ui/simple-html-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -293,11 +293,12 @@ export function CountyBasicsTemplate({
                       </div>
                       <div>
                         <Label htmlFor="page_content">Page Content</Label>
-                        <HybridHtmlEditor
+                        <SimpleHtmlEditor
                           content={editedCounty.page_content || ''}
                           onChange={(content) => setEditedCounty(prev => ({ ...prev, page_content: content }))}
                           placeholder="Enter the main content for this county page..."
                           className="min-h-[300px]"
+                          showCopyFromCounty={true}
                         />
                       </div>
                     </TabsContent>

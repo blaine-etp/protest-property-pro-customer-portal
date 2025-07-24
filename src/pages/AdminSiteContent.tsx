@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Save, RotateCcw, Plus, Trash2 } from "lucide-react";
-import { HybridHtmlEditor } from "@/components/ui/hybrid-html-editor";
+import { SimpleHtmlEditor } from "@/components/ui/simple-html-editor";
 import { useToast } from "@/hooks/use-toast";
 
 

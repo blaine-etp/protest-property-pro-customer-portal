@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { HybridHtmlEditor } from "@/components/ui/hybrid-html-editor";
+import { SimpleHtmlEditor } from "@/components/ui/simple-html-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -321,11 +321,12 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
               </div>
               <div>
                 <Label htmlFor="page_content">Main Page Content</Label>
-                <HybridHtmlEditor
+                <SimpleHtmlEditor
                   content={formData.page_content}
                   onChange={(content) => handleChange('page_content', content)}
                   placeholder="Main content about property taxes, protests, and important information for residents of this county..."
                   className="min-h-[300px]"
+                  showCopyFromCounty={true}
                 />
               </div>
               
@@ -371,20 +372,22 @@ export function CountyForm({ county, onSuccess, onCancel }: CountyFormProps) {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="how_to_content">How-To Content</Label>
-                <HybridHtmlEditor
+                <SimpleHtmlEditor
                   content={formData.how_to_content}
                   onChange={(content) => handleChange('how_to_content', content)}
                   placeholder="Step-by-step process for property tax protests in this county..."
                   className="min-h-[250px]"
+                  showCopyFromCounty={true}
                 />
               </div>
               <div>
                 <Label htmlFor="county_info_content">County Information Content</Label>
-                <HybridHtmlEditor
+                <SimpleHtmlEditor
                   content={formData.county_info_content}
                   onChange={(content) => handleChange('county_info_content', content)}
                   placeholder="General information about property taxes in this county..."
                   className="min-h-[250px]"
+                  showCopyFromCounty={true}
                 />
               </div>
             </CardContent>

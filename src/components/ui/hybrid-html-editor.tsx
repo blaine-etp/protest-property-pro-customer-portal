@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import ListItem from '@tiptap/extension-list-item';
@@ -16,6 +16,7 @@ import {
   Redo,
   Code,
   Eye,
+  FileText,
 } from 'lucide-react';
 
 interface HybridHtmlEditorProps {
@@ -25,7 +26,7 @@ interface HybridHtmlEditorProps {
   className?: string;
 }
 
-type EditorMode = 'visual' | 'html';
+type EditorMode = 'visual' | 'html' | 'raw';
 
 export function HybridHtmlEditor({
   content,
@@ -35,6 +36,12 @@ export function HybridHtmlEditor({
 }: HybridHtmlEditorProps) {
   const [mode, setMode] = useState<EditorMode>('visual');
   const [htmlContent, setHtmlContent] = useState(content);
+  const [rawContent, setRawContent] = useState(content);
+
+  // Detect if content has custom styled divs that shouldn't be processed by TipTap
+  const hasComplexHtml = useMemo(() => {
+    return content.includes('style=') || content.includes('class=') || content.includes('<div');
+  }, [content]);
 
   const editor = useEditor({
     extensions: [
@@ -51,11 +58,13 @@ export function HybridHtmlEditor({
       ListItem,
       TextStyle,
     ],
-    content,
+    content: hasComplexHtml ? '' : content, // Don't let TipTap process complex HTML
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       setHtmlContent(html);
-      onChange(html);
+      if (mode === 'visual') {
+        onChange(html);
+      }
     },
     editorProps: {
       attributes: {
@@ -67,6 +76,12 @@ export function HybridHtmlEditor({
   const switchToVisual = () => {
     if (editor && mode === 'html') {
       editor.commands.setContent(htmlContent);
+    } else if (editor && mode === 'raw') {
+      // Don't switch to visual if content has complex HTML
+      if (hasComplexHtml) {
+        return;
+      }
+      editor.commands.setContent(rawContent);
     }
     setMode('visual');
   };
@@ -75,12 +90,28 @@ export function HybridHtmlEditor({
     if (editor && mode === 'visual') {
       const currentHtml = editor.getHTML();
       setHtmlContent(currentHtml);
+    } else if (mode === 'raw') {
+      setHtmlContent(rawContent);
     }
     setMode('html');
   };
 
+  const switchToRaw = () => {
+    if (mode === 'visual' && editor) {
+      setRawContent(editor.getHTML());
+    } else if (mode === 'html') {
+      setRawContent(htmlContent);
+    }
+    setMode('raw');
+  };
+
   const handleHtmlChange = (value: string) => {
     setHtmlContent(value);
+    onChange(value);
+  };
+
+  const handleRawChange = (value: string) => {
+    setRawContent(value);
     onChange(value);
   };
 
@@ -98,6 +129,8 @@ export function HybridHtmlEditor({
             variant={mode === 'visual' ? 'default' : 'ghost'}
             size="sm"
             onClick={switchToVisual}
+            disabled={hasComplexHtml && mode === 'raw'}
+            title={hasComplexHtml && mode === 'raw' ? 'Complex HTML detected - use Raw or HTML mode' : ''}
           >
             <Eye className="h-4 w-4 mr-1" />
             Visual
@@ -110,6 +143,15 @@ export function HybridHtmlEditor({
           >
             <Code className="h-4 w-4 mr-1" />
             HTML
+          </Button>
+          <Button
+            type="button"
+            variant={mode === 'raw' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={switchToRaw}
+          >
+            <FileText className="h-4 w-4 mr-1" />
+            Raw
           </Button>
         </div>
 
@@ -188,13 +230,27 @@ export function HybridHtmlEditor({
       {/* Editor Content */}
       {mode === 'visual' ? (
         <EditorContent editor={editor} />
-      ) : (
+      ) : mode === 'html' ? (
         <Textarea
           value={htmlContent}
           onChange={(e) => handleHtmlChange(e.target.value)}
           placeholder={placeholder}
           className="min-h-[200px] border-0 rounded-none resize-none focus-visible:ring-0 font-mono text-sm"
         />
+      ) : (
+        <div className="relative">
+          {hasComplexHtml && (
+            <div className="absolute top-2 right-2 z-10 bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">
+              Complex HTML detected - preserving original formatting
+            </div>
+          )}
+          <Textarea
+            value={rawContent}
+            onChange={(e) => handleRawChange(e.target.value)}
+            placeholder={placeholder}
+            className="min-h-[200px] border-0 rounded-none resize-none focus-visible:ring-0 font-mono text-sm"
+          />
+        </div>
       )}
     </div>
   );

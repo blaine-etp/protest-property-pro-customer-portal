@@ -96,6 +96,32 @@ export function CountyManagement() {
     setSelectedCounty(null);
   };
 
+  const handleToggleStatus = async (county: County) => {
+    const newStatus = county.status === 'published' ? 'draft' : 'published';
+    
+    try {
+      const { error } = await supabase
+        .from('counties')
+        .update({ status: newStatus })
+        .eq('id', county.id);
+
+      if (error) throw error;
+
+      setCounties(counties.map(c => c.id === county.id ? { ...c, status: newStatus } : c));
+      toast({
+        title: "Success",
+        description: `County ${newStatus === 'published' ? 'published' : 'unpublished'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating county status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update county status",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -201,27 +227,39 @@ export function CountyManagement() {
                 )}
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEditCounty(county)}
-                  className="flex-1"
-                >
-                  <Edit className="w-3 h-3 mr-1" />
-                  Edit County Settings
-                </Button>
+              <div className="space-y-2 pt-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditCounty(county)}
+                    className="flex-1"
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Edit
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="flex-1"
+                  >
+                    <a href={`/county/${county.slug}`} target="_blank">
+                      <Eye className="w-3 h-3 mr-1" />
+                      Preview
+                    </a>
+                  </Button>
+                </div>
                 
                 <Button
-                  variant="outline"
+                  variant={county.status === 'published' ? 'secondary' : 'default'}
                   size="sm"
-                  asChild
-                  className="flex-1"
+                  onClick={() => handleToggleStatus(county)}
+                  className="w-full"
                 >
-                  <a href={`/county/${county.slug}`} target="_blank">
-                    <Eye className="w-3 h-3 mr-1" />
-                    Preview
-                  </a>
+                  <Eye className="w-3 h-3 mr-1" />
+                  {county.status === 'published' ? 'Unpublish' : 'Publish'}
                 </Button>
               </div>
 

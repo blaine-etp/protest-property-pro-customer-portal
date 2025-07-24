@@ -1,6 +1,19 @@
-import { Scale, Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react";
+import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react";
+import { useFooterContent } from "@/hooks/useFooterContent";
 
 export const Footer = () => {
+  const { footerData, loading } = useFooterContent();
+
+  if (loading || !footerData) {
+    return (
+      <footer id="contact" className="bg-foreground text-background py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center">Loading...</div>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer id="contact" className="bg-foreground text-background py-16">
       <div className="container mx-auto px-4">
@@ -9,24 +22,22 @@ export const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-6">
               <img 
-                src="/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png" 
-                alt="Tax Logo" 
+                src={footerData.companyLogo.url} 
+                alt={footerData.companyLogo.alt} 
                 className="h-12"
               />
             </div>
             <p className="text-background/80 mb-6 max-w-md">
-              Professional property tax protest services helping homeowners save thousands on their annual tax bills. No upfront fees, guaranteed results.
+              {footerData.companyDescription}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="p-2 bg-background/10 rounded-lg hover:bg-background/20 transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="p-2 bg-background/10 rounded-lg hover:bg-background/20 transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="p-2 bg-background/10 rounded-lg hover:bg-background/20 transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </a>
+              {footerData.socialLinks.map((link, index) => (
+                <a key={index} href={link.url} className="p-2 bg-background/10 rounded-lg hover:bg-background/20 transition-colors">
+                  {link.platform === 'Facebook' && <Facebook className="h-5 w-5" />}
+                  {link.platform === 'Twitter' && <Twitter className="h-5 w-5" />}
+                  {link.platform === 'LinkedIn' && <Linkedin className="h-5 w-5" />}
+                </a>
+              ))}
             </div>
           </div>
 
@@ -34,11 +45,13 @@ export const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Services</h3>
             <ul className="space-y-2 text-background/80">
-              <li><a href="#" className="hover:text-background transition-colors">Property Tax Protest</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Tax Assessment Review</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Commercial Properties</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Residential Properties</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Consultation Services</a></li>
+              {footerData.services.map((service, index) => (
+                <li key={index}>
+                  <a href={service.url} className="hover:text-background transition-colors">
+                    {service.name}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -48,17 +61,17 @@ export const Footer = () => {
             <div className="space-y-3 text-background/80">
               <div className="flex items-center">
                 <Phone className="h-4 w-4 mr-3 flex-shrink-0" />
-                <span>(555) 012-3456</span>
+                <span>{footerData.contactInfo.phone}</span>
               </div>
               <div className="flex items-center">
                 <Mail className="h-4 w-4 mr-3 flex-shrink-0" />
-                <span>info@easytaxprotest.com</span>
+                <span>{footerData.contactInfo.email}</span>
               </div>
               <div className="flex items-start">
                 <MapPin className="h-4 w-4 mr-3 flex-shrink-0 mt-1" />
                 <span>
-                  123 Business Plaza<br />
-                  Austin, TX 78701
+                  {footerData.contactInfo.address.street}<br />
+                  {footerData.contactInfo.address.city}, {footerData.contactInfo.address.state} {footerData.contactInfo.address.zip}
                 </span>
               </div>
             </div>
@@ -68,12 +81,14 @@ export const Footer = () => {
         <div className="border-t border-background/20 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-background/60">
             <div className="text-sm">
-              © 2024 EasyTaxProtest.com. All rights reserved.
+              {footerData.copyrightText}
             </div>
             <div className="flex space-x-6 text-sm mt-4 md:mt-0">
-              <a href="#" className="hover:text-background transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-background transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-background transition-colors">License Information</a>
+              {footerData.legalLinks.map((link, index) => (
+                <a key={index} href={link.url} className="hover:text-background transition-colors">
+                  {link.name}
+                </a>
+              ))}
             </div>
           </div>
         </div>

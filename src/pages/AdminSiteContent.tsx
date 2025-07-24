@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HybridHtmlEditor } from "@/components/ui/hybrid-html-editor";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Save, RotateCcw, Plus, X } from "lucide-react";
+import { FileText, Save, RotateCcw, Plus, X, Trash2 } from "lucide-react";
+import { useFooterContent, FooterData } from "@/hooks/useFooterContent";
 
 // Mock data structure matching actual homepage content
 const initialContent = {
@@ -136,6 +137,29 @@ export default function AdminSiteContent() {
   const [content, setContent] = useState(initialContent);
   const [activeTab, setActiveTab] = useState("hero");
   const { toast } = useToast();
+  const { footerData: dbFooterData, loading, saving, saveFooterContent } = useFooterContent();
+
+  // Footer form state
+  const [footerData, setFooterData] = useState<FooterData>({
+    companyLogo: { url: "", alt: "" },
+    companyDescription: "",
+    socialLinks: [],
+    services: [],
+    contactInfo: {
+      phone: "",
+      email: "",
+      address: { street: "", city: "", state: "", zip: "" }
+    },
+    copyrightText: "",
+    legalLinks: []
+  });
+
+  // Update footer form when database data loads
+  useEffect(() => {
+    if (dbFooterData) {
+      setFooterData(dbFooterData);
+    }
+  }, [dbFooterData]);
 
   const handleSave = (section: string) => {
     // In a real implementation, this would save to a database
@@ -191,35 +215,77 @@ export default function AdminSiteContent() {
     }));
   };
 
+  // Footer-specific handlers
+  const handleSaveFooter = async () => {
+    await saveFooterContent(footerData);
+  };
+
   const addServiceItem = () => {
-    setContent(prev => ({
+    setFooterData(prev => ({
       ...prev,
-      footer: {
-        ...prev.footer,
-        services: [...prev.footer.services, { name: "", url: "#" }]
-      }
+      services: [...prev.services, { name: "", url: "#" }]
     }));
   };
 
   const removeServiceItem = (index: number) => {
-    setContent(prev => ({
+    setFooterData(prev => ({
       ...prev,
-      footer: {
-        ...prev.footer,
-        services: prev.footer.services.filter((_, i) => i !== index)
-      }
+      services: prev.services.filter((_, i) => i !== index)
     }));
   };
 
   const updateServiceItem = (index: number, field: string, value: string) => {
-    setContent(prev => ({
+    setFooterData(prev => ({
       ...prev,
-      footer: {
-        ...prev.footer,
-        services: prev.footer.services.map((item, i) => 
-          i === index ? { ...item, [field]: value } : item
-        )
-      }
+      services: prev.services.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const addSocialLink = () => {
+    setFooterData(prev => ({
+      ...prev,
+      socialLinks: [...prev.socialLinks, { platform: "", url: "#" }]
+    }));
+  };
+
+  const removeSocialLink = (index: number) => {
+    setFooterData(prev => ({
+      ...prev,
+      socialLinks: prev.socialLinks.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateSocialLink = (index: number, field: string, value: string) => {
+    setFooterData(prev => ({
+      ...prev,
+      socialLinks: prev.socialLinks.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
+  };
+
+  const addLegalLink = () => {
+    setFooterData(prev => ({
+      ...prev,
+      legalLinks: [...prev.legalLinks, { name: "", url: "#" }]
+    }));
+  };
+
+  const removeLegalLink = (index: number) => {
+    setFooterData(prev => ({
+      ...prev,
+      legalLinks: prev.legalLinks.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateLegalLink = (index: number, field: string, value: string) => {
+    setFooterData(prev => ({
+      ...prev,
+      legalLinks: prev.legalLinks.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
     }));
   };
 
@@ -594,231 +660,295 @@ export default function AdminSiteContent() {
               <CardTitle>Footer Section</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Company Info */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Company Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-logo-url">Logo URL</Label>
-                    <Input
-                      id="footer-logo-url"
-                      value={content.footer.company.logoUrl}
-                      onChange={(e) => updateNestedContent('footer', 'company', 'logoUrl', e.target.value)}
-                      placeholder="Logo image URL"
-                    />
+              {loading && <div className="text-center">Loading footer data...</div>}
+              
+              {!loading && (
+                <>
+                  {/* Company Info */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Company Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-logo-url">Logo URL</Label>
+                        <Input
+                          id="footer-logo-url"
+                          value={footerData.companyLogo.url}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            companyLogo: { ...prev.companyLogo, url: e.target.value }
+                          }))}
+                          placeholder="Logo image URL"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-logo-alt">Logo Alt Text</Label>
+                        <Input
+                          id="footer-logo-alt"
+                          value={footerData.companyLogo.alt}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            companyLogo: { ...prev.companyLogo, alt: e.target.value }
+                          }))}
+                          placeholder="Logo alt text"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="footer-description">Company Description</Label>
+                      <Textarea
+                        id="footer-description"
+                        value={footerData.companyDescription}
+                        onChange={(e) => setFooterData(prev => ({
+                          ...prev,
+                          companyDescription: e.target.value
+                        }))}
+                        placeholder="Company description"
+                        rows={3}
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-logo-alt">Logo Alt Text</Label>
-                    <Input
-                      id="footer-logo-alt"
-                      value={content.footer.company.logoAlt}
-                      onChange={(e) => updateNestedContent('footer', 'company', 'logoAlt', e.target.value)}
-                      placeholder="Logo alt text"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="footer-description">Company Description</Label>
-                  <Textarea
-                    id="footer-description"
-                    value={content.footer.company.description}
-                    onChange={(e) => updateNestedContent('footer', 'company', 'description', e.target.value)}
-                    placeholder="Company description"
-                    rows={3}
-                  />
-                </div>
-              </div>
 
-              {/* Services */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Services</h3>
-                  <Button onClick={addServiceItem} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Service
-                  </Button>
-                </div>
-                {content.footer.services.map((service, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="flex items-end gap-4">
-                      <div className="flex-1 space-y-2">
-                        <Label>Service Name</Label>
-                        <Input
-                          value={service.name}
-                          onChange={(e) => updateServiceItem(index, 'name', e.target.value)}
-                          placeholder="Service name"
-                        />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <Label>Service URL</Label>
-                        <Input
-                          value={service.url}
-                          onChange={(e) => updateServiceItem(index, 'url', e.target.value)}
-                          placeholder="Service URL"
-                        />
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeServiceItem(index)}
-                      >
-                        <X className="h-4 w-4" />
+                  {/* Services */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Services</h3>
+                      <Button onClick={addServiceItem} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Service
                       </Button>
                     </div>
-                  </Card>
-                ))}
-              </div>
+                    {footerData.services.map((service, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="flex items-end gap-4">
+                          <div className="flex-1 space-y-2">
+                            <Label>Service Name</Label>
+                            <Input
+                              value={service.name}
+                              onChange={(e) => updateServiceItem(index, 'name', e.target.value)}
+                              placeholder="Service name"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <Label>Service URL</Label>
+                            <Input
+                              value={service.url}
+                              onChange={(e) => updateServiceItem(index, 'url', e.target.value)}
+                              placeholder="Service URL"
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeServiceItem(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
 
-              {/* Contact Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-phone">Phone Number</Label>
-                    <Input
-                      id="footer-phone"
-                      value={content.footer.contact.phone}
-                      onChange={(e) => updateNestedContent('footer', 'contact', 'phone', e.target.value)}
-                      placeholder="Phone number"
-                    />
+                  {/* Contact Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Contact Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-phone">Phone Number</Label>
+                        <Input
+                          id="footer-phone"
+                          value={footerData.contactInfo.phone}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            contactInfo: { ...prev.contactInfo, phone: e.target.value }
+                          }))}
+                          placeholder="Phone number"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-email">Email Address</Label>
+                        <Input
+                          id="footer-email"
+                          value={footerData.contactInfo.email}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            contactInfo: { ...prev.contactInfo, email: e.target.value }
+                          }))}
+                          placeholder="Email address"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="footer-street">Street Address</Label>
+                      <Input
+                        id="footer-street"
+                        value={footerData.contactInfo.address.street}
+                        onChange={(e) => setFooterData(prev => ({
+                          ...prev,
+                          contactInfo: {
+                            ...prev.contactInfo,
+                            address: { ...prev.contactInfo.address, street: e.target.value }
+                          }
+                        }))}
+                        placeholder="Street address"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-city">City</Label>
+                        <Input
+                          id="footer-city"
+                          value={footerData.contactInfo.address.city}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            contactInfo: {
+                              ...prev.contactInfo,
+                              address: { ...prev.contactInfo.address, city: e.target.value }
+                            }
+                          }))}
+                          placeholder="City"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-state">State</Label>
+                        <Input
+                          id="footer-state"
+                          value={footerData.contactInfo.address.state}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            contactInfo: {
+                              ...prev.contactInfo,
+                              address: { ...prev.contactInfo.address, state: e.target.value }
+                            }
+                          }))}
+                          placeholder="State"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="footer-zip">ZIP Code</Label>
+                        <Input
+                          id="footer-zip"
+                          value={footerData.contactInfo.address.zip}
+                          onChange={(e) => setFooterData(prev => ({
+                            ...prev,
+                            contactInfo: {
+                              ...prev.contactInfo,
+                              address: { ...prev.contactInfo.address, zip: e.target.value }
+                            }
+                          }))}
+                          placeholder="ZIP code"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-email">Email Address</Label>
-                    <Input
-                      id="footer-email"
-                      value={content.footer.contact.email}
-                      onChange={(e) => updateNestedContent('footer', 'contact', 'email', e.target.value)}
-                      placeholder="Email address"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="footer-street">Street Address</Label>
-                  <Input
-                    id="footer-street"
-                    value={content.footer.contact.address.street}
-                    onChange={(e) => updateNestedContent('footer', 'contact', 'address', { ...content.footer.contact.address, street: e.target.value })}
-                    placeholder="Street address"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-city">City</Label>
-                    <Input
-                      id="footer-city"
-                      value={content.footer.contact.address.city}
-                      onChange={(e) => updateNestedContent('footer', 'contact', 'address', { ...content.footer.contact.address, city: e.target.value })}
-                      placeholder="City"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-state">State</Label>
-                    <Input
-                      id="footer-state"
-                      value={content.footer.contact.address.state}
-                      onChange={(e) => updateNestedContent('footer', 'contact', 'address', { ...content.footer.contact.address, state: e.target.value })}
-                      placeholder="State"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-zip">ZIP Code</Label>
-                    <Input
-                      id="footer-zip"
-                      value={content.footer.contact.address.zip}
-                      onChange={(e) => updateNestedContent('footer', 'contact', 'address', { ...content.footer.contact.address, zip: e.target.value })}
-                      placeholder="ZIP code"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Social Media */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Social Media</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-facebook">Facebook URL</Label>
-                    <Input
-                      id="footer-facebook"
-                      value={content.footer.social.facebook}
-                      onChange={(e) => updateNestedContent('footer', 'social', 'facebook', e.target.value)}
-                      placeholder="Facebook URL"
-                    />
+                  {/* Social Media */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Social Media</h3>
+                      <Button onClick={addSocialLink} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Social Link
+                      </Button>
+                    </div>
+                    {footerData.socialLinks.map((link, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="flex items-end gap-4">
+                          <div className="flex-1 space-y-2">
+                            <Label>Platform</Label>
+                            <Input
+                              value={link.platform}
+                              onChange={(e) => updateSocialLink(index, 'platform', e.target.value)}
+                              placeholder="Platform name (Facebook, Twitter, LinkedIn)"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <Label>URL</Label>
+                            <Input
+                              value={link.url}
+                              onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
+                              placeholder="Social media URL"
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeSocialLink(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-twitter">Twitter URL</Label>
-                    <Input
-                      id="footer-twitter"
-                      value={content.footer.social.twitter}
-                      onChange={(e) => updateNestedContent('footer', 'social', 'twitter', e.target.value)}
-                      placeholder="Twitter URL"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-linkedin">LinkedIn URL</Label>
-                    <Input
-                      id="footer-linkedin"
-                      value={content.footer.social.linkedin}
-                      onChange={(e) => updateNestedContent('footer', 'social', 'linkedin', e.target.value)}
-                      placeholder="LinkedIn URL"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              {/* Legal */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Legal & Footer</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="footer-copyright">Copyright Text</Label>
-                  <Input
-                    id="footer-copyright"
-                    value={content.footer.legal.copyright}
-                    onChange={(e) => updateNestedContent('footer', 'legal', 'copyright', e.target.value)}
-                    placeholder="Copyright text"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-privacy">Privacy Policy URL</Label>
-                    <Input
-                      id="footer-privacy"
-                      value={content.footer.legal.privacyPolicy}
-                      onChange={(e) => updateNestedContent('footer', 'legal', 'privacyPolicy', e.target.value)}
-                      placeholder="Privacy Policy URL"
-                    />
+                  {/* Legal Links */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Legal Links</h3>
+                      <Button onClick={addLegalLink} size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Legal Link
+                      </Button>
+                    </div>
+                    {footerData.legalLinks.map((link, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="flex items-end gap-4">
+                          <div className="flex-1 space-y-2">
+                            <Label>Link Name</Label>
+                            <Input
+                              value={link.name}
+                              onChange={(e) => updateLegalLink(index, 'name', e.target.value)}
+                              placeholder="Link name"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <Label>URL</Label>
+                            <Input
+                              value={link.url}
+                              onChange={(e) => updateLegalLink(index, 'url', e.target.value)}
+                              placeholder="Legal page URL"
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeLegalLink(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-terms">Terms of Service URL</Label>
-                    <Input
-                      id="footer-terms"
-                      value={content.footer.legal.termsOfService}
-                      onChange={(e) => updateNestedContent('footer', 'legal', 'termsOfService', e.target.value)}
-                      placeholder="Terms of Service URL"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="footer-license">License Info URL</Label>
-                    <Input
-                      id="footer-license"
-                      value={content.footer.legal.licenseInfo}
-                      onChange={(e) => updateNestedContent('footer', 'legal', 'licenseInfo', e.target.value)}
-                      placeholder="License Info URL"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex gap-2">
-                <Button onClick={() => handleSave('footer')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </Button>
-                <Button variant="outline" onClick={() => handleReset('footer')}>
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset
-                </Button>
-              </div>
+                  {/* Copyright */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Copyright</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="footer-copyright">Copyright Text</Label>
+                      <Input
+                        id="footer-copyright"
+                        value={footerData.copyrightText}
+                        onChange={(e) => setFooterData(prev => ({
+                          ...prev,
+                          copyrightText: e.target.value
+                        }))}
+                        placeholder="Copyright text"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleSaveFooter}
+                      disabled={saving || loading}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? "Saving..." : "Save Footer Changes"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

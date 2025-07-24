@@ -105,11 +105,6 @@ export const useFooterContent = () => {
       if (data) {
         const migratedData = migrateFooterData(data);
         setContent(migratedData);
-        
-        // Auto-save migrated data to update database structure
-        if (JSON.stringify(data) !== JSON.stringify(migratedData)) {
-          await siteContentService.updateSiteContent('footer', 'footer', migratedData);
-        }
       }
     } catch (error) {
       console.error('Error loading footer content:', error);

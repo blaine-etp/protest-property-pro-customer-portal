@@ -27,6 +27,8 @@ export const siteContentService = {
         content_key: contentKey,
         content_type: contentType,
         content_value: contentValue
+      }, {
+        onConflict: 'content_key,content_type'
       });
 
     if (error) {

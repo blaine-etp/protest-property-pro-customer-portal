@@ -1,0 +1,14 @@
+-- Enable RLS on all remaining tables to fix security issues
+ALTER TABLE public.blog_post_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.counties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.county_pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.credit_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.customer_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.owners ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.referral_relationships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.verification_codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;

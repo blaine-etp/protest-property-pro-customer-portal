@@ -33,6 +33,12 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { 
+  PROTEST_STATUSES, 
+  PROTEST_STATUS_LABELS, 
+  ProtestStatus,
+  LEGACY_STATUS_MAPPING 
+} from "@/constants/protestStatus";
 
 export function ProtestSection() {
   const navigate = useNavigate();
@@ -73,6 +79,12 @@ export function ProtestSection() {
     }
   };
 
+  // Helper function to get normalized status
+  const getNormalizedStatus = (status: string | null): ProtestStatus => {
+    if (!status) return PROTEST_STATUSES.PENDING;
+    return LEGACY_STATUS_MAPPING[status] || status as ProtestStatus;
+  };
+
   // Filter protests
   const filteredProtests = protests.filter(protest => {
     // Text search
@@ -80,8 +92,10 @@ export function ProtestSection() {
       (protest.owner_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (protest.county || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Status filter
-    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(protest.appeal_status || 'pending');
+    // Status filter - normalize both the filter values and protest status
+    const normalizedProtestStatus = getNormalizedStatus(protest.appeal_status);
+    const matchesStatus = selectedStatuses.length === 0 || 
+      selectedStatuses.some(filterStatus => getNormalizedStatus(filterStatus) === normalizedProtestStatus);
     
     // County filter
     const matchesCounty = selectedCounties.length === 0 || selectedCounties.includes(protest.county || '');
@@ -97,8 +111,11 @@ export function ProtestSection() {
     return matchesSearch && matchesStatus && matchesCounty && matchesAssessedValue && matchesDate;
   });
 
-  // Get unique values for filters
-  const uniqueStatuses = Array.from(new Set(protests.map(p => p.appeal_status || 'pending')));
+  // Get unique values for filters - show normalized status labels
+  const uniqueStatuses = Array.from(new Set(protests.map(p => {
+    const normalizedStatus = getNormalizedStatus(p.appeal_status);
+    return PROTEST_STATUS_LABELS[normalizedStatus];
+  })));
   const uniqueCounties = Array.from(new Set(protests.map(p => p.county || '')));
 
   // Count active filters
@@ -120,28 +137,39 @@ export function ProtestSection() {
   };
 
   const protestsByStatus = {
-    "pending": filteredProtests.filter(p => p.appeal_status === "pending"),
-    "filed": filteredProtests.filter(p => p.appeal_status === "filed"),
-    "accepted": filteredProtests.filter(p => p.appeal_status === "accepted"),
-    "rejected": filteredProtests.filter(p => p.appeal_status === "rejected"),
+    [PROTEST_STATUSES.PENDING]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.PENDING),
+    [PROTEST_STATUSES.IN_PROGRESS]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.IN_PROGRESS),
+    [PROTEST_STATUSES.OFFER_RECEIVED]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.OFFER_RECEIVED),
+    [PROTEST_STATUSES.ACCEPTED]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.ACCEPTED),
+    [PROTEST_STATUSES.REJECTED]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.REJECTED),
+    [PROTEST_STATUSES.COMPLETED]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.COMPLETED),
+    [PROTEST_STATUSES.NEEDS_REVIEW]: filteredProtests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.NEEDS_REVIEW),
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending": return "yellow";
-      case "filed": return "blue";
-      case "accepted": return "green";
-      case "rejected": return "red";
+  const getStatusColor = (status: string | null) => {
+    const normalizedStatus = getNormalizedStatus(status);
+    switch (normalizedStatus) {
+      case PROTEST_STATUSES.PENDING: return "yellow";
+      case PROTEST_STATUSES.IN_PROGRESS: return "blue";
+      case PROTEST_STATUSES.OFFER_RECEIVED: return "purple";
+      case PROTEST_STATUSES.ACCEPTED: return "green";
+      case PROTEST_STATUSES.REJECTED: return "red";
+      case PROTEST_STATUSES.COMPLETED: return "gray";
+      case PROTEST_STATUSES.NEEDS_REVIEW: return "orange";
       default: return "gray";
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending": return <Clock className="h-4 w-4" />;
-      case "filed": return <FileText className="h-4 w-4" />;
-      case "accepted": return <CheckCircle className="h-4 w-4" />;
-      case "rejected": return <XCircle className="h-4 w-4" />;
+  const getStatusIcon = (status: string | null) => {
+    const normalizedStatus = getNormalizedStatus(status);
+    switch (normalizedStatus) {
+      case PROTEST_STATUSES.PENDING: return <Clock className="h-4 w-4" />;
+      case PROTEST_STATUSES.IN_PROGRESS: return <FileText className="h-4 w-4" />;
+      case PROTEST_STATUSES.OFFER_RECEIVED: return <AlertCircle className="h-4 w-4" />;
+      case PROTEST_STATUSES.ACCEPTED: return <CheckCircle className="h-4 w-4" />;
+      case PROTEST_STATUSES.REJECTED: return <XCircle className="h-4 w-4" />;
+      case PROTEST_STATUSES.COMPLETED: return <CheckCircle className="h-4 w-4" />;
+      case PROTEST_STATUSES.NEEDS_REVIEW: return <AlertCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -222,7 +250,7 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Active</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {protests.filter(p => ["pending", "filed"].includes(p.appeal_status || 'pending')).length}
+                  {protests.filter(p => [PROTEST_STATUSES.PENDING, PROTEST_STATUSES.IN_PROGRESS].includes(getNormalizedStatus(p.appeal_status))).length}
                 </p>
               </div>
               <AlertCircle className="h-8 w-8 text-orange-500" />
@@ -235,7 +263,7 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Settled</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {protests.filter(p => p.appeal_status === "accepted").length}
+                  {protests.filter(p => getNormalizedStatus(p.appeal_status) === PROTEST_STATUSES.ACCEPTED).length}
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -354,9 +382,9 @@ export function ProtestSection() {
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Badge variant={getStatusColor(protest.appeal_status || 'pending') as any} className="flex items-center gap-1">
-                      {getStatusIcon(protest.appeal_status || 'pending')}
-                      <span className="ml-1">{protest.appeal_status || 'pending'}</span>
+                    <Badge variant={getStatusColor(protest.appeal_status) as any} className="flex items-center gap-1">
+                      {getStatusIcon(protest.appeal_status)}
+                      <span className="ml-1">{PROTEST_STATUS_LABELS[getNormalizedStatus(protest.appeal_status)]}</span>
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -454,12 +482,12 @@ export function ProtestSection() {
                         </div>
                       </TableCell>
                       <TableCell>{protest.owner_name || 'Not specified'}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(protest.appeal_status || 'pending') as any} className="flex items-center gap-1 w-fit">
-                          {getStatusIcon(protest.appeal_status || 'pending')}
-                          {protest.appeal_status || 'pending'}
-                        </Badge>
-                      </TableCell>
+                       <TableCell>
+                         <Badge variant={getStatusColor(protest.appeal_status) as any} className="flex items-center gap-1 w-fit">
+                           {getStatusIcon(protest.appeal_status)}
+                           {PROTEST_STATUS_LABELS[getNormalizedStatus(protest.appeal_status)]}
+                         </Badge>
+                       </TableCell>
                       <TableCell>{protest.filedDate}</TableCell>
                       <TableCell>{protest.hearingDate}</TableCell>
                       <TableCell>{protest.assessedValue}</TableCell>

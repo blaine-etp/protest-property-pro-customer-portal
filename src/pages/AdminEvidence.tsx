@@ -9,6 +9,13 @@ import { MoreHorizontal, Download, FileText, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  PROTEST_STATUSES, 
+  PROTEST_STATUS_LABELS, 
+  PROTEST_STATUS_COLORS,
+  ProtestStatus,
+  LEGACY_STATUS_MAPPING 
+} from "@/constants/protestStatus";
 
 interface Protest {
   id: string;
@@ -24,22 +31,22 @@ interface Protest {
   created_at: string;
 }
 
-const statusColors = {
-  waiting_for_offer: "bg-yellow-100 text-yellow-800",
-  offer_received: "bg-blue-100 text-blue-800", 
-  needs_review: "bg-orange-100 text-orange-800",
-  accepted: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-800",
-  email_reply_required: "bg-purple-100 text-purple-800"
+// Helper function to get normalized status
+const getNormalizedStatus = (status: string | null): ProtestStatus => {
+  if (!status) return PROTEST_STATUSES.PENDING;
+  return LEGACY_STATUS_MAPPING[status] || status as ProtestStatus;
 };
 
-const statusLabels = {
-  waiting_for_offer: "Waiting for Offer",
-  offer_received: "Offer Received",
-  needs_review: "Needs Review", 
-  accepted: "Accepted",
-  rejected: "Rejected",
-  email_reply_required: "Email Reply Required"
+// Helper function to get status label
+const getStatusLabel = (status: string | null): string => {
+  const normalizedStatus = getNormalizedStatus(status);
+  return PROTEST_STATUS_LABELS[normalizedStatus] || status || 'Pending';
+};
+
+// Helper function to get status color
+const getStatusColor = (status: string | null): string => {
+  const normalizedStatus = getNormalizedStatus(status);
+  return PROTEST_STATUS_COLORS[normalizedStatus] || "bg-gray-100 text-gray-800";
 };
 
 export default function AdminEvidence() {
@@ -112,17 +119,19 @@ export default function AdminEvidence() {
   }, [fetchProtests]);
 
   const handleAcceptReject = async (protestId: string, action: 'accepted' | 'rejected') => {
+    const newStatus = action === 'accepted' ? PROTEST_STATUSES.ACCEPTED : PROTEST_STATUSES.REJECTED;
+    
     try {
       // Optimistic update
       setProtests(prev => prev.map(protest => 
         protest.id === protestId 
-          ? { ...protest, appeal_status: action }
+          ? { ...protest, appeal_status: newStatus }
           : protest
       ));
 
       const { error } = await supabase
         .from('protests')
-        .update({ appeal_status: action })
+        .update({ appeal_status: newStatus })
         .eq('id', protestId);
 
       if (error) throw error;
@@ -207,17 +216,15 @@ export default function AdminEvidence() {
                     <TableCell>{protest.owner_name || '-'}</TableCell>
                     <TableCell>{protest.county || '-'}</TableCell>
                     <TableCell>
-                      <Badge 
-                        className={statusColors[protest.appeal_status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"}
-                      >
-                        {statusLabels[protest.appeal_status as keyof typeof statusLabels] || protest.appeal_status}
+                      <Badge className={getStatusColor(protest.appeal_status)}>
+                        {getStatusLabel(protest.appeal_status)}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDate(protest.hearing_date)}</TableCell>
                     <TableCell>{formatCurrency(protest.assessed_value)}</TableCell>
                     <TableCell>{protest.recommendation || '-'}</TableCell>
                     <TableCell>
-                      {protest.appeal_status === 'offer_received' && (
+                      {getNormalizedStatus(protest.appeal_status) === PROTEST_STATUSES.OFFER_RECEIVED && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"

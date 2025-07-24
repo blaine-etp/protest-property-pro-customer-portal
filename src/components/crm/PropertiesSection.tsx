@@ -5,12 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Building,
   Search,
-  Filter,
   Plus,
   Edit,
   Eye,
@@ -28,43 +26,32 @@ import {
   User,
   X,
 } from "lucide-react";
-import { dataService } from "@/services";
-import type { Property } from "@/services/types";
+import { supabase } from "@/integrations/supabase/client";
 import { FilterPanel } from "./filters/FilterPanel";
 import { MultiSelectFilter } from "./filters/MultiSelectFilter";
-import { DateRangeFilter } from "./filters/DateRangeFilter";
-import { NumericRangeFilter } from "./filters/NumericRangeFilter";
+import { 
+  PROTEST_STATUSES, 
+  PROTEST_STATUS_LABELS, 
+  ProtestStatus,
+  LEGACY_STATUS_MAPPING 
+} from "@/constants/protestStatus";
 
 interface PropertyFilters {
   search: string;
   counties: string[];
   statuses: string[];
-  protestStatuses: string[];
-  protestDeadlineStart?: Date;
-  protestDeadlineEnd?: Date;
-  lastUpdatedStart?: Date;
-  lastUpdatedEnd?: Date;
-  assessedValueMin?: number;
-  assessedValueMax?: number;
-  marketValueMin?: number;
-  marketValueMax?: number;
-  taxAmountMin?: number;
-  taxAmountMax?: number;
-  potentialSavingsMin?: number;
-  potentialSavingsMax?: number;
 }
 
 const defaultFilters: PropertyFilters = {
   search: "",
   counties: [],
   statuses: [],
-  protestStatuses: [],
 };
 
 export function PropertiesSection() {
   const [filters, setFilters] = useState<PropertyFilters>(defaultFilters);
   const [viewMode, setViewMode] = useState("grid");
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -77,8 +64,26 @@ export function PropertiesSection() {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await dataService.getProperties();
-      setProperties(data);
+      
+      // Fetch properties with their associated protest data
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          protests (
+            id,
+            appeal_status,
+            exemption_status,
+            savings_amount,
+            assessed_value,
+            hearing_date,
+            created_at
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProperties(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load properties');
       console.error('Failed to load properties:', err);
@@ -87,84 +92,80 @@ export function PropertiesSection() {
     }
   };
 
+  // Helper function to get normalized status
+  const getNormalizedStatus = (status: string | null): ProtestStatus => {
+    if (!status) return PROTEST_STATUSES.PENDING;
+    return LEGACY_STATUS_MAPPING[status] || status as ProtestStatus;
+  };
+
+  // Helper function to get property status based on protests
+  const getPropertyStatus = (property: any) => {
+    if (!property.protests || property.protests.length === 0) {
+      return 'No Protest';
+    }
+    
+    const activeProtest = property.protests.find((p: any) => 
+      p.appeal_status && !['completed', 'rejected'].includes(p.appeal_status)
+    );
+    
+    if (activeProtest) {
+      const normalizedStatus = getNormalizedStatus(activeProtest.appeal_status);
+      switch (normalizedStatus) {
+        case PROTEST_STATUSES.PENDING: return 'Review Needed';
+        case PROTEST_STATUSES.IN_PROGRESS: return 'Active Protest';
+        case PROTEST_STATUSES.OFFER_RECEIVED: return 'Review Needed';
+        case PROTEST_STATUSES.ACCEPTED: return 'Completed';
+        case PROTEST_STATUSES.NEEDS_REVIEW: return 'Review Needed';
+        default: return 'Active Protest';
+      }
+    }
+    
+    return 'Completed';
+  };
+
+  // Filter properties based on search and filters
   const filteredProperties = properties.filter(property => {
     // Search filter
-    if (filters.search && !property.address.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !property.owner.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !property.parcelNumber.includes(filters.search)) {
-      return false;
-    }
-
+    const matchesSearch = !filters.search || 
+      (property.situs_address && property.situs_address.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (property.county && property.county.toLowerCase().includes(filters.search.toLowerCase()));
+    
+    // Status filter  
+    const propertyStatus = getPropertyStatus(property);
+    const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(propertyStatus);
+    
     // County filter
-    if (filters.counties.length > 0 && !filters.counties.includes("Travis")) { // Mock county
-      return false;
-    }
-
-    // Status filter
-    if (filters.statuses.length > 0 && !filters.statuses.includes(property.status)) {
-      return false;
-    }
-
-    // Protest Status filter
-    if (filters.protestStatuses.length > 0 && property.protestStatus && !filters.protestStatuses.includes(property.protestStatus)) {
-      return false;
-    }
-
-    // Assessed value filter
-    if (filters.assessedValueMin !== undefined) {
-      const assessedValue = parseFloat(property.assessedValue.replace(/[$,]/g, ''));
-      if (assessedValue < filters.assessedValueMin) return false;
-    }
-    if (filters.assessedValueMax !== undefined) {
-      const assessedValue = parseFloat(property.assessedValue.replace(/[$,]/g, ''));
-      if (assessedValue > filters.assessedValueMax) return false;
-    }
-
-    // Market value filter
-    if (filters.marketValueMin !== undefined) {
-      const marketValue = parseFloat(property.marketValue.replace(/[$,]/g, ''));
-      if (marketValue < filters.marketValueMin) return false;
-    }
-    if (filters.marketValueMax !== undefined) {
-      const marketValue = parseFloat(property.marketValue.replace(/[$,]/g, ''));
-      if (marketValue > filters.marketValueMax) return false;
-    }
-
-    // Tax amount filter
-    if (filters.taxAmountMin !== undefined) {
-      const taxAmount = parseFloat(property.taxAmount.replace(/[$,]/g, ''));
-      if (taxAmount < filters.taxAmountMin) return false;
-    }
-    if (filters.taxAmountMax !== undefined) {
-      const taxAmount = parseFloat(property.taxAmount.replace(/[$,]/g, ''));
-      if (taxAmount > filters.taxAmountMax) return false;
-    }
-
-    // Potential savings filter
-    if (filters.potentialSavingsMin !== undefined) {
-      const potentialSavings = parseFloat(property.potentialSavings.replace(/[$,]/g, ''));
-      if (potentialSavings < filters.potentialSavingsMin) return false;
-    }
-    if (filters.potentialSavingsMax !== undefined) {
-      const potentialSavings = parseFloat(property.potentialSavings.replace(/[$,]/g, ''));
-      if (potentialSavings > filters.potentialSavingsMax) return false;
-    }
-
-    return true;
+    const matchesCounty = filters.counties.length === 0 || 
+      (property.county && filters.counties.includes(property.county));
+    
+    return matchesSearch && matchesStatus && matchesCounty;
   });
+
+  // Get unique values for filters
+  const uniqueStatuses = Array.from(new Set(
+    properties.map(p => getPropertyStatus(p))
+  ));
+  
+  const uniqueCounties = Array.from(new Set(
+    properties.map(p => p.county).filter(Boolean)
+  ));
+
+  // Calculate statistics
+  const totalProperties = properties.length;
+  const activeProtests = properties.filter(p => getPropertyStatus(p) === 'Active Protest').length;
+  const completedProtests = properties.filter(p => getPropertyStatus(p) === 'Completed').length;
+  const totalSavings = properties.reduce((sum, p) => {
+    if (p.protests && p.protests.length > 0) {
+      return sum + (p.protests[0].savings_amount || 0);
+    }
+    return sum;
+  }, 0);
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.search) count++;
     if (filters.counties.length > 0) count++;
     if (filters.statuses.length > 0) count++;
-    if (filters.protestStatuses.length > 0) count++;
-    if (filters.protestDeadlineStart || filters.protestDeadlineEnd) count++;
-    if (filters.lastUpdatedStart || filters.lastUpdatedEnd) count++;
-    if (filters.assessedValueMin !== undefined || filters.assessedValueMax !== undefined) count++;
-    if (filters.marketValueMin !== undefined || filters.marketValueMax !== undefined) count++;
-    if (filters.taxAmountMin !== undefined || filters.taxAmountMax !== undefined) count++;
-    if (filters.potentialSavingsMin !== undefined || filters.potentialSavingsMax !== undefined) count++;
     return count;
   };
 
@@ -181,7 +182,7 @@ export function PropertiesSection() {
       case "Active Protest": return "orange";
       case "Review Needed": return "red";
       case "Completed": return "green";
-      case "Monitoring": return "blue";
+      case "No Protest": return "gray";
       default: return "gray";
     }
   };
@@ -191,31 +192,10 @@ export function PropertiesSection() {
       case "Active Protest": return <Gavel className="h-4 w-4" />;
       case "Review Needed": return <AlertCircle className="h-4 w-4" />;
       case "Completed": return <CheckCircle className="h-4 w-4" />;
-      case "Monitoring": return <Clock className="h-4 w-4" />;
+      case "No Protest": return <Clock className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
-
-  const countyOptions = [
-    { value: "Travis", label: "Travis County" },
-    { value: "Harris", label: "Harris County" },
-    { value: "Dallas", label: "Dallas County" },
-    { value: "Collin", label: "Collin County" },
-    { value: "Williamson", label: "Williamson County" },
-  ];
-
-  const statusOptions = [
-    { value: "Active Protest", label: "Active Protest", color: "orange" },
-    { value: "Review Needed", label: "Review Needed", color: "red" },
-    { value: "Completed", label: "Completed", color: "green" },
-    { value: "Monitoring", label: "Monitoring", color: "blue" },
-  ];
-
-  const protestStatusOptions = [
-    { value: "filed", label: "Filed", color: "blue" },
-    { value: "settled", label: "Settled", color: "green" },
-    { value: "none", label: "None", color: "gray" },
-  ];
 
   if (isLoading) {
     return (
@@ -268,7 +248,7 @@ export function PropertiesSection() {
             <p className="text-slate-600">Track property assessments and protest opportunities</p>
             <Badge variant="outline" className="text-xs">
               <Database className="h-3 w-3 mr-1" />
-              Mock Data
+              Supabase Data
             </Badge>
           </div>
         </div>
@@ -285,7 +265,7 @@ export function PropertiesSection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Total Properties</p>
-                <p className="text-2xl font-bold">{properties.length}</p>
+                <p className="text-2xl font-bold">{totalProperties}</p>
               </div>
               <Building className="h-8 w-8 text-blue-500" />
             </div>
@@ -296,7 +276,7 @@ export function PropertiesSection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Active Protests</p>
-                <p className="text-2xl font-bold">{properties.filter(p => p.status === "Active Protest").length}</p>
+                <p className="text-2xl font-bold">{activeProtests}</p>
               </div>
               <Gavel className="h-8 w-8 text-orange-500" />
             </div>
@@ -306,12 +286,10 @@ export function PropertiesSection() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Potential Savings</p>
-                <p className="text-2xl font-bold text-green-600">
-                  ${filteredProperties.reduce((sum, p) => sum + parseFloat(p.potentialSavings.replace(/[$,]/g, '')), 0).toLocaleString()}
-                </p>
+                <p className="text-sm font-medium text-slate-600">Completed</p>
+                <p className="text-2xl font-bold">{completedProtests}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -319,12 +297,12 @@ export function PropertiesSection() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Avg. Assessment</p>
-                <p className="text-2xl font-bold">
-                  ${Math.round(filteredProperties.reduce((sum, p) => sum + parseFloat(p.assessedValue.replace(/[$,]/g, '')), 0) / filteredProperties.length / 1000)}K
+                <p className="text-sm font-medium text-slate-600">Total Savings</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ${totalSavings.toLocaleString()}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-purple-500" />
+              <TrendingUp className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -333,14 +311,22 @@ export function PropertiesSection() {
       {/* Search Bar */}
       <Card>
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search properties by address, owner, or parcel number..."
-              value={filters.search}
-              onChange={(e) => updateFilter("search", e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search properties by address or county..."
+                value={filters.search}
+                onChange={(e) => updateFilter("search", e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {getActiveFiltersCount() > 0 && (
+              <Button variant="outline" onClick={clearAllFilters}>
+                <X className="h-4 w-4 mr-2" />
+                Clear All ({getActiveFiltersCount()})
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -348,94 +334,23 @@ export function PropertiesSection() {
       {/* Advanced Filters */}
       <FilterPanel
         title="Advanced Filters"
-        isOpen={filtersOpen}
-        onToggle={() => setFiltersOpen(!filtersOpen)}
         activeFiltersCount={getActiveFiltersCount()}
         onClearAll={clearAllFilters}
       >
         <MultiSelectFilter
-          label="County"
-          options={countyOptions}
-          selectedValues={filters.counties}
-          onSelectionChange={(values) => updateFilter("counties", values)}
-        />
-        
-        <MultiSelectFilter
           label="Status"
-          options={statusOptions}
+          options={uniqueStatuses}
           selectedValues={filters.statuses}
           onSelectionChange={(values) => updateFilter("statuses", values)}
+          placeholder="All statuses"
         />
         
         <MultiSelectFilter
-          label="Protest Status"
-          options={protestStatusOptions}
-          selectedValues={filters.protestStatuses}
-          onSelectionChange={(values) => updateFilter("protestStatuses", values)}
-        />
-
-        <DateRangeFilter
-          label="Protest Deadline"
-          startDate={filters.protestDeadlineStart}
-          endDate={filters.protestDeadlineEnd}
-          onDateChange={(start, end) => {
-            updateFilter("protestDeadlineStart", start);
-            updateFilter("protestDeadlineEnd", end);
-          }}
-        />
-
-        <DateRangeFilter
-          label="Last Updated"
-          startDate={filters.lastUpdatedStart}
-          endDate={filters.lastUpdatedEnd}
-          onDateChange={(start, end) => {
-            updateFilter("lastUpdatedStart", start);
-            updateFilter("lastUpdatedEnd", end);
-          }}
-        />
-
-        <NumericRangeFilter
-          label="Assessed Value"
-          min={filters.assessedValueMin}
-          max={filters.assessedValueMax}
-          onRangeChange={(min, max) => {
-            updateFilter("assessedValueMin", min);
-            updateFilter("assessedValueMax", max);
-          }}
-          formatValue={(value) => `$${value.toLocaleString()}`}
-        />
-
-        <NumericRangeFilter
-          label="Market Value"
-          min={filters.marketValueMin}
-          max={filters.marketValueMax}
-          onRangeChange={(min, max) => {
-            updateFilter("marketValueMin", min);
-            updateFilter("marketValueMax", max);
-          }}
-          formatValue={(value) => `$${value.toLocaleString()}`}
-        />
-
-        <NumericRangeFilter
-          label="Tax Amount"
-          min={filters.taxAmountMin}
-          max={filters.taxAmountMax}
-          onRangeChange={(min, max) => {
-            updateFilter("taxAmountMin", min);
-            updateFilter("taxAmountMax", max);
-          }}
-          formatValue={(value) => `$${value.toLocaleString()}`}
-        />
-
-        <NumericRangeFilter
-          label="Potential Savings"
-          min={filters.potentialSavingsMin}
-          max={filters.potentialSavingsMax}
-          onRangeChange={(min, max) => {
-            updateFilter("potentialSavingsMin", min);
-            updateFilter("potentialSavingsMax", max);
-          }}
-          formatValue={(value) => `$${value.toLocaleString()}`}
+          label="County"
+          options={uniqueCounties}
+          selectedValues={filters.counties}
+          onSelectionChange={(values) => updateFilter("counties", values)}
+          placeholder="All counties"
         />
       </FilterPanel>
 
@@ -443,121 +358,103 @@ export function PropertiesSection() {
         <TabsList>
           <TabsTrigger value="grid">Grid View</TabsTrigger>
           <TabsTrigger value="table">Table View</TabsTrigger>
-          <TabsTrigger value="map">Map View</TabsTrigger>
         </TabsList>
 
         <TabsContent value="grid" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredProperties.map((property) => (
-              <Card key={property.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{property.address}</CardTitle>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Property
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Generate Report
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  
-                  <div className="space-y-2 mt-3">
-                    <div className="flex items-center gap-2">
-                       <span className="text-sm font-medium text-slate-600">Situs Address:</span>
-                       <span className="text-sm">{property.address}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600">County:</span>
-                      <span className="text-sm">Travis</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600">Protest:</span>
-                      <span 
-                        className="text-sm cursor-pointer hover:underline text-blue-600"
-                        onClick={() => console.log('Navigate to protest:', property.protestId)}
-                      >
-                        {property.protestStatus === 'filed' ? 'active, filed' : 
-                         property.protestStatus === 'settled' ? 'settled' : 
-                         'none'}
-                      </span>
-                    </div>
-                    {property.contactId && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600">Contact:</span>
-                        <span 
-                          className="text-sm cursor-pointer hover:underline text-blue-600"
-                          onClick={() => console.log('Navigate to contact:', property.contactId)}
-                        >
-                          John Smith
-                        </span>
+            {filteredProperties.map((property) => {
+              const propertyStatus = getPropertyStatus(property);
+              const activeProtest = property.protests && property.protests.length > 0 ? property.protests[0] : null;
+              
+              return (
+                <Card key={property.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{property.situs_address}</CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant={getStatusColor(propertyStatus) as any} className="flex items-center gap-1">
+                            {getStatusIcon(propertyStatus)}
+                            {propertyStatus}
+                          </Badge>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600">Owner:</span>
-                      <span 
-                        className="text-sm cursor-pointer hover:underline text-blue-600"
-                        onClick={() => console.log('Navigate to owner:', property.ownerId)}
-                      >
-                        {property.owner}
-                      </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Property
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Gavel className="h-4 w-4 mr-2" />
+                            View Protest
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600">IDs:</span>
-                      <span className="text-sm font-mono">
-                        {property.propertyId}, {property.etpPid || 'N/A'}, {property.countyPid || 'N/A'}
-                      </span>
+                    
+                    <div className="space-y-2 mt-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-600">County:</span>
+                        <span className="text-sm">{property.county || 'Not specified'}</span>
+                      </div>
+                      {property.parcel_number && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-600">Parcel:</span>
+                          <span className="text-sm font-mono">{property.parcel_number}</span>
+                        </div>
+                      )}
+                      {activeProtest && (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Assessed Value:</span>
+                            <span className="text-sm">${(activeProtest.assessed_value || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-600">Potential Savings:</span>
+                            <span className="text-sm text-green-600">${(activeProtest.savings_amount || 0).toLocaleString()}</span>
+                          </div>
+                          {activeProtest.hearing_date && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-600">Hearing Date:</span>
+                              <span className="text-sm">{new Date(activeProtest.hearing_date).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-slate-600">Documents:</span>
-                      <span 
-                        className="text-sm cursor-pointer hover:underline text-blue-600"
-                        onClick={() => console.log('Navigate to document:', property.documentId)}
-                      >
-                        {property.documentId === "1" ? "Form 50-162 - Property Tax Protest" :
-                         property.documentId === "2" ? "Evidence Package - Market Analysis" :
-                         property.documentId === "3" ? "Hearing Notice - County Appeal" :
-                         property.documentId === "4" ? "Settlement Agreement" : 
-                         "No documents"}
-                      </span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-slate-500">
+                        Created: {new Date(property.created_at).toLocaleDateString()}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        {activeProtest && (
+                          <Button variant="outline" size="sm">
+                            <Gavel className="h-4 w-4 mr-1" />
+                            Protest
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-slate-500">
-                      Last updated: {property.lastUpdated}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Gavel className="h-4 w-4 mr-1" />
-                        Protest
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
 
@@ -568,116 +465,70 @@ export function PropertiesSection() {
               <CardDescription>Detailed table view of all properties</CardDescription>
             </CardHeader>
             <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Address</TableHead>
-                <TableHead>County</TableHead>
-                <TableHead>Protest</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>IDs</TableHead>
-                <TableHead>Documents</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProperties.map((property) => (
-                <TableRow key={property.id}>
-                  <TableCell className="font-medium">{property.address}</TableCell>
-                  <TableCell>Travis</TableCell>
-                  <TableCell>
-                    <span 
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => console.log('Navigate to protest:', property.protestId)}
-                    >
-                      {property.protestStatus === 'filed' ? 'active, filed' : 
-                       property.protestStatus === 'settled' ? 'settled' : 
-                       'none'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {property.contactId && (
-                      <span 
-                        className="text-blue-600 cursor-pointer hover:underline"
-                        onClick={() => console.log('Navigate to contact:', property.contactId)}
-                      >
-                        John Smith
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span 
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => console.log('Navigate to owner:', property.ownerId)}
-                    >
-                      {property.owner}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-mono text-xs">
-                      {property.propertyId}, {property.etpPid || 'N/A'}, {property.countyPid || 'N/A'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span 
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={() => console.log('Navigate to document:', property.documentId)}
-                    >
-                      {property.documentId === "1" ? "Form 50-162 - Property Tax Protest" :
-                       property.documentId === "2" ? "Evidence Package - Market Analysis" :
-                       property.documentId === "3" ? "Hearing Notice - County Appeal" :
-                       property.documentId === "4" ? "Settlement Agreement" : 
-                       "No documents"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-xs text-slate-500">{property.lastUpdated}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit Property
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Generate Report
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Address</TableHead>
+                    <TableHead>County</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Assessed Value</TableHead>
+                    <TableHead>Potential Savings</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProperties.map((property) => {
+                    const propertyStatus = getPropertyStatus(property);
+                    const activeProtest = property.protests && property.protests.length > 0 ? property.protests[0] : null;
+                    
+                    return (
+                      <TableRow key={property.id}>
+                        <TableCell className="font-medium">{property.situs_address}</TableCell>
+                        <TableCell>{property.county || 'Not specified'}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusColor(propertyStatus) as any} className="flex items-center gap-1 w-fit">
+                            {getStatusIcon(propertyStatus)}
+                            {propertyStatus}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {activeProtest ? `$${(activeProtest.assessed_value || 0).toLocaleString()}` : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {activeProtest ? `$${(activeProtest.savings_amount || 0).toLocaleString()}` : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-500">
+                          {new Date(property.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Property
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Gavel className="h-4 w-4 mr-2" />
+                                View Protest
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="map">
-          <Card>
-            <CardHeader>
-              <CardTitle>Properties Map View</CardTitle>
-              <CardDescription>Geographic visualization of properties</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-slate-50 rounded-lg p-6 min-h-[500px] flex items-center justify-center">
-                <div className="text-center text-slate-500">
-                  <MapPin className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Interactive map would be rendered here</p>
-                  <p className="text-sm">Showing property locations with protest status indicators</p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

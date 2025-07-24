@@ -366,94 +366,98 @@ export default function AdminProtestDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {protest.offer_received_date ? (
                 <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
-                        <p className="font-medium">{formatDate(protest.offer_received_date)}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
-                        <p className="font-medium text-lg">{formatOfferAmount()}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Assessed Value</label>
-                        <p className="font-medium">{formatCurrency(protest.assessed_value || 0)}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Recommendation Reduction</label>
-                        <p className="font-medium">{(() => {
-                          const assessedValue = protest.assessed_value || 0;
-                          const offerAmount = getOfferAmount();
-                          if (offerAmount !== null) {
-                            return formatCurrency(assessedValue - offerAmount);
-                          }
-                          return 'N/A';
-                        })()}</p>
-                      </div>
-                      <div className="flex gap-4">
-                        <div className="flex-1">
-                          <label className="text-sm font-medium text-muted-foreground">County Evidence</label>
-                          <div className="font-medium">
-                            {protest.evidence_packet_url ? (
-                              <a 
-                                href={protest.evidence_packet_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline inline-flex items-center gap-1"
-                              >
-                                View Evidence
-                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground">Not available</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-sm font-medium text-muted-foreground">AI Recco</label>
-                          <p className="font-medium">{hasValidOffer() ? 'Accept' : 'No Recommendation'}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Offer Received Date</label>
+                      <p className="font-medium">{protest.offer_received_date ? formatDate(protest.offer_received_date) : 'Not received'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">County Offer Amount</label>
+                      <p className="font-medium text-lg">{formatOfferAmount()}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Assessed Value</label>
+                      <p className="font-medium">{formatCurrency(protest.assessed_value || 0)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Recommendation Reduction</label>
+                      <p className="font-medium">{(() => {
+                        const assessedValue = protest.assessed_value || 0;
+                        const offerAmount = getOfferAmount();
+                        if (offerAmount !== null) {
+                          return formatCurrency(assessedValue - offerAmount);
+                        }
+                        return 'N/A';
+                      })()}</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="text-sm font-medium text-muted-foreground">County Evidence</label>
+                        <div className="font-medium">
+                          {protest.evidence_packet_url ? (
+                            <a 
+                              href={protest.evidence_packet_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline inline-flex items-center gap-1"
+                            >
+                              View Evidence
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">Not available</span>
+                          )}
                         </div>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">AI Recco Reasoning</label>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {hasValidOffer() 
-                            ? 'The county offer represents a significant reduction in assessed value that would benefit the property owner.'
-                            : 'No county offer available to evaluate at this time.'
-                          }
-                        </p>
+                      <div className="flex-1">
+                        <label className="text-sm font-medium text-muted-foreground">AI Recco</label>
+                        <p className="font-medium">{hasValidOffer() ? 'Accept' : 'No Recommendation'}</p>
                       </div>
                     </div>
-                    <Separator />
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={() => updateStatus('accepted')}
-                        disabled={statusUpdating || !hasValidOffer()}
-                        className="flex-1"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Accept Offer
-                      </Button>
-                      <Button 
-                        onClick={() => updateStatus('rejected')}
-                        disabled={statusUpdating || !hasValidOffer()}
-                        variant="destructive"
-                        className="flex-1"
-                      >
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        Reject Offer
-                      </Button>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">AI Recco Reasoning</label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {hasValidOffer() 
+                          ? 'The county offer represents a significant reduction in assessed value that would benefit the property owner.'
+                          : 'No county offer available to evaluate at this time.'
+                        }
+                      </p>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-muted-foreground">No offer received yet</p>
+                  <Separator />
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => updateStatus('accepted')}
+                      disabled={statusUpdating || protest?.appeal_status !== 'offer_received'}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Accept Offer
+                    </Button>
+                    <Button 
+                      onClick={() => updateStatus('rejected')}
+                      disabled={statusUpdating || protest?.appeal_status !== 'offer_received'}
+                      variant="destructive"
+                      className="flex-1"
+                    >
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Reject Offer
+                    </Button>
                   </div>
-                )}
+                  {protest?.appeal_status !== 'offer_received' && (
+                    <div className="text-center py-2">
+                      <p className="text-sm text-muted-foreground">
+                        {hasValidOffer() 
+                          ? 'Offer actions only available when status is "Offer Received"'
+                          : 'No offer received yet'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

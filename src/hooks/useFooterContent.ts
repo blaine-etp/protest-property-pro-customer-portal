@@ -8,7 +8,10 @@ interface FooterContent {
     description: string;
     logoUrl: string;
   };
-  services: string[];
+  services: {
+    name: string;
+    url: string;
+  }[];
   contact: {
     phone: string;
     email: string;
@@ -22,8 +25,11 @@ interface FooterContent {
   legal: {
     copyright: string;
     privacy: string;
+    privacyUrl: string;
     terms: string;
+    termsUrl: string;
     license: string;
+    licenseUrl: string;
   };
 }
 
@@ -34,11 +40,11 @@ const defaultFooterContent: FooterContent = {
     logoUrl: '/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png'
   },
   services: [
-    'Property Tax Protest',
-    'Tax Assessment Review',
-    'Commercial Properties', 
-    'Residential Properties',
-    'Consultation Services'
+    { name: 'Property Tax Protest', url: '/services/property-tax-protest' },
+    { name: 'Tax Assessment Review', url: '/services/tax-assessment-review' },
+    { name: 'Commercial Properties', url: '/services/commercial-properties' }, 
+    { name: 'Residential Properties', url: '/services/residential-properties' },
+    { name: 'Consultation Services', url: '/services/consultation' }
   ],
   contact: {
     phone: '(555) 012-3456',
@@ -53,8 +59,11 @@ const defaultFooterContent: FooterContent = {
   legal: {
     copyright: '© 2024 EasyTaxProtest.com. All rights reserved.',
     privacy: 'Privacy Policy',
+    privacyUrl: '/privacy-policy',
     terms: 'Terms of Service',
-    license: 'License Information'
+    termsUrl: '/terms-of-service',
+    license: 'License Information',
+    licenseUrl: '/license'
   }
 };
 

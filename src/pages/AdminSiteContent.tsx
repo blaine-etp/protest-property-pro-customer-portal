@@ -313,7 +313,7 @@ export default function AdminSiteContent() {
                       <h3 className="text-lg font-semibold">Services</h3>
                       <Button onClick={() => setFooterContent(prev => ({
                         ...prev,
-                        services: [...prev.services, "New Service"]
+                        services: [...prev.services, { name: "New Service", url: "#" }]
                       }))} size="sm">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Service
@@ -321,25 +321,45 @@ export default function AdminSiteContent() {
                     </div>
                     <div className="space-y-2">
                       {footerContent.services.map((service, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Input
-                            value={service}
-                            onChange={(e) => setFooterContent(prev => ({
-                              ...prev,
-                              services: prev.services.map((s, i) => i === index ? e.target.value : s)
-                            }))}
-                            placeholder="Service name"
-                          />
-                          <Button 
-                            onClick={() => setFooterContent(prev => ({
-                              ...prev,
-                              services: prev.services.filter((_, i) => i !== index)
-                            }))} 
-                            variant="destructive" 
-                            size="sm"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <div key={index} className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Service Name</Label>
+                            <Input
+                              value={service.name}
+                              onChange={(e) => setFooterContent(prev => ({
+                                ...prev,
+                                services: prev.services.map((s, i) => 
+                                  i === index ? { ...s, name: e.target.value } : s
+                                )
+                              }))}
+                              placeholder="Service name"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Service URL</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                value={service.url}
+                                onChange={(e) => setFooterContent(prev => ({
+                                  ...prev,
+                                  services: prev.services.map((s, i) => 
+                                    i === index ? { ...s, url: e.target.value } : s
+                                  )
+                                }))}
+                                placeholder="/service-url"
+                              />
+                              <Button 
+                                onClick={() => setFooterContent(prev => ({
+                                  ...prev,
+                                  services: prev.services.filter((_, i) => i !== index)
+                                }))} 
+                                variant="destructive" 
+                                size="sm"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -447,42 +467,84 @@ export default function AdminSiteContent() {
                         placeholder="Copyright text"
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="footer-privacy">Privacy Policy Text</Label>
-                        <Input
-                          id="footer-privacy"
-                          value={footerContent.legal.privacy}
-                          onChange={(e) => setFooterContent(prev => ({
-                            ...prev,
-                            legal: { ...prev.legal, privacy: e.target.value }
-                          }))}
-                          placeholder="Privacy Policy text"
-                        />
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-privacy">Privacy Policy Text</Label>
+                          <Input
+                            id="footer-privacy"
+                            value={footerContent.legal.privacy}
+                            onChange={(e) => setFooterContent(prev => ({
+                              ...prev,
+                              legal: { ...prev.legal, privacy: e.target.value }
+                            }))}
+                            placeholder="Privacy Policy text"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-privacy-url">Privacy Policy URL</Label>
+                          <Input
+                            id="footer-privacy-url"
+                            value={footerContent.legal.privacyUrl}
+                            onChange={(e) => setFooterContent(prev => ({
+                              ...prev,
+                              legal: { ...prev.legal, privacyUrl: e.target.value }
+                            }))}
+                            placeholder="/privacy-policy"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="footer-terms">Terms of Service Text</Label>
-                        <Input
-                          id="footer-terms"
-                          value={footerContent.legal.terms}
-                          onChange={(e) => setFooterContent(prev => ({
-                            ...prev,
-                            legal: { ...prev.legal, terms: e.target.value }
-                          }))}
-                          placeholder="Terms of Service text"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-terms">Terms of Service Text</Label>
+                          <Input
+                            id="footer-terms"
+                            value={footerContent.legal.terms}
+                            onChange={(e) => setFooterContent(prev => ({
+                              ...prev,
+                              legal: { ...prev.legal, terms: e.target.value }
+                            }))}
+                            placeholder="Terms of Service text"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-terms-url">Terms of Service URL</Label>
+                          <Input
+                            id="footer-terms-url"
+                            value={footerContent.legal.termsUrl}
+                            onChange={(e) => setFooterContent(prev => ({
+                              ...prev,
+                              legal: { ...prev.legal, termsUrl: e.target.value }
+                            }))}
+                            placeholder="/terms-of-service"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="footer-license">License Info Text</Label>
-                        <Input
-                          id="footer-license"
-                          value={footerContent.legal.license}
-                          onChange={(e) => setFooterContent(prev => ({
-                            ...prev,
-                            legal: { ...prev.legal, license: e.target.value }
-                          }))}
-                          placeholder="License Info text"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-license">License Info Text</Label>
+                          <Input
+                            id="footer-license"
+                            value={footerContent.legal.license}
+                            onChange={(e) => setFooterContent(prev => ({
+                              ...prev,
+                              legal: { ...prev.legal, license: e.target.value }
+                            }))}
+                            placeholder="License Info text"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="footer-license-url">License Info URL</Label>
+                          <Input
+                            id="footer-license-url"
+                            value={footerContent.legal.licenseUrl}
+                            onChange={(e) => setFooterContent(prev => ({
+                              ...prev,
+                              legal: { ...prev.legal, licenseUrl: e.target.value }
+                            }))}
+                            placeholder="/license"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

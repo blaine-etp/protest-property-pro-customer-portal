@@ -49,7 +49,7 @@ export const Footer = () => {
             <ul className="space-y-2 text-background/80">
               {content.services.map((service, index) => (
                 <li key={index}>
-                  <a href="#" className="hover:text-background transition-colors">{service}</a>
+                  <a href={service.url} className="hover:text-background transition-colors">{service.name}</a>
                 </li>
               ))}
             </ul>
@@ -81,9 +81,9 @@ export const Footer = () => {
               {content.legal.copyright}
             </div>
             <div className="flex space-x-6 text-sm mt-4 md:mt-0">
-              <a href="#" className="hover:text-background transition-colors">{content.legal.privacy}</a>
-              <a href="#" className="hover:text-background transition-colors">{content.legal.terms}</a>
-              <a href="#" className="hover:text-background transition-colors">{content.legal.license}</a>
+              <a href={content.legal.privacyUrl} className="hover:text-background transition-colors">{content.legal.privacy}</a>
+              <a href={content.legal.termsUrl} className="hover:text-background transition-colors">{content.legal.terms}</a>
+              <a href={content.legal.licenseUrl} className="hover:text-background transition-colors">{content.legal.license}</a>
             </div>
           </div>
         </div>

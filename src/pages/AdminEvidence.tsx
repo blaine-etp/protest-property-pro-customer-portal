@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Download, FileText, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface Protest {
   id: string;
@@ -43,14 +44,11 @@ const statusLabels = {
 
 export default function AdminEvidence() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [protests, setProtests] = useState<Protest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProtests();
-  }, []);
-
-  const fetchProtests = async () => {
+  const fetchProtests = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('protests')
@@ -61,22 +59,89 @@ export default function AdminEvidence() {
       setProtests(data || []);
     } catch (error) {
       console.error('Error fetching protests:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load protests. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchProtests();
+
+    // Set up real-time subscription for protests table
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'protests'
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          // Refresh data when any change occurs
+          fetchProtests();
+        }
+      )
+      .subscribe();
+
+    // Refresh data when page becomes visible (user returns from detail page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchProtests();
+      }
+    };
+
+    const handleFocus = () => {
+      fetchProtests();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchProtests]);
 
   const handleAcceptReject = async (protestId: string, action: 'accepted' | 'rejected') => {
     try {
+      // Optimistic update
+      setProtests(prev => prev.map(protest => 
+        protest.id === protestId 
+          ? { ...protest, appeal_status: action }
+          : protest
+      ));
+
       const { error } = await supabase
         .from('protests')
         .update({ appeal_status: action })
         .eq('id', protestId);
 
       if (error) throw error;
-      fetchProtests(); // Refresh the data
+
+      toast({
+        title: "Success",
+        description: `Protest ${action} successfully.`,
+      });
     } catch (error) {
       console.error('Error updating protest:', error);
+      
+      // Rollback optimistic update on error
+      fetchProtests();
+      
+      toast({
+        title: "Error",
+        description: `Failed to ${action} protest. Please try again.`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -152,7 +217,7 @@ export default function AdminEvidence() {
                     <TableCell>{formatCurrency(protest.assessed_value)}</TableCell>
                     <TableCell>{protest.recommendation || '-'}</TableCell>
                     <TableCell>
-                      {(protest.appeal_status === 'offer_received' || protest.appeal_status === 'needs_review') && (
+                      {protest.appeal_status === 'offer_received' && (
                         <div className="flex gap-2">
                           <Button
                             size="sm"

@@ -19,7 +19,6 @@ export interface Property {
   appeal_status?: {
     appeal_status: string;
     exemption_status: string;
-    auto_appeal_enabled: boolean;
     savings_amount: number;
   };
 }
@@ -59,7 +58,6 @@ export const useCustomerData = (email: string) => {
             protests (
               appeal_status,
               exemption_status,
-              auto_appeal_enabled,
               savings_amount
             )
           `)
@@ -99,21 +97,8 @@ export const useCustomerData = (email: string) => {
       console.log('Auto appeal toggle requested for property:', propertyId);
       
       // Placeholder for future auto-appeal implementation
-      // For now, just toggle the local state
-      const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
-
-      // Update local state
-      setProperties(prev => prev.map(p => 
-        p.id === propertyId 
-          ? { 
-              ...p, 
-              appeal_status: p.appeal_status ? {
-                ...p.appeal_status,
-                auto_appeal_enabled: newAutoAppealStatus
-              } : undefined
-            }
-          : p
-      ));
+      // This feature is not yet implemented in the database schema
+      
     } catch (err) {
       console.error('Error toggling auto-appeal:', err);
       throw err;

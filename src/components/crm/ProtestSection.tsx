@@ -250,7 +250,10 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Active</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {protests.filter(p => [PROTEST_STATUSES.PENDING, PROTEST_STATUSES.IN_PROGRESS].includes(getNormalizedStatus(p.appeal_status))).length}
+                  {protests.filter(p => {
+                    const status = getNormalizedStatus(p.appeal_status);
+                    return status === PROTEST_STATUSES.PENDING || status === PROTEST_STATUSES.IN_PROGRESS;
+                  }).length}
                 </p>
               </div>
               <AlertCircle className="h-8 w-8 text-orange-500" />

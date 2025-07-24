@@ -32,13 +32,12 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { dataService } from "@/services";
-import type { Protest } from "@/services/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ProtestSection() {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState("pipeline");
-  const [protests, setProtests] = useState<Protest[]>([]);
+  const [protests, setProtests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -59,8 +58,13 @@ export function ProtestSection() {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await dataService.getProtests();
-      setProtests(data);
+      const { data, error } = await supabase
+        .from('protests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProtests(data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load protests');
       console.error('Failed to load protests:', err);
@@ -72,18 +76,18 @@ export function ProtestSection() {
   // Filter protests
   const filteredProtests = protests.filter(protest => {
     // Text search
-    const matchesSearch = protest.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      protest.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      protest.county.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (protest.situs_address || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (protest.owner_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (protest.county || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     // Status filter
-    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(protest.status);
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(protest.appeal_status || 'pending');
     
     // County filter
-    const matchesCounty = selectedCounties.length === 0 || selectedCounties.includes(protest.county);
+    const matchesCounty = selectedCounties.length === 0 || selectedCounties.includes(protest.county || '');
     
-    // Assessed value filter (convert $X,XXX to number)
-    const assessedValue = parseFloat(protest.assessedValue.replace(/[$,]/g, ''));
+    // Assessed value filter
+    const assessedValue = protest.assessed_value || 0;
     const matchesAssessedValue = (minAssessedValue === undefined || assessedValue >= minAssessedValue) &&
       (maxAssessedValue === undefined || assessedValue <= maxAssessedValue);
     
@@ -94,8 +98,8 @@ export function ProtestSection() {
   });
 
   // Get unique values for filters
-  const uniqueStatuses = Array.from(new Set(protests.map(p => p.status)));
-  const uniqueCounties = Array.from(new Set(protests.map(p => p.county)));
+  const uniqueStatuses = Array.from(new Set(protests.map(p => p.appeal_status || 'pending')));
+  const uniqueCounties = Array.from(new Set(protests.map(p => p.county || '')));
 
   // Count active filters
   const activeFiltersCount = 
@@ -116,25 +120,28 @@ export function ProtestSection() {
   };
 
   const protestsByStatus = {
-    "Filed": filteredProtests.filter(p => p.status === "Filed"),
-    "Hearing Date Scheduled": filteredProtests.filter(p => p.status === "Hearing Date Scheduled"),
-    "Settled": filteredProtests.filter(p => p.status === "Settled"),
+    "pending": filteredProtests.filter(p => p.appeal_status === "pending"),
+    "filed": filteredProtests.filter(p => p.appeal_status === "filed"),
+    "accepted": filteredProtests.filter(p => p.appeal_status === "accepted"),
+    "rejected": filteredProtests.filter(p => p.appeal_status === "rejected"),
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Filed": return "blue";
-      case "Hearing Date Scheduled": return "orange";
-      case "Settled": return "green";
+      case "pending": return "yellow";
+      case "filed": return "blue";
+      case "accepted": return "green";
+      case "rejected": return "red";
       default: return "gray";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Filed": return <FileText className="h-4 w-4" />;
-      case "Hearing Date Scheduled": return <Calendar className="h-4 w-4" />;
-      case "Settled": return <CheckCircle className="h-4 w-4" />;
+      case "pending": return <Clock className="h-4 w-4" />;
+      case "filed": return <FileText className="h-4 w-4" />;
+      case "accepted": return <CheckCircle className="h-4 w-4" />;
+      case "rejected": return <XCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -190,7 +197,7 @@ export function ProtestSection() {
             <p className="text-slate-600">Track and manage property tax protests</p>
             <Badge variant="outline" className="text-xs">
               <Database className="h-3 w-3 mr-1" />
-              Mock Data
+              Supabase Data
             </Badge>
           </div>
         </div>
@@ -215,7 +222,7 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Active</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {protests.filter(p => ["Filed", "Hearing Date Scheduled"].includes(p.status)).length}
+                  {protests.filter(p => ["pending", "filed"].includes(p.appeal_status || 'pending')).length}
                 </p>
               </div>
               <AlertCircle className="h-8 w-8 text-orange-500" />
@@ -228,7 +235,7 @@ export function ProtestSection() {
               <div>
                 <p className="text-sm font-medium text-slate-600">Settled</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {protests.filter(p => p.status === "Settled").length}
+                  {protests.filter(p => p.appeal_status === "accepted").length}
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500" />
@@ -251,7 +258,9 @@ export function ProtestSection() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Total Reduced</p>
-                <p className="text-2xl font-bold text-green-600">$6,950</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ${protests.reduce((sum, p) => sum + (p.savings_amount || 0), 0).toLocaleString()}
+                </p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
@@ -340,14 +349,14 @@ export function ProtestSection() {
                 key={protest.id} 
                 className="p-6 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
                 onClick={() => {
-                  navigate(`/admin/protest/${protest.id}`);
+                  navigate(`/admin/protests/${protest.id}`);
                 }}
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Badge variant={getStatusColor(protest.status) as any} className="flex items-center gap-1">
-                      {getStatusIcon(protest.status)}
-                      <span className="ml-1">{protest.status}</span>
+                    <Badge variant={getStatusColor(protest.appeal_status || 'pending') as any} className="flex items-center gap-1">
+                      {getStatusIcon(protest.appeal_status || 'pending')}
+                      <span className="ml-1">{protest.appeal_status || 'pending'}</span>
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -377,35 +386,35 @@ export function ProtestSection() {
                   </div>
                   
                   <div>
-                    <h4 className="font-semibold text-lg mb-1">{protest.propertyAddress}</h4>
-                    <p className="text-sm text-muted-foreground">Tax Year: {protest.protestYear}</p>
+                    <h4 className="font-semibold text-lg mb-1">{protest.situs_address || 'Address not available'}</h4>
+                    <p className="text-sm text-muted-foreground">Tax Year: {protest.tax_year || new Date().getFullYear()}</p>
                   </div>
                   
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">County:</span>
-                      <span className="font-medium">{protest.county}</span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">County:</span>
+                        <span className="font-medium">{protest.county || 'Not specified'}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Owner:</span>
+                        <span className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+                          {protest.owner_name || 'Not specified'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Assessed Value:</span>
+                        <span className="font-medium">
+                          ${(protest.assessed_value || 0).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Owner:</span>
-                      <span className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
-                        {protest.owner}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contact:</span>
-                      <span className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
-                        {protest.contactId}
-                      </span>
-                    </div>
-                  </div>
                   
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Filed: {protest.filedDate}</span>
-                    {protest.hearingDate && (
+                    <span>Created: {protest.created_at ? new Date(protest.created_at).toLocaleDateString() : 'N/A'}</span>
+                    {protest.hearing_date && (
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {protest.hearingDate}
+                        {new Date(protest.hearing_date).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -441,14 +450,14 @@ export function ProtestSection() {
                     <TableRow key={protest.id}>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{protest.propertyAddress}</p>
+                          <p className="font-medium">{protest.situs_address || 'Address not available'}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{protest.owner}</TableCell>
+                      <TableCell>{protest.owner_name || 'Not specified'}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(protest.status) as any} className="flex items-center gap-1 w-fit">
-                          {getStatusIcon(protest.status)}
-                          {protest.status}
+                        <Badge variant={getStatusColor(protest.appeal_status || 'pending') as any} className="flex items-center gap-1 w-fit">
+                          {getStatusIcon(protest.appeal_status || 'pending')}
+                          {protest.appeal_status || 'pending'}
                         </Badge>
                       </TableCell>
                       <TableCell>{protest.filedDate}</TableCell>

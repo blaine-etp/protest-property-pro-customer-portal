@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { mockAuthService } from '@/services/mockAuthService';
 import { mockFormService } from '@/services/mockFormService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CustomerProfile {
   id: string;
@@ -60,10 +61,41 @@ export const useAuthenticatedCustomerData = () => {
 
       setProfile(profileData);
 
-      // Fetch properties for this user (using mock form service)
-      const propertiesData = await mockFormService.getPropertiesForUser(session.user.id);
+      // Fetch properties for this user from Supabase
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          situs_address,
+          parcel_number,
+          estimated_savings,
+          protests (
+            appeal_status,
+            exemption_status,
+            savings_amount
+          )
+        `)
+        .eq('user_id', session.user.id);
 
-      setProperties(propertiesData);
+      if (propertiesError) {
+        console.error('Error fetching properties:', propertiesError);
+      }
+
+      // Transform the data to match expected format
+      const transformedProperties = (propertiesData || []).map((property: any) => ({
+        id: property.id,
+        address: property.situs_address,
+        parcel_number: property.parcel_number,
+        estimated_savings: property.estimated_savings,
+        appeal_status: property.protests?.[0] ? {
+          appeal_status: property.protests[0].appeal_status,
+          exemption_status: property.protests[0].exemption_status,
+          auto_appeal_enabled: false, // Default value since it's not stored in protests table
+          savings_amount: property.protests[0].savings_amount
+        } : undefined
+      }));
+
+      setProperties(transformedProperties);
     } catch (err: any) {
       console.error('Error fetching customer data:', err);
       setError(err.message);
@@ -79,12 +111,10 @@ export const useAuthenticatedCustomerData = () => {
 
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
 
-      const { error } = await mockFormService.toggleAutoAppeal(propertyId);
-
-      if (error) {
-        throw new Error(`Failed to update auto-appeal: ${error.message}`);
-      }
-
+      // Since auto_appeal_enabled is not currently stored in the database,
+      // we'll just update the local state for now
+      console.log('Auto appeal toggle requested for property:', propertyId);
+      
       // Update local state
       setProperties(prev => prev.map(p => 
         p.id === propertyId && p.appeal_status

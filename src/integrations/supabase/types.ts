@@ -995,33 +995,6 @@ export type Database = {
           },
         ]
       }
-      site_content: {
-        Row: {
-          content_key: string
-          content_type: string
-          content_value: Json
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          content_key: string
-          content_type: string
-          content_value: Json
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          content_key?: string
-          content_type?: string
-          content_value?: Json
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       verification_codes: {
         Row: {
           code: string

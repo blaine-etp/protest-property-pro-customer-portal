@@ -1,18 +1,39 @@
 import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react";
-import { useFooterContent } from "@/hooks/useFooterContent";
 
 export const Footer = () => {
-  const { content, loading } = useFooterContent();
-
-  if (loading) {
-    return (
-      <footer id="contact" className="bg-foreground text-background py-16">
-        <div className="container mx-auto px-4">
-          <div className="animate-pulse">Loading...</div>
-        </div>
-      </footer>
-    );
-  }
+  const content = {
+    company: {
+      name: 'EasyTaxProtest.com',
+      description: 'Professional property tax protest services helping homeowners save thousands on their annual tax bills. No upfront fees, guaranteed results.',
+      logoUrl: '/lovable-uploads/9f31b537-92b7-4e7d-9b60-b224c326a0cc.png'
+    },
+    services: [
+      { name: 'Property Tax Protest', url: '/services/property-tax-protest' },
+      { name: 'Tax Assessment Review', url: '/services/tax-assessment-review' },
+      { name: 'Commercial Properties', url: '/services/commercial-properties' }, 
+      { name: 'Residential Properties', url: '/services/residential-properties' },
+      { name: 'Consultation Services', url: '/services/consultation' }
+    ],
+    contact: {
+      phone: '(555) 012-3456',
+      email: 'info@easytaxprotest.com',
+      address: '123 Business Plaza\nAustin, TX 78701'
+    },
+    social: {
+      facebook: '#',
+      twitter: '#',
+      linkedin: '#'
+    },
+    legal: {
+      copyright: '© 2024 EasyTaxProtest.com. All rights reserved.',
+      privacy: 'Privacy Policy',
+      privacyUrl: '/privacy-policy',
+      terms: 'Terms of Service',
+      termsUrl: '/terms-of-service',
+      license: 'License Information',
+      licenseUrl: '/license'
+    }
+  };
 
   return (
     <footer id="contact" className="bg-foreground text-background py-16">

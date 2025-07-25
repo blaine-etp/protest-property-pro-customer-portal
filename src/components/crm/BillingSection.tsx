@@ -56,12 +56,10 @@ export function BillingSection() {
     try {
       setIsLoading(true);
       setError(null);
-      const [billsData, invoicesData] = await Promise.all([
-        dataService.getBills(),
-        dataService.getInvoices(),
-      ]);
+      const billsData = await dataService.getBills();
       setBills(billsData);
-      setInvoices(invoicesData);
+      // TODO: Implement invoices when ready
+      setInvoices([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load billing data');
       console.error('Failed to load billing data:', err);

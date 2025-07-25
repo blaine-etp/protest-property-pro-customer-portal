@@ -250,6 +250,7 @@ export const mockProtests: Protest[] = [
 export const mockBills: Bill[] = [
   {
     id: "1",
+    protestId: "1",
     propertyAddress: "123 Main Street, Austin, TX",
     owner: "John Smith",
     taxYear: "2024",
@@ -257,12 +258,13 @@ export const mockBills: Bill[] = [
     assessedValue: "$450,000",
     taxAmount: "$12,350",
     dueDate: "2024-03-15",
-    status: "Pending",
+    status: "Draft",
     paidAmount: "$0",
     importDate: "2024-01-15"
   },
   {
     id: "2",
+    protestId: "2",
     propertyAddress: "456 Oak Avenue, Austin, TX",
     owner: "Sarah Johnson",
     taxYear: "2024",
@@ -270,12 +272,13 @@ export const mockBills: Bill[] = [
     assessedValue: "$325,000",
     taxAmount: "$8,925",
     dueDate: "2024-03-20",
-    status: "Under Review",
+    status: "Draft",
     paidAmount: "$0",
     importDate: "2024-01-14"
   },
   {
     id: "3",
+    protestId: "3",
     propertyAddress: "789 Pine Street, Austin, TX",
     owner: "Michael Brown",
     taxYear: "2023",
@@ -289,6 +292,7 @@ export const mockBills: Bill[] = [
   },
   {
     id: "4",
+    protestId: "4",
     propertyAddress: "321 Elm Drive, Austin, TX",
     owner: "Emily Davis",
     taxYear: "2023",

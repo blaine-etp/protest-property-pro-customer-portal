@@ -80,8 +80,8 @@ export type Database = {
           due_date: string | null
           id: string
           notes: string | null
-          owner_id: string
           paid_date: string | null
+          protest_id: string | null
           status: string
           tax_year: number
           total_assessed_value: number | null
@@ -97,8 +97,8 @@ export type Database = {
           due_date?: string | null
           id?: string
           notes?: string | null
-          owner_id: string
           paid_date?: string | null
+          protest_id?: string | null
           status?: string
           tax_year: number
           total_assessed_value?: number | null
@@ -114,8 +114,8 @@ export type Database = {
           due_date?: string | null
           id?: string
           notes?: string | null
-          owner_id?: string
           paid_date?: string | null
+          protest_id?: string | null
           status?: string
           tax_year?: number
           total_assessed_value?: number | null
@@ -126,17 +126,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_bills_owner"
-            columns: ["owner_id"]
+            foreignKeyName: "bills_protest_id_fkey"
+            columns: ["protest_id"]
             isOneToOne: false
-            referencedRelation: "owners"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bills_owner_id"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owners"
+            referencedRelation: "protests"
             referencedColumns: ["id"]
           },
         ]

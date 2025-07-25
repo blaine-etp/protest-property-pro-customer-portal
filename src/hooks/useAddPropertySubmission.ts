@@ -139,7 +139,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
       }
 
       // 5. Create initial protest record for new property
-      const { error: protestError } = await supabase
+      const { data: protestData, error: protestError } = await supabase
         .from('protests')
         .insert({
           property_id: property.id,
@@ -147,10 +147,30 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
           exemption_status: 'pending',
           auto_appeal_enabled: false,
           savings_amount: formData.estimatedSavings || 0,
-        });
+        })
+        .select()
+        .single();
 
       if (protestError) {
         throw new Error(`Protest record creation failed: ${protestError.message}`);
+      }
+
+      // 6. Create draft bill for the protest
+      const { error: billError } = await supabase
+        .from('bills')
+        .insert({
+          protest_id: protestData.id,
+          tax_year: new Date().getFullYear(),
+          status: 'draft',
+          total_assessed_value: formData.estimatedSavings ? Number(formData.estimatedSavings) * 4 : 0,
+          total_protest_amount: 0,
+          total_fee_amount: 0,
+          contingency_fee_percent: 25.00
+        });
+
+      if (billError) {
+        console.error('Error creating bill:', billError);
+        // Don't throw here as the main application was successful
       }
 
       // Generate Form 50-162 automatically

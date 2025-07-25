@@ -63,6 +63,7 @@ export interface Protest {
 
 export interface Bill {
   id: string;
+  protestId: string;
   propertyAddress: string;
   owner: string;
   taxYear: string;
@@ -70,7 +71,7 @@ export interface Bill {
   assessedValue: string;
   taxAmount: string;
   dueDate: string;
-  status: 'Pending' | 'Under Review' | 'Protested' | 'Paid';
+  status: 'Draft' | 'Pending' | 'Under Review' | 'Protested' | 'Paid';
   paidAmount: string;
   importDate: string;
 }

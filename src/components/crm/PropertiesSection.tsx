@@ -87,7 +87,7 @@ export function PropertiesSection() {
             last_name,
             email
           ),
-          owners (
+          owner:owners (
             id,
             name,
             owner_type

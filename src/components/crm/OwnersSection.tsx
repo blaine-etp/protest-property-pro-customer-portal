@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +12,6 @@ import {
   Search,
   Plus,
   X,
-  FileText,
-  ArrowLeft,
-  Mail,
-  Phone,
-  MapPin,
   Building2,
   Briefcase,
   Shield,
@@ -37,23 +33,16 @@ const defaultFilters: OwnerFilters = {
 };
 
 export function OwnersSection() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<OwnerFilters>(defaultFilters);
   const [viewMode, setViewMode] = useState("grid");
   const [owners, setOwners] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOwner, setSelectedOwner] = useState<any | null>(null);
-  const [ownerDetails, setOwnerDetails] = useState<any | null>(null);
 
   useEffect(() => {
     loadOwners();
   }, []);
-
-  useEffect(() => {
-    if (selectedOwner) {
-      loadOwnerDetails(selectedOwner.id);
-    }
-  }, [selectedOwner]);
 
   const loadOwners = async () => {
     try {
@@ -78,36 +67,6 @@ export function OwnersSection() {
       console.error('Failed to load owners:', err);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadOwnerDetails = async (ownerId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('owners')
-        .select(`
-          *,
-          properties (
-            id,
-            situs_address,
-            county,
-            parcel_number,
-            contacts (
-              id,
-              first_name,
-              last_name,
-              email,
-              phone
-            )
-          )
-        `)
-        .eq('id', ownerId)
-        .single();
-
-      if (error) throw error;
-      setOwnerDetails(data);
-    } catch (err) {
-      console.error('Failed to load owner details:', err);
     }
   };
 
@@ -225,150 +184,6 @@ export function OwnersSection() {
     );
   }
 
-  // Expanded view for selected owner
-  if (selectedOwner && ownerDetails) {
-    const uniqueContacts = Array.from(
-      new Map(
-        ownerDetails.properties
-          ?.flatMap((p: any) => p.contacts || [])
-          .map((c: any) => [c.id, c])
-      ).values()
-    );
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setSelectedOwner(null);
-              setOwnerDetails(null);
-            }}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Owners
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold">{ownerDetails.name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant={getOwnerTypeColor(ownerDetails.owner_type) as any} className="flex items-center gap-1">
-                {getOwnerTypeIcon(ownerDetails.owner_type)}
-                {formatOwnerType(ownerDetails.owner_type)}
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Owner Details */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-blue-500" />
-                  <h3 className="font-semibold">Owner Details</h3>
-                </div>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Name</p>
-                    <p className="font-medium">{ownerDetails.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Type</p>
-                    <p className="font-medium">{formatOwnerType(ownerDetails.owner_type)}</p>
-                  </div>
-                  {ownerDetails.form_entity_name && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Entity Name</p>
-                      <p className="font-medium">{ownerDetails.form_entity_name}</p>
-                    </div>
-                  )}
-                  {ownerDetails.mailing_address && (
-                    <div>
-                      <p className="text-sm text-muted-foreground">Address</p>
-                      <p className="font-medium text-sm">
-                        {ownerDetails.mailing_address}<br/>
-                        {ownerDetails.mailing_city}, {ownerDetails.mailing_state} {ownerDetails.mailing_zip}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Attached Properties */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Building className="h-5 w-5 text-green-500" />
-                  <h3 className="font-semibold">Properties ({ownerDetails.properties?.length || 0})</h3>
-                </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {ownerDetails.properties?.map((property: any) => (
-                    <div key={property.id} className="p-2 bg-slate-50 rounded">
-                      <p className="font-medium text-sm">{property.situs_address}</p>
-                      <p className="text-xs text-muted-foreground">{property.county}</p>
-                    </div>
-                  )) || <p className="text-sm text-muted-foreground">No properties</p>}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Attached Contacts */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-purple-500" />
-                  <h3 className="font-semibold">Contacts ({uniqueContacts.length})</h3>
-                </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {uniqueContacts.map((contact: any) => (
-                    <div key={contact.id} className="p-2 bg-slate-50 rounded">
-                      <p className="font-medium text-sm">{contact.first_name} {contact.last_name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {contact.email && (
-                          <div className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {contact.email}
-                          </div>
-                        )}
-                        {contact.phone && (
-                          <div className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {contact.phone}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )) || <p className="text-sm text-muted-foreground">No contacts</p>}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Attached Documents */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-orange-500" />
-                  <h3 className="font-semibold">Documents (0)</h3>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">No documents attached</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
@@ -480,7 +295,7 @@ export function OwnersSection() {
               <Card 
                 key={owner.id} 
                 className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedOwner(owner)}
+                onClick={() => navigate(`/admin/owners/${owner.id}`)}
               >
                 <div className="space-y-4">
                   <div className="flex justify-between items-start">

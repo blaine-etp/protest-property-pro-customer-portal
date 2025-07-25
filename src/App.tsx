@@ -31,6 +31,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
+import AdminOwnerDetail from "./pages/AdminOwnerDetail";
 import AdminProtestDetail from "./pages/AdminProtestDetail";
 import Resources from "./pages/Resources";
 import { CountyPage } from "./pages/CountyPage";
@@ -66,6 +67,7 @@ const App = () => (
             <Route index element={<Admin />} />
             <Route path="customers" element={<AdminCRM />} />
             <Route path="customers/:contactId" element={<AdminContactDetail />} />
+            <Route path="owners/:ownerId" element={<AdminOwnerDetail />} />
             <Route path="protest/:protestId" element={<AdminProtestDetail />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="site-content" element={<AdminSiteContent />} />

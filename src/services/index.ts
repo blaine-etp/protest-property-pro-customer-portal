@@ -3,6 +3,7 @@
 
 import { DataService } from './dataService';
 import { MockDataService } from './mockDataService';
+import { SupabaseDataService } from './supabaseDataService';
 import { AWSDataService } from './awsDataService';
 import { mockAuthService } from './mockAuthService';
 import { mockFormService } from './mockFormService';
@@ -10,6 +11,7 @@ import { mockStorageService } from './mockStorageService';
 
 // Master configuration flags - set to true when real integrations are ready
 const USE_AWS_DATA = false;
+const USE_SUPABASE_DATA = true; // Enable Supabase for bills
 const USE_SUPABASE_AUTH = false;
 const USE_SUPABASE_FORMS = false;
 const USE_SUPABASE_STORAGE = false;
@@ -23,6 +25,9 @@ function createDataService(): DataService {
   if (USE_AWS_DATA) {
     console.log('🔗 Using AWS Data Service');
     return new AWSDataService(AWS_API_URL, AWS_API_KEY);
+  } else if (USE_SUPABASE_DATA) {
+    console.log('🔗 Using Supabase Data Service for Bills');
+    return new SupabaseDataService();
   } else {
     console.log('🎭 Using Mock Data Service');
     return new MockDataService();
@@ -75,6 +80,7 @@ export const storageService = createStorageService();
 // Export types and classes for advanced usage
 export { DataService } from './dataService';
 export { MockDataService } from './mockDataService';
+export { SupabaseDataService } from './supabaseDataService';
 export { AWSDataService } from './awsDataService';
 export { mockAuthService } from './mockAuthService';
 export { mockFormService } from './mockFormService';
@@ -85,7 +91,8 @@ export * from './types';
 export const getServiceInfo = () => ({
   data: {
     isUsingAWS: USE_AWS_DATA,
-    source: USE_AWS_DATA ? 'AWS Database' : 'Mock Data',
+    isUsingSupabase: USE_SUPABASE_DATA,
+    source: USE_AWS_DATA ? 'AWS Database' : USE_SUPABASE_DATA ? 'Supabase Database' : 'Mock Data',
     apiUrl: USE_AWS_DATA ? AWS_API_URL : 'N/A'
   },
   auth: {

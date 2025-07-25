@@ -180,13 +180,7 @@ export function BillingSection() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Billing Management</h2>
-          <div className="flex items-center gap-2">
-            <p className="text-slate-600">Manage tax bills and client invoicing</p>
-            <Badge variant="outline" className="text-xs">
-              <Database className="h-3 w-3 mr-1" />
-              Mock Data
-            </Badge>
-          </div>
+          <p className="text-slate-600">Manage tax bills and client invoicing</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">

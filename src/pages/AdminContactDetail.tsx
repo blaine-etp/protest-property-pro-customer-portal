@@ -361,7 +361,11 @@ export default function AdminContactDetail() {
                 <p className="text-muted-foreground">No properties found</p>
               ) : (
                 properties.map((property) => (
-                  <div key={property.id} className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+                  <div 
+                    key={property.id} 
+                    className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`/admin/property/${property.id}`)}
+                  >
                     <div className="font-medium">{property.situs_address}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">

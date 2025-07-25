@@ -326,6 +326,63 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          mailing_address: string | null
+          mailing_address_2: string | null
+          mailing_city: string | null
+          mailing_state: string | null
+          mailing_zip: string | null
+          notes: string | null
+          phone: string | null
+          source: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          mailing_address?: string | null
+          mailing_address_2?: string | null
+          mailing_city?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          mailing_address?: string | null
+          mailing_address_2?: string | null
+          mailing_city?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       counties: {
         Row: {
           appraisal_district_address: string | null
@@ -772,6 +829,7 @@ export type Database = {
       properties: {
         Row: {
           assessed_value: number | null
+          contact_id: string | null
           county: string | null
           county_pid: string | null
           created_at: string
@@ -793,6 +851,7 @@ export type Database = {
         }
         Insert: {
           assessed_value?: number | null
+          contact_id?: string | null
           county?: string | null
           county_pid?: string | null
           created_at?: string
@@ -814,6 +873,7 @@ export type Database = {
         }
         Update: {
           assessed_value?: number | null
+          contact_id?: string | null
           county?: string | null
           county_pid?: string | null
           created_at?: string
@@ -854,6 +914,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "properties_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
           },
         ]
       }

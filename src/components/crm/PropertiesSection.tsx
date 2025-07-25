@@ -380,7 +380,7 @@ export function PropertiesSection() {
               const activeProtest = property.protests && property.protests.length > 0 ? property.protests[0] : null;
               
               return (
-                <Card key={property.id} className="hover:shadow-lg transition-shadow">
+                <Card key={property.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/admin/property/${property.id}`)}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -392,27 +392,31 @@ export function PropertiesSection() {
                           </Badge>
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Property
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Gavel className="h-4 w-4 mr-2" />
-                            View Protest
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button 
+                             variant="ghost" 
+                             size="sm"
+                             onClick={(e) => e.stopPropagation()}
+                           >
+                             <MoreHorizontal className="h-4 w-4" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem>
+                             <Eye className="h-4 w-4 mr-2" />
+                             View Details
+                           </DropdownMenuItem>
+                           <DropdownMenuItem>
+                             <Edit className="h-4 w-4 mr-2" />
+                             Edit Property
+                           </DropdownMenuItem>
+                           <DropdownMenuItem>
+                             <Gavel className="h-4 w-4 mr-2" />
+                             View Protest
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
+                       </DropdownMenu>
                     </div>
                     
                      <div className="space-y-2 mt-4">
@@ -420,12 +424,15 @@ export function PropertiesSection() {
                          <div className="flex items-center gap-2">
                            <User className="h-4 w-4 text-slate-500" />
                            <span className="text-sm font-medium text-slate-600">Contact:</span>
-                           <button 
-                             onClick={() => navigate(`/admin/customers/${property.contact_id}`)}
-                             className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                           >
-                             {property.contacts.first_name} {property.contacts.last_name}
-                           </button>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/admin/customers/${property.contacts.id}`);
+                              }}
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                            >
+                              {property.contacts.first_name} {property.contacts.last_name}
+                            </button>
                          </div>
                        )}
                        <div className="flex items-center gap-2">
@@ -447,12 +454,16 @@ export function PropertiesSection() {
                       <p className="text-xs text-slate-500">
                         Created: {new Date(property.created_at).toLocaleDateString()}
                       </p>
-                       <div className="flex gap-2">
-                         <Button variant="outline" size="sm">
-                           <MapPin className="h-4 w-4 mr-1" />
-                           View
-                         </Button>
-                       </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MapPin className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
                     </div>
                   </CardContent>
                 </Card>

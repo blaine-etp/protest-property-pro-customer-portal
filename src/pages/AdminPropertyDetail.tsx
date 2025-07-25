@@ -177,18 +177,6 @@ export default function AdminPropertyDetail() {
                     <p className="font-medium font-mono text-sm">{propertyDetails.parcel_number}</p>
                   </div>
                 )}
-                {propertyDetails.assessed_value && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Assessed Value</p>
-                    <p className="font-medium">${propertyDetails.assessed_value.toLocaleString()}</p>
-                  </div>
-                )}
-                {propertyDetails.estimated_savings && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Estimated Savings</p>
-                    <p className="font-medium text-green-600">${propertyDetails.estimated_savings.toLocaleString()}</p>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>

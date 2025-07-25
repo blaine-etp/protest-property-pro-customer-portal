@@ -125,11 +125,21 @@ export default function AdminContactDetail() {
 
         if (documentsError) throw documentsError;
 
-        // Fetch bills
+        // Fetch bills (bills → protests → properties → contacts relationship)
+        const protestIds = propertiesData?.flatMap(p => p.protests?.map(protest => protest.id) || []) || [];
         const { data: billsData, error: billsError } = await supabase
           .from('bills')
-          .select('*')
-          .eq('owner_id', contactId) // Assuming bills are linked to contacts as owners
+          .select(`
+            *,
+            protests:protest_id(
+              id,
+              situs_address,
+              properties:property_id(
+                situs_address
+              )
+            )
+          `)
+          .in('protest_id', protestIds)
           .order('created_at', { ascending: false })
           .limit(10);
 

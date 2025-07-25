@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ const defaultFilters: PropertyFilters = {
 };
 
 export function PropertiesSection() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<PropertyFilters>(defaultFilters);
   const [viewMode, setViewMode] = useState("grid");
   const [properties, setProperties] = useState<any[]>([]);
@@ -412,7 +414,12 @@ export function PropertiesSection() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-slate-500" />
                           <span className="text-sm font-medium text-slate-600">Contact:</span>
-                          <span className="text-sm">{property.contacts.first_name} {property.contacts.last_name}</span>
+                          <button 
+                            onClick={() => navigate(`/admin/contact/${property.contact_id}`)}
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                          >
+                            {property.contacts.first_name} {property.contacts.last_name}
+                          </button>
                         </div>
                       )}
                       <div className="flex items-center gap-2">

@@ -108,10 +108,10 @@ export default function AdminOwnerDetail() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/admin/crm')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to CRM
-          </Button>
+        <Button variant="outline" onClick={() => navigate('/admin/customers')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to CRM
+        </Button>
           <div>
             <h2 className="text-2xl font-bold">Loading Owner Details...</h2>
           </div>
@@ -136,7 +136,7 @@ export default function AdminOwnerDetail() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate('/admin/crm')}>
+          <Button variant="outline" onClick={() => navigate('/admin/customers')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to CRM
           </Button>
@@ -160,7 +160,7 @@ export default function AdminOwnerDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/admin/crm')}>
+        <Button variant="outline" onClick={() => navigate('/admin/customers')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to CRM
         </Button>

@@ -66,7 +66,12 @@ export function ProtestSection() {
       setError(null);
       const { data, error } = await supabase
         .from('protests')
-        .select('*')
+        .select(`
+          *,
+          properties (
+            contact_id
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -428,9 +433,17 @@ export function ProtestSection() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Owner:</span>
-                        <span className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (protest.properties?.contact_id) {
+                              navigate(`/admin/customers/${protest.properties.contact_id}`);
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                        >
                           {protest.owner_name || 'Not specified'}
-                        </span>
+                        </button>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Assessed Value:</span>

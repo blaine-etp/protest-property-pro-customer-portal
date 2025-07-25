@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -307,7 +308,12 @@ export function BillingSection() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-slate-600">Contact</p>
-                  <p className="font-medium">{bill.contact}</p>
+                  <Link 
+                    to={`/admin/contact/${bill.contactId}`}
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {bill.contact}
+                  </Link>
                 </div>
                 <div>
                   <p className="text-slate-600">Tax Savings</p>

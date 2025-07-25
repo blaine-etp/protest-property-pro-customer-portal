@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,10 +29,26 @@ import {
   X,
 } from "lucide-react";
 
+interface Contact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  status: string;
+  properties: number;
+  protests: number;
+  lastContact: string;
+  totalSavings: string;
+  avatar: string;
+}
+
 export function ContactsSection() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Filter states
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -42,60 +59,58 @@ export function ContactsSection() {
   const [minSavings, setMinSavings] = useState<number | undefined>();
   const [maxSavings, setMaxSavings] = useState<number | undefined>();
 
-  const contacts = [
-    {
-      id: "1",
-      firstName: "John",
-      lastName: "Smith",
-      email: "john.smith@email.com",
-      phone: "(555) 123-4567",
-      status: "Active",
-      properties: 2,
-      protests: 1,
-      lastContact: "2024-01-15",
-      totalSavings: "$4,250",
-      avatar: "JS",
-    },
-    {
-      id: "2",
-      firstName: "Sarah",
-      lastName: "Johnson", 
-      email: "sarah.johnson@email.com",
-      phone: "(555) 234-5678",
-      status: "Lead",
-      properties: 1,
-      protests: 0,
-      lastContact: "2024-01-14",
-      totalSavings: "$0",
-      avatar: "SJ",
-    },
-    {
-      id: "3",
-      firstName: "Michael",
-      lastName: "Brown",
-      email: "michael.brown@email.com",
-      phone: "(555) 345-6789",
-      status: "Active",
-      properties: 3,
-      protests: 2,
-      lastContact: "2024-01-13",
-      totalSavings: "$7,890",
-      avatar: "MB",
-    },
-    {
-      id: "4",
-      firstName: "Emily",
-      lastName: "Davis",
-      email: "emily.davis@email.com",
-      phone: "(555) 456-7890",
-      status: "Inactive",
-      properties: 1,
-      protests: 1,
-      lastContact: "2023-12-20",
-      totalSavings: "$2,100",
-      avatar: "ED",
-    },
-  ];
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    try {
+      setLoading(true);
+      
+      // Get contacts with property counts and protest counts
+      const { data: contactsData, error: contactsError } = await supabase
+        .from('contacts')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          status,
+          created_at,
+          properties:properties(id, protests:protests(id))
+        `);
+
+      if (contactsError) throw contactsError;
+
+      // Transform the data to match our interface
+      const transformedContacts: Contact[] = (contactsData || []).map(contact => {
+        const propertyCount = contact.properties?.length || 0;
+        const protestCount = contact.properties?.reduce((total: number, prop: any) => 
+          total + (prop.protests?.length || 0), 0) || 0;
+        
+        return {
+          id: contact.id,
+          firstName: contact.first_name,
+          lastName: contact.last_name,
+          email: contact.email,
+          phone: contact.phone || undefined,
+          status: contact.status || 'active',
+          properties: propertyCount,
+          protests: protestCount,
+          lastContact: new Date(contact.created_at).toLocaleDateString(),
+          totalSavings: "$0", // TODO: Calculate from protests/bills
+          avatar: (contact.first_name.charAt(0) + contact.last_name.charAt(0)).toUpperCase()
+        };
+      });
+
+      setContacts(transformedContacts);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredContacts = contacts.filter(contact => {
     // Text search
@@ -152,6 +167,14 @@ export function ContactsSection() {
   const handleContactClick = (contactId: string) => {
     navigate(`/admin/customers/${contactId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">Loading contacts...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

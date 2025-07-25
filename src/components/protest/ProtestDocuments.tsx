@@ -28,28 +28,12 @@ export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
 
   const fetchDocuments = async () => {
     try {
-      // Mock documents for now
-      const mockDocs: Document[] = [
-        {
-          id: '1',
-          document_type: 'evidence_packet',
-          file_name: 'Evidence_Packet_2024.pdf',
-          status: 'generated',
-          generated_at: '2024-01-15T10:00:00Z',
-          file_size: 2048000
-        },
-        {
-          id: '2',
-          document_type: 'form_50_162',
-          file_name: 'Form_50_162.pdf',
-          status: 'pending',
-          file_size: 512000
-        }
-      ];
-      
-      setDocuments(mockDocs);
+      // TODO: Fetch actual documents from customer_documents table
+      // For now, show empty state until document generation is implemented
+      setDocuments([]);
     } catch (error) {
       console.error('Error fetching documents:', error);
+      setDocuments([]);
     } finally {
       setLoading(false);
     }

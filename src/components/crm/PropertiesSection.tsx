@@ -65,7 +65,7 @@ export function PropertiesSection() {
       setIsLoading(true);
       setError(null);
       
-      // Fetch properties with their associated protest data
+      // Fetch properties with their associated protest and contact data
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -78,6 +78,11 @@ export function PropertiesSection() {
             assessed_value,
             hearing_date,
             created_at
+          ),
+          contacts (
+            first_name,
+            last_name,
+            email
           )
         `)
         .order('created_at', { ascending: false });
@@ -403,6 +408,13 @@ export function PropertiesSection() {
                     </div>
                     
                     <div className="space-y-2 mt-4">
+                      {property.contacts && (
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-slate-500" />
+                          <span className="text-sm font-medium text-slate-600">Contact:</span>
+                          <span className="text-sm">{property.contacts.first_name} {property.contacts.last_name}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-slate-600">County:</span>
                         <span className="text-sm">{property.county || 'Not specified'}</span>

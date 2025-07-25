@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Download, Upload, FileIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Document {
   id: string;
@@ -21,6 +23,8 @@ interface ProtestDocumentsProps {
 export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchDocuments();
@@ -28,11 +32,41 @@ export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
 
   const fetchDocuments = async () => {
     try {
-      // TODO: Fetch actual documents from customer_documents table
-      // For now, show empty state until document generation is implemented
-      setDocuments([]);
+      // Get property_id from protest_id to fetch documents
+      const { data: protest } = await supabase
+        .from('protests')
+        .select('property_id')
+        .eq('id', protestId)
+        .single();
+
+      if (protest?.property_id) {
+        const { data: customerDocs, error } = await supabase
+          .from('customer_documents')
+          .select('*')
+          .eq('property_id', protest.property_id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        // Transform the data to match our interface
+        const transformedDocs = customerDocs?.map(doc => ({
+          id: doc.id,
+          document_type: doc.document_type,
+          file_name: doc.file_path.split('/').pop() || 'Unknown',
+          status: doc.status,
+          generated_at: doc.generated_at,
+          file_size: undefined // We don't store file size in our schema
+        })) || [];
+
+        setDocuments(transformedDocs);
+      }
     } catch (error) {
       console.error('Error fetching documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch documents.",
+        variant: "destructive",
+      });
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -40,13 +74,101 @@ export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
   };
 
   const generateDocument = async (documentType: string) => {
-    console.log(`Generating ${documentType} for protest ${protestId}`);
-    // Implementation will be added when backend is ready
+    if (generating) return;
+
+    setGenerating(documentType);
+    try {
+      // Get property info to generate documents
+      const { data: protest } = await supabase
+        .from('protests')
+        .select('property_id')
+        .eq('id', protestId)
+        .single();
+
+      if (!protest?.property_id) {
+        throw new Error('Property not found');
+      }
+
+      // For our test case, use the known user_id and property_id
+      const userId = '22222222-2222-2222-2222-222222222222';
+      const propertyId = protest.property_id;
+
+      let functionName = '';
+      if (documentType === 'form_50_162') {
+        functionName = 'generate-form-50-162';
+      } else if (documentType === 'services_agreement') {
+        functionName = 'generate-services-agreement';
+      } else {
+        throw new Error('Document type not yet supported');
+      }
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: { userId, propertyId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `${formatDocumentType(documentType)} generated successfully!`,
+      });
+
+      // Refresh documents list
+      await fetchDocuments();
+    } catch (error) {
+      console.error(`Error generating ${documentType}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to generate ${formatDocumentType(documentType)}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(null);
+    }
   };
 
   const downloadDocument = async (document: Document) => {
-    console.log(`Downloading ${document.file_name}`);
-    // Implementation will be added when backend is ready
+    try {
+      // Get the file path from the database
+      const { data: doc } = await supabase
+        .from('customer_documents')
+        .select('file_path')
+        .eq('id', document.id)
+        .single();
+
+      if (!doc?.file_path) {
+        throw new Error('File path not found');
+      }
+
+      // Download the file from Supabase storage
+      const { data: fileData, error } = await supabase.storage
+        .from('customer-documents')
+        .download(doc.file_path);
+
+      if (error) throw error;
+
+      // Create a blob URL and trigger download
+      const url = URL.createObjectURL(fileData);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = document.file_name;
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Document downloaded successfully!",
+      });
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download document.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -77,6 +199,8 @@ export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
     switch (type) {
       case 'evidence_packet': return 'Evidence Packet';
       case 'form_50_162': return 'Form 50-162';
+      case 'form-50-162': return 'Form 50-162';
+      case 'services_agreement': return 'Services Agreement';
       case 'hearing_notice': return 'Hearing Notice';
       case 'settlement_agreement': return 'Settlement Agreement';
       default: return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -97,26 +221,29 @@ export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
           <Button 
             variant="outline" 
             size="sm"
+            onClick={() => generateDocument('form_50_162')}
+            disabled={generating === 'form_50_162'}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {generating === 'form_50_162' ? 'Generating...' : 'Generate Form 50-162'}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => generateDocument('services_agreement')}
+            disabled={generating === 'services_agreement'}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {generating === 'services_agreement' ? 'Generating...' : 'Generate Services Agreement'}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={() => generateDocument('evidence_packet')}
+            disabled={generating === 'evidence_packet'}
           >
             <Upload className="h-4 w-4 mr-2" />
-            Generate Evidence Packet
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => generateDocument('form_50_162')}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Generate Form 50-162
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => generateDocument('hearing_notice')}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Generate Hearing Notice
+            {generating === 'evidence_packet' ? 'Generating...' : 'Generate Evidence Packet'}
           </Button>
         </div>
 

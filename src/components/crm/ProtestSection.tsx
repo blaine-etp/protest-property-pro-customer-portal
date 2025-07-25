@@ -497,7 +497,19 @@ export function ProtestSection() {
                           <p className="font-medium">{protest.situs_address || 'Address not available'}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{protest.owner_name || 'Not specified'}</TableCell>
+                       <TableCell>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (protest.properties?.contact_id) {
+                              navigate(`/admin/customers/${protest.properties.contact_id}`);
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                        >
+                          {protest.owner_name || 'Not specified'}
+                        </button>
+                      </TableCell>
                        <TableCell>
                          <Badge variant={getStatusColor(protest.appeal_status) as any} className="flex items-center gap-1 w-fit">
                            {getStatusIcon(protest.appeal_status)}

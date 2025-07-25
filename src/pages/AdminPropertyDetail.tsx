@@ -294,7 +294,11 @@ export default function AdminPropertyDetail() {
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {propertyDetails.protests?.length > 0 ? (
                   propertyDetails.protests.map((protest: any) => (
-                    <div key={protest.id} className="p-3 bg-slate-50 rounded border">
+                    <div 
+                      key={protest.id} 
+                      className="p-3 bg-slate-50 rounded border cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => navigate(`/admin/protest/${protest.id}`)}
+                    >
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium text-sm">Tax Year {protest.tax_year}</p>
                         <Badge variant={getProtestStatusColor(protest.appeal_status) as any}>

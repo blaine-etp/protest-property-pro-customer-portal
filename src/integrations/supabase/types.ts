@@ -75,6 +75,7 @@ export type Database = {
       bills: {
         Row: {
           bill_number: string
+          contact_id: string | null
           contingency_fee_percent: number | null
           created_at: string
           due_date: string | null
@@ -89,9 +90,11 @@ export type Database = {
           total_market_value: number | null
           total_protest_amount: number | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           bill_number?: string
+          contact_id?: string | null
           contingency_fee_percent?: number | null
           created_at?: string
           due_date?: string | null
@@ -106,9 +109,11 @@ export type Database = {
           total_market_value?: number | null
           total_protest_amount?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           bill_number?: string
+          contact_id?: string | null
           contingency_fee_percent?: number | null
           created_at?: string
           due_date?: string | null
@@ -123,14 +128,29 @@ export type Database = {
           total_market_value?: number | null
           total_protest_amount?: number | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bills_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bills_protest_id_fkey"
             columns: ["protest_id"]
             isOneToOne: false
             referencedRelation: "protests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }

@@ -67,7 +67,7 @@ export function PropertiesSection() {
       setIsLoading(true);
       setError(null);
       
-      // Fetch properties with their associated protest and contact data
+      // Fetch properties with their associated protest, contact, and owner data
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -82,9 +82,15 @@ export function PropertiesSection() {
             created_at
           ),
           contacts (
+            id,
             first_name,
             last_name,
             email
+          ),
+          owners (
+            id,
+            name,
+            owner_type
           )
         `)
         .order('created_at', { ascending: false });

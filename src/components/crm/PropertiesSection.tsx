@@ -415,7 +415,7 @@ export function PropertiesSection() {
                           <User className="h-4 w-4 text-slate-500" />
                           <span className="text-sm font-medium text-slate-600">Contact:</span>
                           <button 
-                            onClick={() => navigate(`/admin/contact/${property.contact_id}`)}
+                            onClick={() => navigate(`/admin/customers/${property.contact_id}`)}
                             className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                           >
                             {property.contacts.first_name} {property.contacts.last_name}

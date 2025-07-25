@@ -69,7 +69,8 @@ export function ProtestSection() {
         .select(`
           *,
           properties (
-            contact_id
+            contact_id,
+            owner_id
           )
         `)
         .order('created_at', { ascending: false });
@@ -436,6 +437,20 @@ export function ProtestSection() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (protest.properties?.owner_id) {
+                              navigate(`/admin/owners/${protest.properties.owner_id}`);
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                        >
+                          {protest.owner_name || 'Not specified'}
+                        </button>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Contact:</span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (protest.properties?.contact_id) {
                               navigate(`/admin/customers/${protest.properties.contact_id}`);
                             }
@@ -478,9 +493,10 @@ export function ProtestSection() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Status</TableHead>
+                     <TableHead>Property</TableHead>
+                     <TableHead>Owner</TableHead>
+                     <TableHead>Contact</TableHead>
+                     <TableHead>Status</TableHead>
                     <TableHead>Filed Date</TableHead>
                     <TableHead>Hearing Date</TableHead>
                     <TableHead>Assessed Value</TableHead>
@@ -498,6 +514,19 @@ export function ProtestSection() {
                         </div>
                       </TableCell>
                        <TableCell>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (protest.properties?.owner_id) {
+                              navigate(`/admin/owners/${protest.properties.owner_id}`);
+                            }
+                          }}
+                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                        >
+                          {protest.owner_name || 'Not specified'}
+                        </button>
+                      </TableCell>
+                      <TableCell>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();

@@ -65,11 +65,13 @@ export interface Bill {
   id: string;
   protestId: string;
   propertyAddress: string;
-  owner: string;
+  contact: string; // Changed from owner to contact
+  contactId: string;
   taxYear: string;
   billNumber: string;
   assessedValue: string;
   taxAmount: string;
+  taxSavings: string; // New field
   dueDate: string;
   status: 'Draft' | 'Pending' | 'Under Review' | 'Protested' | 'Paid';
   paidAmount: string;

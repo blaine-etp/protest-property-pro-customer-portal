@@ -12,12 +12,17 @@ export class SupabaseDataService extends DataService {
         protests:protest_id(
           id,
           situs_address,
-          owner_name,
-          assessed_value,
+          savings_amount,
           properties:property_id(
-            situs_address,
-            owner_id
+            situs_address
           )
+        ),
+        contacts:contact_id(
+          id,
+          first_name,
+          last_name,
+          email,
+          phone
         )
       `)
       .order('created_at', { ascending: false });
@@ -32,11 +37,13 @@ export class SupabaseDataService extends DataService {
       id: bill.id,
       protestId: bill.protest_id || '',
       propertyAddress: bill.protests?.situs_address || bill.protests?.properties?.situs_address || 'Unknown Address',
-      owner: bill.protests?.owner_name || 'Unknown Owner',
+      contact: bill.contacts ? `${bill.contacts.first_name} ${bill.contacts.last_name}` : 'Unknown Contact',
+      contactId: bill.contact_id || '',
       taxYear: bill.tax_year?.toString() || new Date().getFullYear().toString(),
       billNumber: bill.bill_number || `BILL-${bill.id.slice(-8)}`,
       assessedValue: bill.total_assessed_value ? `$${Number(bill.total_assessed_value).toLocaleString()}` : '$0',
       taxAmount: bill.total_protest_amount ? `$${Number(bill.total_protest_amount).toLocaleString()}` : '$0',
+      taxSavings: bill.protests?.savings_amount ? `$${Number(bill.protests.savings_amount).toLocaleString()}` : '$0',
       dueDate: bill.due_date ? new Date(bill.due_date).toLocaleDateString() : 'TBD',
       status: this.mapBillStatus(bill.status),
       paidAmount: '$0', // Field doesn't exist in current schema
@@ -52,12 +59,17 @@ export class SupabaseDataService extends DataService {
         protests:protest_id(
           id,
           situs_address,
-          owner_name,
-          assessed_value,
+          savings_amount,
           properties:property_id(
-            situs_address,
-            owner_id
+            situs_address
           )
+        ),
+        contacts:contact_id(
+          id,
+          first_name,
+          last_name,
+          email,
+          phone
         )
       `)
       .eq('id', id)
@@ -73,11 +85,13 @@ export class SupabaseDataService extends DataService {
       id: billData.id,
       protestId: billData.protest_id || '',
       propertyAddress: billData.protests?.situs_address || billData.protests?.properties?.situs_address || 'Unknown Address',
-      owner: billData.protests?.owner_name || 'Unknown Owner',
+      contact: billData.contacts ? `${billData.contacts.first_name} ${billData.contacts.last_name}` : 'Unknown Contact',
+      contactId: billData.contact_id || '',
       taxYear: billData.tax_year?.toString() || new Date().getFullYear().toString(),
       billNumber: billData.bill_number || `BILL-${billData.id.slice(-8)}`,
       assessedValue: billData.total_assessed_value ? `$${Number(billData.total_assessed_value).toLocaleString()}` : '$0',
       taxAmount: billData.total_protest_amount ? `$${Number(billData.total_protest_amount).toLocaleString()}` : '$0',
+      taxSavings: billData.protests?.savings_amount ? `$${Number(billData.protests.savings_amount).toLocaleString()}` : '$0',
       dueDate: billData.due_date ? new Date(billData.due_date).toLocaleDateString() : 'TBD',
       status: this.mapBillStatus(billData.status),
       paidAmount: '$0', // Field doesn't exist in current schema

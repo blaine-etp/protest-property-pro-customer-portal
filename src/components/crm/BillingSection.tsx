@@ -58,7 +58,7 @@ export function BillingSection() {
   const filteredBills = bills.filter(bill => {
     // Text search
     const matchesSearch = bill.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.contact.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Status filter
@@ -215,7 +215,7 @@ export function BillingSection() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Search bills by property, owner, or bill number..."
+                placeholder="Search bills by property, contact, or bill number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -306,20 +306,12 @@ export function BillingSection() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-slate-600">Owner</p>
-                  <p className="font-medium">{bill.owner}</p>
+                  <p className="text-slate-600">Contact</p>
+                  <p className="font-medium">{bill.contact}</p>
                 </div>
                 <div>
-                  <p className="text-slate-600">Assessed Value</p>
-                  <p className="font-medium">{bill.assessedValue}</p>
-                </div>
-                <div>
-                  <p className="text-slate-600">Tax Amount</p>
-                  <p className="font-medium text-red-600">{bill.taxAmount}</p>
-                </div>
-                <div>
-                  <p className="text-slate-600">Paid Amount</p>
-                  <p className="font-medium text-green-600">{bill.paidAmount}</p>
+                  <p className="text-slate-600">Tax Savings</p>
+                  <p className="font-medium text-green-600">{bill.taxSavings}</p>
                 </div>
               </div>
               
@@ -356,11 +348,10 @@ export function BillingSection() {
             <TableHeader>
               <TableRow>
                 <TableHead>Property</TableHead>
-                <TableHead>Owner</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Bill Number</TableHead>
                 <TableHead>Tax Year</TableHead>
-                <TableHead>Assessed Value</TableHead>
-                <TableHead>Tax Amount</TableHead>
+                <TableHead>Tax Savings</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Actions</TableHead>
@@ -370,11 +361,10 @@ export function BillingSection() {
               {filteredBills.map((bill) => (
                 <TableRow key={bill.id}>
                   <TableCell>{bill.propertyAddress}</TableCell>
-                  <TableCell>{bill.owner}</TableCell>
+                  <TableCell>{bill.contact}</TableCell>
                   <TableCell>{bill.billNumber}</TableCell>
                   <TableCell>{bill.taxYear}</TableCell>
-                  <TableCell>{bill.assessedValue}</TableCell>
-                  <TableCell className="font-medium text-red-600">{bill.taxAmount}</TableCell>
+                  <TableCell className="font-medium text-green-600">{bill.taxSavings}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusColor(bill.status) as any}>
                       {bill.status}

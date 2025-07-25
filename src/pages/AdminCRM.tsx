@@ -40,6 +40,7 @@ import { PropertiesSection } from "@/components/crm/PropertiesSection";
 import { ProtestSection } from "@/components/crm/ProtestSection";
 import { DocumentsSection } from "@/components/crm/DocumentsSection";
 import { BillingSection } from "@/components/crm/BillingSection";
+import { OwnersSection } from "@/components/crm/OwnersSection";
 import { RelationshipViewer } from "@/components/crm/RelationshipViewer";
 
 export default function AdminCRM() {
@@ -120,11 +121,12 @@ export default function AdminCRM() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="schema">Database Schema</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="properties">Properties</TabsTrigger>
+          <TabsTrigger value="owners">Owners</TabsTrigger>
           <TabsTrigger value="protests">Protests</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
@@ -277,6 +279,10 @@ export default function AdminCRM() {
 
         <TabsContent value="properties">
           <PropertiesSection />
+        </TabsContent>
+
+        <TabsContent value="owners">
+          <OwnersSection />
         </TabsContent>
 
         <TabsContent value="protests">

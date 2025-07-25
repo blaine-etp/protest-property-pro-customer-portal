@@ -409,66 +409,44 @@ export function PropertiesSection() {
                       </DropdownMenu>
                     </div>
                     
-                    <div className="space-y-2 mt-4">
-                      {property.contacts && (
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">Contact:</span>
-                          <button 
-                            onClick={() => navigate(`/admin/customers/${property.contact_id}`)}
-                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                          >
-                            {property.contacts.first_name} {property.contacts.last_name}
-                          </button>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-600">County:</span>
-                        <span className="text-sm">{property.county || 'Not specified'}</span>
-                      </div>
-                      {property.parcel_number && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-600">Parcel:</span>
-                          <span className="text-sm font-mono">{property.parcel_number}</span>
-                        </div>
-                      )}
-                      {activeProtest && (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-600">Assessed Value:</span>
-                            <span className="text-sm">${(activeProtest.assessed_value || 0).toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-600">Potential Savings:</span>
-                            <span className="text-sm text-green-600">${(activeProtest.savings_amount || 0).toLocaleString()}</span>
-                          </div>
-                          {activeProtest.hearing_date && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-slate-600">Hearing Date:</span>
-                              <span className="text-sm">{new Date(activeProtest.hearing_date).toLocaleDateString()}</span>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
+                     <div className="space-y-2 mt-4">
+                       {property.contacts && (
+                         <div className="flex items-center gap-2">
+                           <User className="h-4 w-4 text-slate-500" />
+                           <span className="text-sm font-medium text-slate-600">Contact:</span>
+                           <button 
+                             onClick={() => navigate(`/admin/customers/${property.contact_id}`)}
+                             className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                           >
+                             {property.contacts.first_name} {property.contacts.last_name}
+                           </button>
+                         </div>
+                       )}
+                       <div className="flex items-center gap-2">
+                         <span className="text-sm font-medium text-slate-600">Owner:</span>
+                         <span className="text-sm">{property.owner?.name || 'Not specified'}</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <span className="text-sm font-medium text-slate-600">Client Status:</span>
+                         <Badge variant="secondary" className="text-xs">Active Client</Badge>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <span className="text-sm font-medium text-slate-600">Auto Protest:</span>
+                         <Badge variant="outline" className="text-xs text-green-600 border-green-600">Enabled</Badge>
+                       </div>
+                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="flex justify-between items-center">
                       <p className="text-xs text-slate-500">
                         Created: {new Date(property.created_at).toLocaleDateString()}
                       </p>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        {activeProtest && (
-                          <Button variant="outline" size="sm">
-                            <Gavel className="h-4 w-4 mr-1" />
-                            Protest
-                          </Button>
-                        )}
-                      </div>
+                       <div className="flex gap-2">
+                         <Button variant="outline" size="sm">
+                           <MapPin className="h-4 w-4 mr-1" />
+                           View
+                         </Button>
+                       </div>
                     </div>
                   </CardContent>
                 </Card>

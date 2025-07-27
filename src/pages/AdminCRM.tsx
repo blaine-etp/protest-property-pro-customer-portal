@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
   Building,
@@ -42,41 +43,51 @@ import { DocumentsSection } from "@/components/crm/DocumentsSection";
 import { BillingSection } from "@/components/crm/BillingSection";
 import { OwnersSection } from "@/components/crm/OwnersSection";
 import { RelationshipViewer } from "@/components/crm/RelationshipViewer";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 export default function AdminCRM() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
+  const { stats: dashboardStats, loading: statsLoading, error: statsError } = useDashboardStats();
 
-  const stats = [
-    {
-      title: "Total Contacts",
-      value: "1,247",
-      change: "+12%",
-      icon: Users,
-      color: "blue",
-    },
-    {
-      title: "Active Properties",
-      value: "843",
-      change: "+8%",
-      icon: Building,
-      color: "green",
-    },
-    {
-      title: "Open Protests",
-      value: "156",
-      change: "-3%",
-      icon: Gavel,
-      color: "orange",
-    },
-    {
-      title: "Generated Documents",
-      value: "2,341",
-      change: "+15%",
-      icon: FileText,
-      color: "purple",
-    },
-  ];
+  const formatNumber = (num: number): string => {
+    return num.toLocaleString();
+  };
+
+  const getStatsArray = () => {
+    if (!dashboardStats) return [];
+    
+    return [
+      {
+        title: "Total Contacts",
+        value: formatNumber(dashboardStats.totalContacts),
+        change: dashboardStats.contactsChange,
+        icon: Users,
+        color: "blue",
+      },
+      {
+        title: "Active Properties", 
+        value: formatNumber(dashboardStats.activeProperties),
+        change: dashboardStats.propertiesChange,
+        icon: Building,
+        color: "green",
+      },
+      {
+        title: "Open Protests",
+        value: formatNumber(dashboardStats.openProtests),
+        change: dashboardStats.protestsChange,
+        icon: Gavel,
+        color: "orange",
+      },
+      {
+        title: "Generated Documents",
+        value: formatNumber(dashboardStats.generatedDocuments),
+        change: dashboardStats.documentsChange,
+        icon: FileText,
+        color: "purple",
+      },
+    ];
+  };
 
   const recentActivity = [
     {
@@ -133,26 +144,56 @@ export default function AdminCRM() {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
+          {/* Error State */}
+          {statsError && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <p className="text-sm text-red-600">Error loading dashboard stats: {statsError}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* CRM Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat) => (
-              <Card key={stat.title}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className="h-4 w-4 text-slate-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
-                  <p className={`text-xs mt-1 ${
-                    stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stat.change} from last month
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            {statsLoading ? (
+              // Loading skeletons
+              Array.from({ length: 4 }).map((_, index) => (
+                <Card key={index}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-4" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-16 mb-1" />
+                    <Skeleton className="h-3 w-20" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              // Real stats
+              getStatsArray().map((stat) => (
+                <Card key={stat.title}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600">
+                      {stat.title}
+                    </CardTitle>
+                    <stat.icon className="h-4 w-4 text-slate-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+                    <p className={`text-xs mt-1 ${
+                      stat.change.startsWith('+') ? 'text-green-600' : 
+                      stat.change.startsWith('-') ? 'text-red-600' : 'text-slate-600'
+                    }`}>
+                      {stat.change} from last month
+                    </p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
 
           {/* Quick Actions */}

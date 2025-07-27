@@ -53,7 +53,7 @@ export function OwnersSection() {
         .from('owners')
         .select(`
           *,
-          properties (
+          properties!fk_properties_owner_id (
             id,
             situs_address
           )

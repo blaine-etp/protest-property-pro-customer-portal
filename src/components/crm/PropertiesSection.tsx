@@ -81,7 +81,7 @@ export function PropertiesSection() {
             hearing_date,
             created_at
           ),
-          contacts (
+          contacts!fk_properties_contact_id (
             id,
             first_name,
             last_name,

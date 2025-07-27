@@ -386,7 +386,7 @@ export function ProtestSection() {
                 key={protest.id} 
                 className="p-6 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
                 onClick={() => {
-                  navigate(`/admin/protests/${protest.id}`);
+                  navigate(`/admin/protest/${protest.id}`);
                 }}
               >
                 <div className="space-y-4">

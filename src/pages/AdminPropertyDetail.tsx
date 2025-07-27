@@ -41,7 +41,7 @@ export default function AdminPropertyDetail() {
         .from('properties')
         .select(`
           *,
-          contacts (
+          contacts!fk_properties_contact_id (
             id,
             first_name,
             last_name,
@@ -71,7 +71,7 @@ export default function AdminPropertyDetail() {
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setPropertyDetails(data);

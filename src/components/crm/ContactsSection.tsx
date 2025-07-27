@@ -67,7 +67,7 @@ export function ContactsSection() {
     try {
       setLoading(true);
       
-      // Get contacts with property counts and protest counts
+      // Get all contacts first
       const { data: contactsData, error: contactsError } = await supabase
         .from('contacts')
         .select(`
@@ -77,17 +77,54 @@ export function ContactsSection() {
           email,
           phone,
           status,
-          created_at,
-          properties:properties(id, protests:protests(id))
+          created_at
         `);
 
-      if (contactsError) throw contactsError;
+      if (contactsError) {
+        console.error('Error fetching contacts:', contactsError);
+        throw contactsError;
+      }
+
+      console.log('Fetched contacts:', contactsData);
+
+      if (!contactsData || contactsData.length === 0) {
+        console.log('No contacts found in database');
+        setContacts([]);
+        return;
+      }
+
+      // Get property counts for each contact
+      const contactIds = contactsData.map(c => c.id);
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select('id, contact_id')
+        .in('contact_id', contactIds);
+
+      if (propertiesError) {
+        console.error('Error fetching properties:', propertiesError);
+      }
+
+      // Get protest counts for each contact's properties
+      const propertyIds = propertiesData?.map(p => p.id) || [];
+      const { data: protestsData, error: protestsError } = await supabase
+        .from('protests')
+        .select('id, property_id')
+        .in('property_id', propertyIds);
+
+      if (protestsError) {
+        console.error('Error fetching protests:', protestsError);
+      }
+
+      console.log('Properties data:', propertiesData);
+      console.log('Protests data:', protestsData);
 
       // Transform the data to match our interface
-      const transformedContacts: Contact[] = (contactsData || []).map(contact => {
-        const propertyCount = contact.properties?.length || 0;
-        const protestCount = contact.properties?.reduce((total: number, prop: any) => 
-          total + (prop.protests?.length || 0), 0) || 0;
+      const transformedContacts: Contact[] = contactsData.map(contact => {
+        const contactProperties = propertiesData?.filter(p => p.contact_id === contact.id) || [];
+        const propertyCount = contactProperties.length;
+        
+        const contactPropertyIds = contactProperties.map(p => p.id);
+        const protestCount = protestsData?.filter(p => contactPropertyIds.includes(p.property_id)).length || 0;
         
         return {
           id: contact.id,
@@ -104,6 +141,7 @@ export function ContactsSection() {
         };
       });
 
+      console.log('Transformed contacts:', transformedContacts);
       setContacts(transformedContacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);

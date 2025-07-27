@@ -50,18 +50,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_applications_property"
+            foreignKeyName: "fk_applications_property_id"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_applications_user"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "fk_applications_user_id"
@@ -132,21 +125,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bills_contact_id_fkey"
+            foreignKeyName: "fk_bills_contact_id"
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bills_protest_id_fkey"
+            foreignKeyName: "fk_bills_protest_id"
             columns: ["protest_id"]
             isOneToOne: false
             referencedRelation: "protests"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bills_user_id_fkey"
+            foreignKeyName: "fk_bills_user_id"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -175,14 +168,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "blog_post_tags_post_id_fkey"
+            foreignKeyName: "fk_blog_post_tags_post_id"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "blog_posts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "blog_post_tags_tag_id_fkey"
+            foreignKeyName: "fk_blog_post_tags_tag_id"
             columns: ["tag_id"]
             isOneToOne: false
             referencedRelation: "blog_tags"
@@ -241,13 +234,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "blog_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "fk_blog_posts_author_id"
             columns: ["author_id"]
             isOneToOne: false
@@ -295,14 +281,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_comm_props_communication"
+            foreignKeyName: "fk_communication_properties_communication_id"
             columns: ["communication_id"]
             isOneToOne: false
             referencedRelation: "communications"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_comm_props_property"
+            foreignKeyName: "fk_communication_properties_property_id"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -351,13 +337,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_communications_contact"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "fk_communications_contact_id"
             columns: ["contact_id"]
@@ -604,7 +583,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "county_pages_county_id_fkey"
+            foreignKeyName: "fk_county_pages_county_id"
             columns: ["county_id"]
             isOneToOne: false
             referencedRelation: "counties"
@@ -648,18 +627,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "credit_transactions_referral_relationship_id_fkey"
+            foreignKeyName: "fk_credit_transactions_referral_relationship_id"
             columns: ["referral_relationship_id"]
             isOneToOne: false
             referencedRelation: "referral_relationships"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "fk_credit_transactions_user_id"
@@ -706,6 +678,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_customer_documents_property_id"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_customer_documents_user_id"
             columns: ["user_id"]
             isOneToOne: false
@@ -735,14 +714,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_doc_props_document"
+            foreignKeyName: "fk_document_properties_document_id"
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "customer_documents"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_doc_props_property"
+            foreignKeyName: "fk_document_properties_property_id"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -959,24 +938,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_properties_contact"
-            columns: ["secondary_contact_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_properties_contact_id"
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_properties_owner"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owners"
             referencedColumns: ["id"]
           },
           {
@@ -994,25 +959,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_properties_user"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "fk_properties_user_id"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "properties_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -1155,20 +1106,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_referral_relationships_referrer_id"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "referral_relationships_referee_id_fkey"
-            columns: ["referee_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "referral_relationships_referrer_id_fkey"
             columns: ["referrer_id"]
             isOneToOne: false
             referencedRelation: "profiles"

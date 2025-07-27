@@ -78,7 +78,7 @@ export function ContactsSection() {
           phone,
           status,
           created_at,
-          properties:properties!fk_properties_contact_id(id, protests:protests(id))
+          properties:properties(id, protests:protests(id))
         `);
 
       if (contactsError) throw contactsError;

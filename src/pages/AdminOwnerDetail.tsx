@@ -46,7 +46,7 @@ export default function AdminOwnerDetail() {
             situs_address,
             county,
             parcel_number,
-            contacts (
+            contacts!fk_properties_contact_id (
               id,
               first_name,
               last_name,
@@ -56,7 +56,7 @@ export default function AdminOwnerDetail() {
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setOwnerDetails(data);

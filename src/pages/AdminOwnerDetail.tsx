@@ -16,6 +16,8 @@ import {
   Shield,
   UserCheck,
   Folder,
+  Download,
+  Calendar,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +25,7 @@ export default function AdminOwnerDetail() {
   const { ownerId } = useParams();
   const navigate = useNavigate();
   const [ownerDetails, setOwnerDetails] = useState<any | null>(null);
+  const [ownerDocuments, setOwnerDocuments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +63,25 @@ export default function AdminOwnerDetail() {
 
       if (error) throw error;
       setOwnerDetails(data);
+
+      // Fetch documents associated with this owner
+      const { data: documentsData, error: documentsError } = await supabase
+        .from('customer_documents')
+        .select(`
+          id,
+          document_type,
+          status,
+          generated_at,
+          file_path
+        `)
+        .eq('owner_id', id)
+        .order('generated_at', { ascending: false });
+
+      if (documentsError) {
+        console.error('Failed to load documents:', documentsError);
+      } else {
+        setOwnerDocuments(documentsData || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load owner details');
       console.error('Failed to load owner details:', err);
@@ -100,6 +122,26 @@ export default function AdminOwnerDetail() {
       case "partnership": return "Partnership";
       case "estate": return "Estate";
       case "individual": return "Individual";
+      default: return type;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "generated": return "green";
+      case "draft": return "yellow";
+      case "delivered": return "blue";
+      case "signed": return "purple";
+      default: return "gray";
+    }
+  };
+
+  const formatDocumentType = (type: string) => {
+    switch (type) {
+      case "form-50-162": return "Form 50-162";
+      case "evidence-package": return "Evidence Package";
+      case "hearing-notice": return "Hearing Notice";
+      case "settlement": return "Settlement Agreement";
       default: return type;
     }
   };
@@ -304,14 +346,39 @@ export default function AdminOwnerDetail() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-orange-500" />
-                <h3 className="font-semibold">Documents (0)</h3>
+                <h3 className="font-semibold">Documents ({ownerDocuments.length})</h3>
               </div>
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">No documents attached</p>
-                <Button variant="outline" size="sm" className="w-full">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Upload Document
-                </Button>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {ownerDocuments.length > 0 ? (
+                  ownerDocuments.map((doc) => (
+                    <div 
+                      key={doc.id} 
+                      className="p-3 bg-slate-50 rounded border cursor-pointer hover:bg-slate-100 transition-colors"
+                      onClick={() => navigate(`/admin/document/${doc.id}`)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{formatDocumentType(doc.document_type)}</p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                            <Calendar className="h-3 w-3" />
+                            Generated: {new Date(doc.generated_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <Badge variant={getStatusColor(doc.status) as any} className="text-xs">
+                          {doc.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">No documents attached</p>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Generate Document
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>

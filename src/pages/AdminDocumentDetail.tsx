@@ -69,29 +69,31 @@ export default function AdminDocumentDetail() {
       if (docError) throw docError;
       setDocumentData(docData);
 
-      // Fetch all properties associated with this document
-      const { data: propertiesData, error: propertiesError } = await supabase
-        .from('properties')
-        .select(`
-          id,
-          situs_address,
-          county,
-          parcel_number,
-          assessed_value,
-          estimated_savings,
-          created_at,
-          protests(
+      // Fetch all properties owned by the same owner as this document
+      if (docData?.owner_id) {
+        const { data: propertiesData, error: propertiesError } = await supabase
+          .from('properties')
+          .select(`
             id,
-            appeal_status,
-            savings_amount,
-            hearing_date
-          )
-        `)
-        .eq('document_id', id)
-        .order('created_at', { ascending: false });
+            situs_address,
+            county,
+            parcel_number,
+            assessed_value,
+            estimated_savings,
+            created_at,
+            protests(
+              id,
+              appeal_status,
+              savings_amount,
+              hearing_date
+            )
+          `)
+          .eq('owner_id', docData.owner_id)
+          .order('created_at', { ascending: false });
 
-      if (propertiesError) throw propertiesError;
-      setAssociatedProperties(propertiesData || []);
+        if (propertiesError) throw propertiesError;
+        setAssociatedProperties(propertiesData || []);
+      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load document details');

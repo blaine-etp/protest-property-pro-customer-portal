@@ -12,7 +12,6 @@ interface CustomerDocument {
   id: string;
   document_type: string;
   file_path: string;
-  property_id: string;
   status: string;
   generated_at: string;
   created_at: string;
@@ -48,11 +47,10 @@ const Documents = () => {
             id: doc.id,
             document_type: doc.type === 'form-50-162' ? 'form-50-162' : 'services-agreement',
             file_path: `/documents/${doc.id}.pdf`,
-            property_id: doc.property || 'prop-1',
             status: 'generated',
             generated_at: doc.createdDate,
             created_at: doc.createdDate,
-            property_address: doc.property === 'prop-1' ? '123 Main St, Austin, TX 78701' : '456 Oak Ave, Austin, TX 78702'
+            property_address: doc.owner === 'John Smith' ? '123 Main St, Austin, TX 78701' : '456 Oak Ave, Austin, TX 78702'
           }));
           setDocuments(customerDocs);
         }
@@ -186,7 +184,7 @@ const Documents = () => {
                       </div>
                       <div>
                         <p className="font-medium">{getDocumentDisplayName(customerDocument.document_type)}</p>
-                        <p className="text-sm text-muted-foreground">Property ID: {customerDocument.property_id}</p>
+                        <p className="text-sm text-muted-foreground">Document Type: {customerDocument.document_type}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           <Calendar className="h-3 w-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">

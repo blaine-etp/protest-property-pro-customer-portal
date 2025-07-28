@@ -382,7 +382,6 @@ serve(async (req) => {
       .from('customer_documents')
       .insert({
         user_id: userId,
-        property_id: propertyId,
         owner_id: propertyData.owner_id,
         contact_id: propertyData.contact_id,
         document_type: 'form-50-162',

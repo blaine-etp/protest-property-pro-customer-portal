@@ -79,8 +79,8 @@ export default function AdminPropertyDetail() {
       if (error) throw error;
       setPropertyDetails(data);
 
-      // Fetch associated document if property has document_id
-      if (data?.document_id) {
+      // Fetch associated document through owner relationship
+      if (data?.owner_id) {
         const { data: docData, error: docError } = await supabase
           .from('customer_documents')
           .select(`
@@ -88,7 +88,7 @@ export default function AdminPropertyDetail() {
             owners(name),
             contacts(first_name, last_name)
           `)
-          .eq('id', data.document_id)
+          .eq('owner_id', data.owner_id)
           .maybeSingle();
 
         if (docError) {
@@ -432,12 +432,6 @@ export default function AdminPropertyDetail() {
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : propertyDetails.document_id ? (
-              <div className="p-4 bg-slate-50 rounded-lg border">
-                <p className="text-sm text-muted-foreground">
-                  Document associated but details could not be loaded.
-                </p>
               </div>
             ) : (
               <div className="p-4 bg-slate-50 rounded-lg border">

@@ -39,11 +39,20 @@ export function ProtestDocuments({ protestId }: ProtestDocumentsProps) {
         .eq('id', protestId)
         .single();
 
-      if (protest?.property_id) {
+      // Get property owner_id first, then get documents by owner
+      const { data: propertyData, error: propertyError } = await supabase
+        .from('properties')
+        .select('owner_id')
+        .eq('id', protest?.property_id)
+        .maybeSingle();
+
+      if (propertyError) throw propertyError;
+
+      if (propertyData?.owner_id) {
         const { data: customerDocs, error } = await supabase
           .from('customer_documents')
           .select('*')
-          .eq('property_id', protest.property_id)
+          .eq('owner_id', propertyData.owner_id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;

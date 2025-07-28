@@ -98,6 +98,7 @@ export default function AdminContactDetail() {
           .select(`
             id,
             situs_address,
+            owner_id,
             protests:protests(id, appeal_status)
           `)
           .eq('contact_id', contactId);
@@ -114,23 +115,20 @@ export default function AdminContactDetail() {
 
         if (communicationsError) throw communicationsError;
 
-        // Fetch documents (properties now reference customer_documents via document_id)
-        const propertyIds = propertiesData?.map(p => p.id) || [];
-        const { data: documentsData, error: documentsError } = await supabase
-          .from('properties')
-          .select('document_id')
-          .in('id', propertyIds)
-          .not('document_id', 'is', null);
-        
-        const documentIds = documentsData?.map(p => p.document_id).filter(Boolean) || [];
-        const { data: customerDocsData, error: customerDocsError } = await supabase
-          .from('customer_documents')
-          .select('*')
-          .in('id', documentIds)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (documentsError || customerDocsError) throw documentsError || customerDocsError;
+        // Fetch documents through owner relationship
+        const ownerIds = propertiesData?.map(p => p.owner_id).filter(Boolean) || [];
+        let customerDocsData: any[] = [];
+        if (ownerIds.length > 0) {
+          const { data: docData, error: customerDocsError } = await supabase
+            .from('customer_documents')
+            .select('*')
+            .in('owner_id', ownerIds)
+            .order('created_at', { ascending: false })
+            .limit(10);
+          
+          if (customerDocsError) throw customerDocsError;
+          customerDocsData = docData || [];
+        }
 
         // Fetch bills (bills → protests → properties → contacts relationship)
         const protestIds = propertiesData?.flatMap(p => p.protests?.map(protest => protest.id) || []) || [];

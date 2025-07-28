@@ -94,7 +94,6 @@ export interface Document {
   id: string;
   name: string;
   type: 'form-50-162' | 'evidence-package' | 'hearing-notice' | 'settlement';
-  property: string;
   owner: string;
   protest: string;
   status: 'Generated' | 'Draft' | 'Delivered' | 'Signed';

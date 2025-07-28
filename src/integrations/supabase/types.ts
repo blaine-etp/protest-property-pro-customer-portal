@@ -651,7 +651,6 @@ export type Database = {
           generated_at: string
           id: string
           owner_id: string | null
-          property_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -664,7 +663,6 @@ export type Database = {
           generated_at?: string
           id?: string
           owner_id?: string | null
-          property_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -677,19 +675,11 @@ export type Database = {
           generated_at?: string
           id?: string
           owner_id?: string | null
-          property_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "customer_documents_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "fk_customer_documents_contact"
             columns: ["contact_id"]
@@ -860,7 +850,6 @@ export type Database = {
           county: string | null
           county_pid: string | null
           created_at: string
-          document_id: string | null
           estimated_savings: number | null
           etp_pid: string | null
           formatted_address: string | null
@@ -883,7 +872,6 @@ export type Database = {
           county?: string | null
           county_pid?: string | null
           created_at?: string
-          document_id?: string | null
           estimated_savings?: number | null
           etp_pid?: string | null
           formatted_address?: string | null
@@ -906,7 +894,6 @@ export type Database = {
           county?: string | null
           county_pid?: string | null
           created_at?: string
-          document_id?: string | null
           estimated_savings?: number | null
           etp_pid?: string | null
           formatted_address?: string | null
@@ -929,13 +916,6 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_properties_document"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "customer_documents"
             referencedColumns: ["id"]
           },
           {

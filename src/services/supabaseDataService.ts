@@ -246,21 +246,8 @@ export class SupabaseDataService extends DataService {
       throw new Error(`Failed to fetch documents: ${error.message}`);
     }
 
-    // Get associated properties for these documents
-    const documentIds = documentsData?.map(doc => doc.id) || [];
-    const { data: propertiesData } = await supabase
-      .from('properties')
-      .select('document_id, situs_address')
-      .in('document_id', documentIds);
-
     // Transform the data to match the Document interface
     return (documentsData || []).map(doc => {
-      // Find properties associated with this document
-      const docProperties = propertiesData?.filter(prop => prop.document_id === doc.id) || [];
-      const propertyAddress = docProperties.length > 0 
-        ? docProperties[0].situs_address 
-        : 'No Properties';
-
       const contactName = (doc as any).contacts 
         ? `${(doc as any).contacts.first_name} ${(doc as any).contacts.last_name}`.trim()
         : 'Unknown Contact';
@@ -269,7 +256,6 @@ export class SupabaseDataService extends DataService {
         id: doc.id,
         name: `${this.formatDocumentType(doc.document_type)}.pdf`,
         type: doc.document_type as Document['type'],
-        property: propertyAddress,
         owner: (doc as any).owners?.name || 'Unknown Owner',
         protest: 'Active', // Placeholder - would need to check protests table
         status: this.mapDocumentStatus(doc.status),
@@ -300,16 +286,6 @@ export class SupabaseDataService extends DataService {
       throw new Error('Document not found');
     }
 
-    // Get associated properties for this document
-    const { data: propertiesData } = await supabase
-      .from('properties')
-      .select('situs_address')
-      .eq('document_id', id);
-
-    const propertyAddress = propertiesData && propertiesData.length > 0 
-      ? propertiesData[0].situs_address 
-      : 'No Properties';
-
     const contactName = (documentData as any).contacts 
       ? `${(documentData as any).contacts.first_name} ${(documentData as any).contacts.last_name}`.trim()
       : 'Unknown Contact';
@@ -319,7 +295,6 @@ export class SupabaseDataService extends DataService {
       id: documentData.id,
       name: `${this.formatDocumentType(documentData.document_type)}.pdf`,
       type: documentData.document_type as Document['type'],
-      property: propertyAddress,
       owner: (documentData as any).owners?.name || 'Unknown Owner',
       protest: 'Active', // Placeholder - would need to check protests table
       status: this.mapDocumentStatus(documentData.status),

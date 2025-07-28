@@ -8,13 +8,14 @@ import { AWSDataService } from './awsDataService';
 import { mockAuthService } from './mockAuthService';
 import { mockFormService } from './mockFormService';
 import { mockStorageService } from './mockStorageService';
+import { supabaseStorageService } from './supabaseStorageService';
 
 // Master configuration flags - set to true when real integrations are ready
 const USE_AWS_DATA = false;
 const USE_SUPABASE_DATA = true; // Enable Supabase for bills
 const USE_SUPABASE_AUTH = false;
 const USE_SUPABASE_FORMS = false;
-const USE_SUPABASE_STORAGE = false;
+const USE_SUPABASE_STORAGE = true;
 
 // AWS Configuration (to be set when ready)
 const AWS_API_URL = 'https://your-aws-api-url.com/api';
@@ -65,8 +66,7 @@ function createFormService() {
 function createStorageService() {
   if (USE_SUPABASE_STORAGE) {
     console.log('🔗 Using Supabase Storage Service');
-    // Return supabase storage when ready
-    throw new Error('Supabase storage not yet configured');
+    return supabaseStorageService;
   } else {
     console.log('🎭 Using Mock Storage Service');
     return mockStorageService;

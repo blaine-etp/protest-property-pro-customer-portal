@@ -94,7 +94,7 @@ serve(async (req) => {
     const { data: propertyData, error: propertyError } = await supabaseClient
       .from('properties')
       .select(`
-        address,
+        situs_address,
         include_all_properties,
         owner_id
       `)

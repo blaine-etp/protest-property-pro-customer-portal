@@ -49,7 +49,7 @@ serve(async (req) => {
     console.log('Step 2: Fetching property address...')
     const { data: propertyData, error: propertyError } = await supabaseClient
       .from('properties')
-      .select('address')
+      .select('situs_address')
       .eq('id', propertyId)
       .single()
 
@@ -119,7 +119,7 @@ serve(async (req) => {
       'Date_2': currentDate,
       'Date_3': currentDate,
       'property owner': `${customerData.first_name} ${customerData.last_name}`,
-      'customer address': propertyData.address,
+      'customer address': propertyData.situs_address,
       'Title': title
     }
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
-import { useFormSubmission } from '@/hooks/useFormSubmission';
+import { useSimplifiedFormSubmission } from '@/hooks/useSimplifiedFormSubmission';
 
 interface ReviewStepProps {
   formData: FormData;
@@ -27,7 +27,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
-  const { submitFormData, isSubmitting } = useFormSubmission();
+  const { submitFormData, isSubmitting } = useSimplifiedFormSubmission();
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);

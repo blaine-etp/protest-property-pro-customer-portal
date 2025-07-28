@@ -270,16 +270,40 @@ export const useSimplifiedFormSubmission = () => {
         }
       }
 
-      // Step 12: Generate PDFs (non-blocking)
+      // Step 12: Generate PDFs and update documents_generated flag
       try {
-        Promise.all([
+        console.log(`Generating documents for property ${property.id} and user ${userId}`);
+        
+        const documentPromises = await Promise.allSettled([
           supabase.functions.invoke('generate-form-50-162', {
             body: { propertyId: property.id, userId }
           }),
           supabase.functions.invoke('generate-services-agreement', {
             body: { propertyId: property.id, userId }
           })
-        ]).catch(console.error);
+        ]);
+
+        // Log results
+        documentPromises.forEach((result, index) => {
+          const docType = index === 0 ? 'Form 50-162' : 'Services Agreement';
+          if (result.status === 'fulfilled') {
+            console.log(`${docType} generated successfully:`, result.value);
+          } else {
+            console.error(`${docType} generation failed:`, result.reason);
+          }
+        });
+
+        // Update documents_generated flag in protest record
+        const { error: updateError } = await supabase
+          .from('protests')
+          .update({ documents_generated: true })
+          .eq('property_id', property.id);
+
+        if (updateError) {
+          console.error('Failed to update documents_generated flag:', updateError);
+        } else {
+          console.log('Documents generated flag updated successfully');
+        }
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);
       }

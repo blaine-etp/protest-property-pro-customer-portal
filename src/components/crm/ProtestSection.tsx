@@ -70,7 +70,10 @@ export function ProtestSection() {
           *,
           properties (
             contact_id,
-            owner_id
+            owner_id,
+            situs_address,
+            county,
+            parcel_number
           )
         `)
         .order('created_at', { ascending: false });
@@ -93,10 +96,11 @@ export function ProtestSection() {
 
   // Filter protests
   const filteredProtests = protests.filter(protest => {
-    // Text search
-    const matchesSearch = (protest.situs_address || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // Text search - use address from properties relationship
+    const address = protest.properties?.situs_address || protest.situs_address || '';
+    const matchesSearch = address.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (protest.owner_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (protest.county || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (protest.county || protest.properties?.county || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     // Status filter - normalize both the filter values and protest status
     const normalizedProtestStatus = getNormalizedStatus(protest.appeal_status);
@@ -423,7 +427,7 @@ export function ProtestSection() {
                   </div>
                   
                   <div>
-                    <h4 className="font-semibold text-lg mb-1">{protest.situs_address || 'Address not available'}</h4>
+                    <h4 className="font-semibold text-lg mb-1">{protest.properties?.situs_address || protest.situs_address || 'Address not available'}</h4>
                     <p className="text-sm text-muted-foreground">Tax Year: {protest.tax_year || new Date().getFullYear()}</p>
                   </div>
                   
@@ -510,7 +514,7 @@ export function ProtestSection() {
                     <TableRow key={protest.id}>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{protest.situs_address || 'Address not available'}</p>
+                          <p className="font-medium">{protest.properties?.situs_address || protest.situs_address || 'Address not available'}</p>
                         </div>
                       </TableCell>
                        <TableCell>

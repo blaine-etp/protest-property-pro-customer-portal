@@ -49,7 +49,7 @@ export const useSimplifiedFormSubmission = () => {
       const { data: existingProperties, error: addressCheckError } = await supabase
         .from('properties')
         .select('situs_address, formatted_address')
-        .or(`situs_address.eq.${formData.address},formatted_address.eq.${formData.formattedAddress || formData.address}`);
+        .or(`situs_address.eq."${formData.address}",formatted_address.eq."${formData.formattedAddress || formData.address}"`);
 
       if (addressCheckError) {
         console.error('Address check error:', addressCheckError);

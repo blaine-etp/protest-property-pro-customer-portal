@@ -37,17 +37,34 @@ class SupabaseStorageService {
     }
   }
 
-  // Download a file from storage
+  // Download a file from storage using signed URL for better compatibility
   async downloadFile(bucket: string, path: string): Promise<Blob> {
     try {
-      const { data, error } = await supabase.storage
+      // Try signed URL approach first for better compatibility with auth
+      const { data: signedData, error: signedError } = await supabase.storage
         .from(bucket)
-        .download(path);
+        .createSignedUrl(path, 3600); // 1 hour expiry
 
-      if (error) throw error;
-      if (!data) throw new Error('No data returned from download');
+      if (signedError) {
+        console.log('Signed URL failed, trying direct download:', signedError);
+        // Fallback to direct download
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .download(path);
 
-      return data;
+        if (error) throw error;
+        if (!data) throw new Error('No data returned from download');
+
+        return data;
+      }
+
+      // Fetch using the signed URL
+      const response = await fetch(signedData.signedUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+
+      return await response.blob();
     } catch (error) {
       console.error('Error downloading file:', error);
       throw error;

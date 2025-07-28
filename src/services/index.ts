@@ -85,6 +85,7 @@ export { AWSDataService } from './awsDataService';
 export { mockAuthService } from './mockAuthService';
 export { mockFormService } from './mockFormService';
 export { mockStorageService } from './mockStorageService';
+export { supabaseStorageService } from './supabaseStorageService';
 export * from './types';
 
 // Configuration information

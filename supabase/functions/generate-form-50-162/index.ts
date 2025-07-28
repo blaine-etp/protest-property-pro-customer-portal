@@ -96,7 +96,8 @@ serve(async (req) => {
       .select(`
         situs_address,
         include_all_properties,
-        owner_id
+        owner_id,
+        contact_id
       `)
       .eq('id', propertyId)
       .maybeSingle();
@@ -382,6 +383,8 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         property_id: propertyId,
+        owner_id: propertyData.owner_id,
+        contact_id: propertyData.contact_id,
         document_type: 'form-50-162',
         file_path: filename,
         status: 'generated'

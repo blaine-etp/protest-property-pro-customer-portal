@@ -49,7 +49,7 @@ serve(async (req) => {
     console.log('Step 2: Fetching property address...')
     const { data: propertyData, error: propertyError } = await supabaseClient
       .from('properties')
-      .select('situs_address')
+      .select('situs_address, owner_id, contact_id')
       .eq('id', propertyId)
       .single()
 
@@ -232,6 +232,8 @@ serve(async (req) => {
       .insert({
         user_id: userId,
         property_id: propertyId,
+        owner_id: propertyData.owner_id,
+        contact_id: propertyData.contact_id,
         document_type: 'services-agreement',
         file_path: filename,
         status: 'generated'

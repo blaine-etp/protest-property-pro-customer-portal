@@ -274,6 +274,7 @@ export const useSimplifiedFormSubmission = () => {
       try {
         console.log(`Generating documents for property ${property.id} and user ${userId}`);
         
+        // Wait for document generation to complete
         const documentPromises = await Promise.allSettled([
           supabase.functions.invoke('generate-form-50-162', {
             body: { propertyId: property.id, userId }
@@ -283,26 +284,36 @@ export const useSimplifiedFormSubmission = () => {
           })
         ]);
 
-        // Log results
+        // Log detailed results
+        let documentsGenerated = 0;
         documentPromises.forEach((result, index) => {
           const docType = index === 0 ? 'Form 50-162' : 'Services Agreement';
           if (result.status === 'fulfilled') {
-            console.log(`${docType} generated successfully:`, result.value);
+            console.log(`${docType} generation completed:`, result.value);
+            if (result.value?.data && !result.value?.error) {
+              documentsGenerated++;
+            } else {
+              console.error(`${docType} generation error:`, result.value?.error);
+            }
           } else {
             console.error(`${docType} generation failed:`, result.reason);
           }
         });
 
-        // Update documents_generated flag in protest record
-        const { error: updateError } = await supabase
-          .from('protests')
-          .update({ documents_generated: true })
-          .eq('property_id', property.id);
+        // Only update documents_generated flag if both documents were created successfully
+        if (documentsGenerated === 2) {
+          const { error: updateError } = await supabase
+            .from('protests')
+            .update({ documents_generated: true })
+            .eq('property_id', property.id);
 
-        if (updateError) {
-          console.error('Failed to update documents_generated flag:', updateError);
+          if (updateError) {
+            console.error('Failed to update documents_generated flag:', updateError);
+          } else {
+            console.log('Documents generated flag updated successfully');
+          }
         } else {
-          console.log('Documents generated flag updated successfully');
+          console.warn(`Only ${documentsGenerated}/2 documents generated successfully`);
         }
       } catch (pdfError) {
         console.error('PDF generation error:', pdfError);

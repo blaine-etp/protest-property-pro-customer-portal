@@ -73,7 +73,18 @@ export function ProtestSection() {
             owner_id,
             situs_address,
             county,
-            parcel_number
+            parcel_number,
+            contacts:contacts!fk_properties_contact_id (
+              id,
+              first_name,
+              last_name,
+              email
+            ),
+            owners:owners!fk_properties_owner_id (
+              id,
+              name,
+              owner_type
+            )
           )
         `)
         .order('created_at', { ascending: false });
@@ -99,7 +110,7 @@ export function ProtestSection() {
     // Text search - use address from properties relationship
     const address = protest.properties?.situs_address || protest.situs_address || '';
     const matchesSearch = address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (protest.owner_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (protest.properties?.owners?.name || protest.owner_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (protest.county || protest.properties?.county || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     // Status filter - normalize both the filter values and protest status
@@ -447,7 +458,7 @@ export function ProtestSection() {
                           }}
                           className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                         >
-                          {protest.owner_name || 'Not specified'}
+                          {protest.properties?.owners?.name || protest.owner_name || 'Not specified'}
                         </button>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -461,7 +472,9 @@ export function ProtestSection() {
                           }}
                           className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                         >
-                          {protest.owner_name || 'Not specified'}
+                          {protest.properties?.contacts?.first_name && protest.properties?.contacts?.last_name 
+                            ? `${protest.properties.contacts.first_name} ${protest.properties.contacts.last_name}`
+                            : 'Not specified'}
                         </button>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -527,7 +540,7 @@ export function ProtestSection() {
                           }}
                           className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                         >
-                          {protest.owner_name || 'Not specified'}
+                          {protest.properties?.owners?.name || protest.owner_name || 'Not specified'}
                         </button>
                       </TableCell>
                       <TableCell>
@@ -540,7 +553,9 @@ export function ProtestSection() {
                           }}
                           className="font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                         >
-                          {protest.owner_name || 'Not specified'}
+                          {protest.properties?.contacts?.first_name && protest.properties?.contacts?.last_name 
+                            ? `${protest.properties.contacts.first_name} ${protest.properties.contacts.last_name}`
+                            : 'Not specified'}
                         </button>
                       </TableCell>
                        <TableCell>

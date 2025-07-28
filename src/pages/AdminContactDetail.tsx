@@ -446,7 +446,11 @@ export default function AdminContactDetail() {
                 <p className="text-muted-foreground">No documents found</p>
               ) : (
                 documents.slice(0, 5).map((doc) => (
-                  <div key={doc.id} className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50">
+                  <div 
+                    key={doc.id} 
+                    className="p-3 border rounded-lg cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/admin/document/${doc.id}`)}
+                  >
                     <div className="font-medium">{doc.document_type}</div>
                     <div className="text-sm text-muted-foreground">
                       Generated: {new Date(doc.generated_at).toLocaleDateString()}

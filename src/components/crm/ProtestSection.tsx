@@ -74,13 +74,13 @@ export function ProtestSection() {
             situs_address,
             county,
             parcel_number,
-            contacts:contacts!fk_properties_contact_id (
+            contacts:contact_id (
               id,
               first_name,
               last_name,
               email
             ),
-            owners:owners!fk_properties_owner_id (
+            owners:owner_id (
               id,
               name,
               owner_type

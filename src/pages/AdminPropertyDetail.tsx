@@ -378,7 +378,10 @@ export default function AdminPropertyDetail() {
             
             {documentData ? (
               <div className="space-y-3">
-                <div className="p-4 bg-slate-50 rounded-lg border">
+                <div 
+                  className="p-4 bg-slate-50 rounded-lg border cursor-pointer hover:bg-slate-100 transition-colors"
+                  onClick={() => navigate(`/admin/document/${documentData.id}`)}
+                >
                   <div className="flex items-start justify-between">
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ import { dataService } from "@/services";
 import type { Document, DocumentTemplate } from "@/services/types";
 
 export function DocumentsSection() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("documents");
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -308,7 +310,11 @@ export function DocumentsSection() {
           {/* Documents Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredDocuments.map((document) => (
-              <Card key={document.id} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={document.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/admin/document/${document.id}`)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -412,7 +418,11 @@ export function DocumentsSection() {
                 </TableHeader>
                 <TableBody>
                   {filteredDocuments.map((document) => (
-                    <TableRow key={document.id}>
+                    <TableRow 
+                      key={document.id}
+                      className="cursor-pointer hover:bg-slate-50"
+                      onClick={() => navigate(`/admin/document/${document.id}`)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getDocumentTypeIcon(document.type)}

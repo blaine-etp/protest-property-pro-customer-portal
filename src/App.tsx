@@ -34,6 +34,7 @@ import AdminContactDetail from "./pages/AdminContactDetail";
 import AdminOwnerDetail from "./pages/AdminOwnerDetail";
 import AdminPropertyDetail from "./pages/AdminPropertyDetail";
 import AdminProtestDetail from "./pages/AdminProtestDetail";
+import AdminDocumentDetail from "./pages/AdminDocumentDetail";
 import Resources from "./pages/Resources";
 import { CountyPage } from "./pages/CountyPage";
 import { BlogPost } from "./pages/BlogPost";
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="owners/:ownerId" element={<AdminOwnerDetail />} />
             <Route path="property/:propertyId" element={<AdminPropertyDetail />} />
             <Route path="protest/:protestId" element={<AdminProtestDetail />} />
+            <Route path="document/:documentId" element={<AdminDocumentDetail />} />
             <Route path="blog" element={<AdminBlog />} />
             <Route path="site-content" element={<AdminSiteContent />} />
             <Route path="evidence" element={<AdminEvidence />} />

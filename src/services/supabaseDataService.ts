@@ -125,6 +125,31 @@ export class SupabaseDataService extends DataService {
     }
   }
 
+  private formatDocumentType(type: string): string {
+    switch (type) {
+      case 'form-50-162':
+        return 'Form 50-162';
+      case 'evidence-package':
+        return 'Evidence Package';
+      case 'hearing-notice':
+        return 'Hearing Notice';
+      case 'settlement':
+        return 'Settlement Agreement';
+      default:
+        return type;
+    }
+  }
+
+  private mapDocumentStatus(status: string | null): Document['status'] {
+    switch (status?.toLowerCase()) {
+      case 'generated': return 'Generated';
+      case 'draft': return 'Draft';
+      case 'delivered': return 'Delivered';
+      case 'signed': return 'Signed';
+      default: return 'Generated';
+    }
+  }
+
   // Placeholder implementations for other methods (using mock data for now)
   async getContacts(): Promise<Contact[]> {
     throw new Error('Method not implemented with real data yet');
@@ -207,27 +232,107 @@ export class SupabaseDataService extends DataService {
   }
 
   async getDocuments(): Promise<Document[]> {
-    throw new Error('Method not implemented with real data yet');
+    const { data: documentsData, error } = await supabase
+      .from('customer_documents')
+      .select(`
+        *,
+        properties:property_id(
+          situs_address
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching documents:', error);
+      throw new Error(`Failed to fetch documents: ${error.message}`);
+    }
+
+    // Transform the data to match the Document interface
+    return (documentsData || []).map(doc => ({
+      id: doc.id,
+      name: `${this.formatDocumentType(doc.document_type)}.pdf`,
+      type: doc.document_type as Document['type'],
+      property: doc.properties?.situs_address || 'Unknown Property',
+      owner: 'Unknown Owner', // Would need to join through property->owner
+      protest: 'Unknown Protest', // Would need to join through property->protest
+      status: this.mapDocumentStatus(doc.status),
+      createdDate: new Date(doc.created_at).toLocaleDateString(),
+      size: '1.2 MB', // Placeholder - would need to get from storage
+      downloadCount: 0 // Placeholder - would need tracking table
+    }));
   }
 
   async getDocument(id: string): Promise<Document> {
-    throw new Error('Method not implemented with real data yet');
+    const { data: documentData, error } = await supabase
+      .from('customer_documents')
+      .select(`
+        *,
+        properties:property_id(
+          situs_address
+        )
+      `)
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching document:', error);
+      throw new Error(`Failed to fetch document: ${error.message}`);
+    }
+
+    if (!documentData) {
+      throw new Error('Document not found');
+    }
+
+    // Transform the data to match the Document interface
+    return {
+      id: documentData.id,
+      name: `${this.formatDocumentType(documentData.document_type)}.pdf`,
+      type: documentData.document_type as Document['type'],
+      property: documentData.properties?.situs_address || 'Unknown Property',
+      owner: 'Unknown Owner', // Would need to join through property->owner
+      protest: 'Unknown Protest', // Would need to join through property->protest
+      status: this.mapDocumentStatus(documentData.status),
+      createdDate: new Date(documentData.created_at).toLocaleDateString(),
+      size: '1.2 MB', // Placeholder - would need to get from storage
+      downloadCount: 0 // Placeholder - would need tracking table
+    };
   }
 
   async createDocument(document: Omit<Document, 'id' | 'createdDate'>): Promise<Document> {
-    throw new Error('Method not implemented with real data yet');
+    // This would require creating a customer document record
+    throw new Error('Creating documents not yet implemented');
   }
 
   async updateDocument(id: string, document: Partial<Document>): Promise<Document> {
-    throw new Error('Method not implemented with real data yet');
+    // This would update the customer document record
+    throw new Error('Updating documents not yet implemented');
   }
 
   async deleteDocument(id: string): Promise<void> {
-    throw new Error('Method not implemented with real data yet');
+    // This would delete the customer document record
+    throw new Error('Deleting documents not yet implemented');
   }
 
   async getDocumentTemplates(): Promise<DocumentTemplate[]> {
-    throw new Error('Method not implemented with real data yet');
+    // Mock templates since we don't have a templates table yet
+    return [
+      {
+        id: 'template-1',
+        name: 'Form 50-162 Template',
+        description: 'Standard property tax protest form',
+        category: 'Legal Forms',
+        lastUpdated: new Date().toLocaleDateString(),
+        usage: 45
+      },
+      {
+        id: 'template-2',
+        name: 'Evidence Package Template',
+        description: 'Template for evidence submission',
+        category: 'Evidence',
+        lastUpdated: new Date().toLocaleDateString(),
+        usage: 23
+      }
+    ];
   }
 
   async getDocumentTemplate(id: string): Promise<DocumentTemplate> {

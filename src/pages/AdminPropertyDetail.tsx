@@ -16,6 +16,8 @@ import {
   Calendar,
   DollarSign,
   Gavel,
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +25,7 @@ export default function AdminPropertyDetail() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
   const [propertyDetails, setPropertyDetails] = useState<any | null>(null);
+  const [documentData, setDocumentData] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,11 +78,53 @@ export default function AdminPropertyDetail() {
 
       if (error) throw error;
       setPropertyDetails(data);
+
+      // Fetch associated document if property has document_id
+      if (data?.document_id) {
+        const { data: docData, error: docError } = await supabase
+          .from('customer_documents')
+          .select(`
+            *,
+            owners(name),
+            contacts(first_name, last_name)
+          `)
+          .eq('id', data.document_id)
+          .maybeSingle();
+
+        if (docError) {
+          console.error('Failed to load document:', docError);
+        } else {
+          setDocumentData(docData);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load property details');
       console.error('Failed to load property details:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDownloadDocument = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('customer-documents')
+        .download(filePath);
+
+      if (error) throw error;
+
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filePath.split('/').pop() || 'document.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download document:', err);
+      setError('Failed to download document');
     }
   };
 
@@ -321,6 +366,86 @@ export default function AdminPropertyDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Documents Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-indigo-500" />
+              <h3 className="font-semibold">Associated Documents</h3>
+            </div>
+            
+            {documentData ? (
+              <div className="space-y-3">
+                <div className="p-4 bg-slate-50 rounded-lg border">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {documentData.document_type.toUpperCase()}
+                        </Badge>
+                        <Badge variant={documentData.status === 'generated' ? 'default' : 'secondary'}>
+                          {documentData.status}
+                        </Badge>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium">
+                          {documentData.document_type === 'form-50-162' ? 'Form 50-162' : documentData.document_type}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Generated on {new Date(documentData.generated_at).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      {documentData.owners && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Owner</p>
+                          <p className="text-sm font-medium">{documentData.owners.name}</p>
+                        </div>
+                      )}
+
+                      {documentData.contacts && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Contact</p>
+                          <p className="text-sm font-medium">
+                            {documentData.contacts.first_name} {documentData.contacts.last_name}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownloadDocument(documentData.file_path)}
+                        className="flex items-center gap-1"
+                      >
+                        <Download className="h-3 w-3" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : propertyDetails.document_id ? (
+              <div className="p-4 bg-slate-50 rounded-lg border">
+                <p className="text-sm text-muted-foreground">
+                  Document associated but details could not be loaded.
+                </p>
+              </div>
+            ) : (
+              <div className="p-4 bg-slate-50 rounded-lg border">
+                <p className="text-sm text-muted-foreground">
+                  No documents associated with this property.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

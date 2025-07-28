@@ -1,4 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PROTEST_STATUSES, PROTEST_STATUS_LABELS } from "@/constants/protestStatus";
 
 interface ProtestStatusSelectProps {
   value: string;
@@ -7,14 +8,13 @@ interface ProtestStatusSelectProps {
 }
 
 const statusOptions = [
-  { value: 'waiting_for_offer', label: 'Waiting for Offer' },
-  { value: 'offer_received', label: 'Offer Received' },
-  { value: 'needs_review', label: 'Needs Review' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'email_reply_required', label: 'Email Reply Required' },
-  { value: 'hearing_scheduled', label: 'Hearing Scheduled' },
-  { value: 'completed', label: 'Completed' },
+  { value: PROTEST_STATUSES.PENDING, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.PENDING] },
+  { value: PROTEST_STATUSES.IN_PROGRESS, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.IN_PROGRESS] },
+  { value: PROTEST_STATUSES.OFFER_RECEIVED, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.OFFER_RECEIVED] },
+  { value: PROTEST_STATUSES.ACCEPTED, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.ACCEPTED] },
+  { value: PROTEST_STATUSES.REJECTED, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.REJECTED] },
+  { value: PROTEST_STATUSES.COMPLETED, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.COMPLETED] },
+  { value: PROTEST_STATUSES.NEEDS_REVIEW, label: PROTEST_STATUS_LABELS[PROTEST_STATUSES.NEEDS_REVIEW] },
 ];
 
 export function ProtestStatusSelect({ value, onValueChange, disabled }: ProtestStatusSelectProps) {

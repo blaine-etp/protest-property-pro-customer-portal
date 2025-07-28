@@ -644,44 +644,54 @@ export type Database = {
       }
       customer_documents: {
         Row: {
+          contact_id: string | null
           created_at: string
           document_type: string
           file_path: string
           generated_at: string
           id: string
-          property_id: string
+          owner_id: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          contact_id?: string | null
           created_at?: string
           document_type?: string
           file_path: string
           generated_at?: string
           id?: string
-          property_id: string
+          owner_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          contact_id?: string | null
           created_at?: string
           document_type?: string
           file_path?: string
           generated_at?: string
           id?: string
-          property_id?: string
+          owner_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "fk_customer_documents_property_id"
-            columns: ["property_id"]
+            foreignKeyName: "fk_customer_documents_contact"
+            columns: ["contact_id"]
             isOneToOne: false
-            referencedRelation: "properties"
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_customer_documents_owner"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
             referencedColumns: ["id"]
           },
           {
@@ -690,42 +700,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
-          },
-        ]
-      }
-      document_properties: {
-        Row: {
-          created_at: string
-          document_id: string
-          id: string
-          property_id: string
-        }
-        Insert: {
-          created_at?: string
-          document_id: string
-          id?: string
-          property_id: string
-        }
-        Update: {
-          created_at?: string
-          document_id?: string
-          id?: string
-          property_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_document_properties_document_id"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "customer_documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_document_properties_property_id"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -876,6 +850,7 @@ export type Database = {
           county: string | null
           county_pid: string | null
           created_at: string
+          document_id: string | null
           estimated_savings: number | null
           etp_pid: string | null
           formatted_address: string | null
@@ -898,6 +873,7 @@ export type Database = {
           county?: string | null
           county_pid?: string | null
           created_at?: string
+          document_id?: string | null
           estimated_savings?: number | null
           etp_pid?: string | null
           formatted_address?: string | null
@@ -920,6 +896,7 @@ export type Database = {
           county?: string | null
           county_pid?: string | null
           created_at?: string
+          document_id?: string | null
           estimated_savings?: number | null
           etp_pid?: string | null
           formatted_address?: string | null
@@ -942,6 +919,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_properties_document"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "customer_documents"
             referencedColumns: ["id"]
           },
           {
@@ -974,6 +958,7 @@ export type Database = {
           county: string | null
           county_confirmation_date: string | null
           created_at: string | null
+          document_id: string | null
           documents_generated: boolean | null
           evidence_packet_url: string | null
           exemption_status: string | null
@@ -998,6 +983,7 @@ export type Database = {
           county?: string | null
           county_confirmation_date?: string | null
           created_at?: string | null
+          document_id?: string | null
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
           exemption_status?: string | null
@@ -1022,6 +1008,7 @@ export type Database = {
           county?: string | null
           county_confirmation_date?: string | null
           created_at?: string | null
+          document_id?: string | null
           documents_generated?: boolean | null
           evidence_packet_url?: string | null
           exemption_status?: string | null
@@ -1041,6 +1028,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_protests_document"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "customer_documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_protests_property_id"
             columns: ["property_id"]

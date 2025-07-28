@@ -169,7 +169,6 @@ export const useSimplifiedFormSubmission = () => {
           property_id: property.id,
           appeal_status: 'pending',
           exemption_status: 'pending',
-          auto_appeal_enabled: false,
           savings_amount: formData.estimatedSavings || 0,
         })
         .select()

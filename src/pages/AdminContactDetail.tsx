@@ -114,16 +114,23 @@ export default function AdminContactDetail() {
 
         if (communicationsError) throw communicationsError;
 
-        // Fetch documents (customer_documents table references properties)
+        // Fetch documents (properties now reference customer_documents via document_id)
         const propertyIds = propertiesData?.map(p => p.id) || [];
         const { data: documentsData, error: documentsError } = await supabase
+          .from('properties')
+          .select('document_id')
+          .in('id', propertyIds)
+          .not('document_id', 'is', null);
+        
+        const documentIds = documentsData?.map(p => p.document_id).filter(Boolean) || [];
+        const { data: customerDocsData, error: customerDocsError } = await supabase
           .from('customer_documents')
           .select('*')
-          .in('property_id', propertyIds)
+          .in('id', documentIds)
           .order('created_at', { ascending: false })
           .limit(10);
 
-        if (documentsError) throw documentsError;
+        if (documentsError || customerDocsError) throw documentsError || customerDocsError;
 
         // Fetch bills (bills → protests → properties → contacts relationship)
         const protestIds = propertiesData?.flatMap(p => p.protests?.map(protest => protest.id) || []) || [];
@@ -175,7 +182,7 @@ export default function AdminContactDetail() {
             inquiry_type: comm.inquiry_type,
             created_at: comm.created_at
           })),
-          documents: (documentsData || []).map(doc => ({
+          documents: (customerDocsData || []).map(doc => ({
             id: doc.id,
             document_type: doc.document_type,
             status: doc.status,

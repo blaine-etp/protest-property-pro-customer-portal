@@ -236,9 +236,8 @@ export class SupabaseDataService extends DataService {
       .from('customer_documents')
       .select(`
         *,
-        properties:property_id(
-          situs_address
-        )
+        owners(name),
+        contacts(first_name, last_name)
       `)
       .order('created_at', { ascending: false });
 
@@ -247,19 +246,38 @@ export class SupabaseDataService extends DataService {
       throw new Error(`Failed to fetch documents: ${error.message}`);
     }
 
+    // Get associated properties for these documents
+    const documentIds = documentsData?.map(doc => doc.id) || [];
+    const { data: propertiesData } = await supabase
+      .from('properties')
+      .select('document_id, situs_address')
+      .in('document_id', documentIds);
+
     // Transform the data to match the Document interface
-    return (documentsData || []).map(doc => ({
-      id: doc.id,
-      name: `${this.formatDocumentType(doc.document_type)}.pdf`,
-      type: doc.document_type as Document['type'],
-      property: doc.properties?.situs_address || 'Unknown Property',
-      owner: 'Unknown Owner', // Would need to join through property->owner
-      protest: 'Unknown Protest', // Would need to join through property->protest
-      status: this.mapDocumentStatus(doc.status),
-      createdDate: new Date(doc.created_at).toLocaleDateString(),
-      size: '1.2 MB', // Placeholder - would need to get from storage
-      downloadCount: 0 // Placeholder - would need tracking table
-    }));
+    return (documentsData || []).map(doc => {
+      // Find properties associated with this document
+      const docProperties = propertiesData?.filter(prop => prop.document_id === doc.id) || [];
+      const propertyAddress = docProperties.length > 0 
+        ? docProperties[0].situs_address 
+        : 'No Properties';
+
+      const contactName = (doc as any).contacts 
+        ? `${(doc as any).contacts.first_name} ${(doc as any).contacts.last_name}`.trim()
+        : 'Unknown Contact';
+
+      return {
+        id: doc.id,
+        name: `${this.formatDocumentType(doc.document_type)}.pdf`,
+        type: doc.document_type as Document['type'],
+        property: propertyAddress,
+        owner: (doc as any).owners?.name || 'Unknown Owner',
+        protest: 'Active', // Placeholder - would need to check protests table
+        status: this.mapDocumentStatus(doc.status),
+        createdDate: new Date(doc.created_at).toLocaleDateString(),
+        size: '1.2 MB', // Placeholder - would need to get from storage
+        downloadCount: 0 // Placeholder - would need tracking table
+      };
+    });
   }
 
   async getDocument(id: string): Promise<Document> {
@@ -267,9 +285,8 @@ export class SupabaseDataService extends DataService {
       .from('customer_documents')
       .select(`
         *,
-        properties:property_id(
-          situs_address
-        )
+        owners(name),
+        contacts(first_name, last_name)
       `)
       .eq('id', id)
       .maybeSingle();
@@ -283,14 +300,28 @@ export class SupabaseDataService extends DataService {
       throw new Error('Document not found');
     }
 
+    // Get associated properties for this document
+    const { data: propertiesData } = await supabase
+      .from('properties')
+      .select('situs_address')
+      .eq('document_id', id);
+
+    const propertyAddress = propertiesData && propertiesData.length > 0 
+      ? propertiesData[0].situs_address 
+      : 'No Properties';
+
+    const contactName = (documentData as any).contacts 
+      ? `${(documentData as any).contacts.first_name} ${(documentData as any).contacts.last_name}`.trim()
+      : 'Unknown Contact';
+
     // Transform the data to match the Document interface
     return {
       id: documentData.id,
       name: `${this.formatDocumentType(documentData.document_type)}.pdf`,
       type: documentData.document_type as Document['type'],
-      property: documentData.properties?.situs_address || 'Unknown Property',
-      owner: 'Unknown Owner', // Would need to join through property->owner
-      protest: 'Unknown Protest', // Would need to join through property->protest
+      property: propertyAddress,
+      owner: (documentData as any).owners?.name || 'Unknown Owner',
+      protest: 'Active', // Placeholder - would need to check protests table
       status: this.mapDocumentStatus(documentData.status),
       createdDate: new Date(documentData.created_at).toLocaleDateString(),
       size: '1.2 MB', // Placeholder - would need to get from storage

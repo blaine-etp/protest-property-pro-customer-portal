@@ -45,6 +45,26 @@ export const useSimplifiedFormSubmission = () => {
         }
       }
 
+      // Step 2: Check if address already exists
+      const { data: existingProperties, error: addressCheckError } = await supabase
+        .from('properties')
+        .select('situs_address, formatted_address')
+        .or(`situs_address.eq.${formData.address},formatted_address.eq.${formData.formattedAddress || formData.address}`);
+
+      if (addressCheckError) {
+        console.error('Address check error:', addressCheckError);
+      } else if (existingProperties && existingProperties.length > 0) {
+        toast({
+          title: "Property Already Registered",
+          description: "This property address has already been registered for tax appeal services.",
+          variant: "destructive",
+        });
+        return { 
+          success: false, 
+          error: "ADDRESS_EXISTS"
+        };
+      }
+
       // Step 2: Create the Supabase user with email and temporary password
       const tempPassword = `temp_${crypto.randomUUID()}`;
       const { data: authUser, error: authError } = await supabase.auth.signUp({
@@ -259,6 +279,17 @@ export const useSimplifiedFormSubmission = () => {
       };
     } catch (error: any) {
       console.error('Form submission error:', error);
+      
+      // If we created a user but failed later, try to clean up
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session?.user) {
+          console.log('Cleaning up failed signup session...');
+          await supabase.auth.signOut();
+        }
+      } catch (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
       
       let errorMessage = error.message;
       if (error.message?.includes('row-level security')) {

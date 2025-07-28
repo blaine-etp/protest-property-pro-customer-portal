@@ -65,7 +65,7 @@ export const useSimplifiedFormSubmission = () => {
         };
       }
 
-      // Step 2: Create the Supabase user with email and temporary password
+      // Step 3: Create the Supabase user with email and temporary password
       const tempPassword = `temp_${crypto.randomUUID()}`;
       const { data: authUser, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -85,7 +85,7 @@ export const useSimplifiedFormSubmission = () => {
 
       const userId = authUser.user.id;
 
-      // Step 3: Create user profile (this will use auth.uid() in RLS)
+      // Step 4: Create user profile (this will use auth.uid() in RLS)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -106,7 +106,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Profile creation failed: ${profileError.message}`);
       }
 
-      // Step 4: Create owner record
+      // Step 5: Create owner record
       let ownerName = '';
       let ownerType = 'individual';
       
@@ -140,12 +140,33 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Owner creation failed: ${ownerError.message}`);
       }
 
-      // Step 5: Create property record
+      // Step 6: Create contact record
+      const { data: contact, error: contactError } = await supabase
+        .from('contacts')
+        .insert({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.isTrustEntity ? formData.entityName : null,
+          source: 'property_signup',
+          status: 'active',
+          notes: `Primary contact for property at ${formData.address}`,
+        })
+        .select()
+        .single();
+
+      if (contactError) {
+        throw new Error(`Contact creation failed: ${contactError.message}`);
+      }
+
+      // Step 7: Create property record
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
           user_id: userId,
           owner_id: owner.id,
+          contact_id: contact.id,
           situs_address: formData.address,
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
@@ -165,7 +186,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // Step 6: Create application record
+      // Step 8: Create application record
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
@@ -182,7 +203,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Application creation failed: ${applicationError.message}`);
       }
 
-      // Step 7: Create initial protest record
+      // Step 9: Create initial protest record
       const { data: protestData, error: protestError } = await supabase
         .from('protests')
         .insert({
@@ -198,7 +219,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Protest record creation failed: ${protestError.message}`);
       }
 
-      // Step 8: Create draft bill for the protest
+      // Step 10: Create draft bill for the protest
       const { error: billError } = await supabase
         .from('bills')
         .insert({
@@ -216,7 +237,7 @@ export const useSimplifiedFormSubmission = () => {
         // Don't throw here as the main application was successful
       }
 
-      // Step 8: Handle referral code if provided
+      // Step 11: Handle referral code if provided
       if (formData.referralCode) {
         try {
           const { data: referrerProfile, error: referrerError } = await supabase
@@ -249,7 +270,7 @@ export const useSimplifiedFormSubmission = () => {
         }
       }
 
-      // Step 9: Generate PDFs (non-blocking)
+      // Step 12: Generate PDFs (non-blocking)
       try {
         Promise.all([
           supabase.functions.invoke('generate-form-50-162', {

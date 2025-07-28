@@ -29,6 +29,22 @@ interface Protest {
   documents_generated: boolean;
   evidence_packet_url: string | null;
   created_at: string;
+  properties?: {
+    id: string;
+    situs_address: string | null;
+    county: string | null;
+    contacts?: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+    } | null;
+    owners?: {
+      id: string;
+      name: string;
+      owner_type: string;
+    } | null;
+  } | null;
 }
 
 // Helper function to get normalized status
@@ -59,11 +75,29 @@ export default function AdminEvidence() {
     try {
       const { data, error } = await supabase
         .from('protests')
-        .select('*')
+        .select(`
+          *,
+          properties:property_id (
+            id,
+            situs_address,
+            county,
+            contacts:contact_id (
+              id,
+              first_name,
+              last_name,
+              email
+            ),
+            owners:owner_id (
+              id,
+              name,
+              owner_type
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProtests(data || []);
+      setProtests((data || []) as unknown as Protest[]);
     } catch (error) {
       console.error('Error fetching protests:', error);
       toast({
@@ -211,10 +245,12 @@ export default function AdminEvidence() {
                     onClick={() => navigate(`/admin/protest/${protest.id}`)}
                   >
                     <TableCell className="font-medium">
-                      {protest.situs_address || '-'}
+                      {protest.properties?.situs_address || protest.situs_address || '-'}
                     </TableCell>
-                    <TableCell>{protest.owner_name || '-'}</TableCell>
-                    <TableCell>{protest.county || '-'}</TableCell>
+                    <TableCell>
+                      {protest.properties?.owners?.name || protest.owner_name || '-'}
+                    </TableCell>
+                    <TableCell>{protest.properties?.county || protest.county || '-'}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(protest.appeal_status)}>
                         {getStatusLabel(protest.appeal_status)}

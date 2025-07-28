@@ -286,13 +286,20 @@ export default function AdminOwnerDetail() {
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {ownerDetails.properties?.map((property: any) => (
                   <div key={property.id} className="p-3 bg-slate-50 rounded border">
-                    <p className="font-medium text-sm">{property.situs_address}</p>
-                    <div className="flex justify-between items-center mt-1">
-                      <p className="text-xs text-muted-foreground">{property.county}</p>
-                      {property.parcel_number && (
-                        <p className="text-xs text-muted-foreground font-mono">{property.parcel_number}</p>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => navigate(`/admin/property/${property.id}`)}
+                      className="text-left w-full hover:bg-slate-100 transition-colors"
+                    >
+                      <p className="font-medium text-sm text-blue-600 hover:text-blue-800">
+                        {property.situs_address}
+                      </p>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-xs text-muted-foreground">{property.county}</p>
+                        {property.parcel_number && (
+                          <p className="text-xs text-muted-foreground font-mono">{property.parcel_number}</p>
+                        )}
+                      </div>
+                    </button>
                   </div>
                 )) || <p className="text-sm text-muted-foreground">No properties attached</p>}
               </div>

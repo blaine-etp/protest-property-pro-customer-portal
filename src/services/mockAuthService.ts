@@ -37,15 +37,11 @@ class MockAuthService {
   private initializeMockData() {
     console.log('🔍 Initializing mock data...');
     
-    // Clear existing mock data to ensure we use UUID format
-    const existingUsers = this.getMockUsers();
-    const hasOldFormat = existingUsers.some(u => u.id && !u.id.includes('-'));
-    if (hasOldFormat) {
-      console.log('🔍 Clearing old format mock data...');
-      localStorage.removeItem(this.MOCK_USERS_KEY);
-      localStorage.removeItem(this.MOCK_PROFILES_KEY);
-      localStorage.removeItem(this.MOCK_SESSION_KEY);
-    }
+    // Force clear ALL existing mock data to ensure clean state
+    console.log('🔍 Force clearing all mock data for fresh start...');
+    localStorage.removeItem(this.MOCK_USERS_KEY);
+    localStorage.removeItem(this.MOCK_PROFILES_KEY);
+    localStorage.removeItem(this.MOCK_SESSION_KEY);
     
     // Initialize with some default users if none exist
     const users = this.getMockUsers();

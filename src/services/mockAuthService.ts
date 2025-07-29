@@ -112,7 +112,7 @@ class MockAuthService {
       const defaultSession: MockSession = {
         access_token: 'mock-access-token',
         refresh_token: 'mock-refresh-token',
-        user: defaultUsers[1] // customer user
+        user: defaultUsers[3] // rblainesmith user
       };
       console.log('🔍 Creating default session:', defaultSession);
       this.setMockSession(defaultSession);
@@ -126,7 +126,7 @@ class MockAuthService {
       console.log('🔍 No session found, creating one...');
       const users = this.getMockUsers();
       if (users.length > 0) {
-        const customerUser = users.find(u => u.permissions === 'customer') || users[0];
+        const customerUser = users.find(u => u.email === 'rblainesmith+test@gmail.com') || users.find(u => u.permissions === 'customer') || users[0];
         const demoSession: MockSession = {
           access_token: 'demo-access-token',
           refresh_token: 'demo-refresh-token',

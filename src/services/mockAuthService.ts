@@ -118,11 +118,21 @@ class MockAuthService {
       this.setMockSession(defaultSession);
     }
     
-    // Always ensure there's a session for demo purposes
+    // Always ensure there's a session for demo purposes - prefer rblainesmith user
     const currentSession = localStorage.getItem(this.MOCK_SESSION_KEY);
     console.log('🔍 Current session in localStorage:', currentSession);
     
-    if (!currentSession) {
+    // Check if current session is for the old default user (john doe) and replace it
+    if (currentSession) {
+      const session = JSON.parse(currentSession);
+      if (session.user && session.user.email === 'customer@example.com') {
+        console.log('🔍 Found old default session, replacing with rblainesmith user...');
+        localStorage.removeItem(this.MOCK_SESSION_KEY);
+      }
+    }
+    
+    const updatedSession = localStorage.getItem(this.MOCK_SESSION_KEY);
+    if (!updatedSession) {
       console.log('🔍 No session found, creating one...');
       const users = this.getMockUsers();
       if (users.length > 0) {

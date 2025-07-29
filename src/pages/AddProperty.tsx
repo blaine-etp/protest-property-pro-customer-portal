@@ -30,22 +30,38 @@ const AddProperty = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const sessionResult = await mockAuthService.getSession();
-        if (sessionResult?.data?.session?.user) {
-          const user = sessionResult.data.session.user;
+        // If we're in database mode, use the real database user
+        if (forceDatabaseSave) {
           const userData = {
-            user_id: user.id,
-            first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
-            last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
-            email: user.email,
-            phone: user.email === 'customer@example.com' ? '(555) 123-4567' : '(555) 987-6543',
+            user_id: '61075f98-529a-4c52-91c7-ee6a696bfa21', // Real database user ID
+            first_name: 'blaine',
+            last_name: 'smith',
+            email: 'rblainesmith+test@gmail.com',
+            phone: '(555) 123-4567',
             role: 'homeowner',
             is_trust_entity: false,
             agree_to_updates: true
           };
           setProfile(userData);
         } else {
-          navigate('/auth');
+          // Use regular mock auth flow
+          const sessionResult = await mockAuthService.getSession();
+          if (sessionResult?.data?.session?.user) {
+            const user = sessionResult.data.session.user;
+            const userData = {
+              user_id: user.id,
+              first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
+              last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
+              email: user.email,
+              phone: user.email === 'customer@example.com' ? '(555) 123-4567' : '(555) 987-6543',
+              role: 'homeowner',
+              is_trust_entity: false,
+              agree_to_updates: true
+            };
+            setProfile(userData);
+          } else {
+            navigate('/auth');
+          }
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -56,7 +72,7 @@ const AddProperty = () => {
     };
 
     loadProfile();
-  }, [navigate]);
+  }, [navigate, forceDatabaseSave]);
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),

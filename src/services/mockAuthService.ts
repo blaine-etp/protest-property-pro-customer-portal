@@ -56,7 +56,9 @@ class MockAuthService {
       const defaultUsers: MockUser[] = [
         { id: '550e8400-e29b-41d4-a716-446655440000', email: 'admin@example.com', permissions: 'administrator' },
         { id: '550e8400-e29b-41d4-a716-446655440001', email: 'customer@example.com', permissions: 'customer' },
-        { id: '550e8400-e29b-41d4-a716-446655440002', email: 'test@example.com', permissions: 'customer' }
+        { id: '550e8400-e29b-41d4-a716-446655440002', email: 'test@example.com', permissions: 'customer' },
+        // Real database user for testing database mode
+        { id: '61075f98-529a-4c52-91c7-ee6a696bfa21', email: 'rblainesmith+test@gmail.com', permissions: 'customer' }
       ];
       
       const defaultProfiles: MockProfile[] = [
@@ -89,6 +91,17 @@ class MockAuthService {
           permissions: 'customer',
           is_authenticated: true,
           lifetime_savings: 1200
+        },
+        // Real database user profile for testing database mode
+        {
+          id: '61075f98-529a-4c52-91c7-ee6a696bfa22',
+          user_id: '61075f98-529a-4c52-91c7-ee6a696bfa21',
+          first_name: 'blaine',
+          last_name: 'smith',
+          email: 'rblainesmith+test@gmail.com',
+          permissions: 'customer',
+          is_authenticated: true,
+          lifetime_savings: 5000
         }
       ];
       

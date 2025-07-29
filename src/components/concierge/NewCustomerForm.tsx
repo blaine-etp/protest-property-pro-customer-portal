@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Phone, Mail, Home, User, FileText } from 'lucide-react';
+import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
 
 const newCustomerSchema = z.object({
   // Property Information
@@ -70,6 +71,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
     parcelNumber: string;
   } | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [googlePlacesData, setGooglePlacesData] = useState<GooglePlacesData | null>(null);
   const { toast } = useToast();
 
   const form = useForm<NewCustomerFormData>({
@@ -91,6 +93,12 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
   });
 
   const isTrustEntity = form.watch('isTrustEntity');
+
+  // Handle Google Places data and trigger property lookup
+  const handleGooglePlacesDataChange = (data: GooglePlacesData) => {
+    setGooglePlacesData(data);
+    handleAddressLookup(data.formattedAddress);
+  };
 
   const handleAddressLookup = async (address: string) => {
     if (!address || address.length < 5) {
@@ -340,13 +348,12 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
                       <FormItem className="md:col-span-2">
                         <FormLabel>Property Address *</FormLabel>
                         <FormControl>
-                          <Input
+                          <GooglePlacesAutocomplete
+                            value={field.value}
+                            onChange={field.onChange}
+                            onPlacesDataChange={handleGooglePlacesDataChange}
                             placeholder="Enter property address"
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e);
-                              handleAddressLookup(e.target.value);
-                            }}
+                            required
                           />
                         </FormControl>
                         <FormMessage />

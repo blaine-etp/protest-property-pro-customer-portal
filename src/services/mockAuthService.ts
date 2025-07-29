@@ -122,11 +122,14 @@ class MockAuthService {
     const currentSession = localStorage.getItem(this.MOCK_SESSION_KEY);
     console.log('🔍 Current session in localStorage:', currentSession);
     
-    // Check if current session is for the old default user (john doe) and replace it
+    // Check if current session is for the old default user (john doe) or wrong user ID and replace it
     if (currentSession) {
       const session = JSON.parse(currentSession);
-      if (session.user && session.user.email === 'customer@example.com') {
-        console.log('🔍 Found old default session, replacing with rblainesmith user...');
+      if (session.user && (
+        session.user.email === 'customer@example.com' || 
+        session.user.id !== '61075f98-529a-4c52-91c7-ee6a696bfa21'
+      )) {
+        console.log('🔍 Found old or wrong session, replacing with rblainesmith user...');
         localStorage.removeItem(this.MOCK_SESSION_KEY);
       }
     }
@@ -136,14 +139,17 @@ class MockAuthService {
       console.log('🔍 No session found, creating one...');
       const users = this.getMockUsers();
       if (users.length > 0) {
-        const customerUser = users.find(u => u.email === 'rblainesmith+test@gmail.com') || users.find(u => u.permissions === 'customer') || users[0];
-        const demoSession: MockSession = {
-          access_token: 'demo-access-token',
-          refresh_token: 'demo-refresh-token',
-          user: customerUser
-        };
-        console.log('🔍 Creating demo session:', demoSession);
-        this.setMockSession(demoSession);
+        // Always use the specific rblainesmith user with the correct ID
+        const customerUser = users.find(u => u.id === '61075f98-529a-4c52-91c7-ee6a696bfa21' && u.email === 'rblainesmith+test@gmail.com');
+        if (customerUser) {
+          const demoSession: MockSession = {
+            access_token: 'demo-access-token',
+            refresh_token: 'demo-refresh-token',
+            user: customerUser
+          };
+          console.log('🔍 Creating demo session for rblainesmith user:', demoSession);
+          this.setMockSession(demoSession);
+        }
       }
     }
   }

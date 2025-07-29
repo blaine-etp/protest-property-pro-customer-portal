@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
-interface GooglePlacesData {
+export interface GooglePlacesData {
   formattedAddress: string;
   placeId?: string;
   addressComponents?: Array<{

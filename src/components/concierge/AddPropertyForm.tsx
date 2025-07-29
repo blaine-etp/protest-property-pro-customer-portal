@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Home, User, FileText, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
 
 const addPropertySchema = z.object({
   address: z.string().min(1, 'Property address is required'),
@@ -50,6 +51,7 @@ export const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationData, setVerificationData] = useState<PropertyVerificationData | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [googlePlacesData, setGooglePlacesData] = useState<GooglePlacesData | null>(null);
   const { toast } = useToast();
 
   const form = useForm<AddPropertyFormData>({
@@ -60,6 +62,12 @@ export const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
       includeAllProperties: false,
     },
   });
+
+  // Handle Google Places data and trigger property lookup
+  const handleGooglePlacesDataChange = (data: GooglePlacesData) => {
+    setGooglePlacesData(data);
+    handleAddressLookup(data.formattedAddress);
+  };
 
   // Mock property lookup function - simulates API call to property records
   const handleAddressLookup = async (address: string) => {
@@ -73,7 +81,7 @@ export const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock property data based on address
+    // Mock property data based on address with enhanced data from Google Places
     const mockPropertyData: PropertyVerificationData = {
       legalOwnerName: address.includes('Main') ? 'Smith Family Trust' : 
                      address.includes('Oak') ? 'Johnson, Robert & Mary' :
@@ -256,13 +264,12 @@ export const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
                     <FormItem className="md:col-span-2">
                       <FormLabel>Property Address *</FormLabel>
                       <FormControl>
-                        <Input
+                        <GooglePlacesAutocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          onPlacesDataChange={handleGooglePlacesDataChange}
                           placeholder="Enter property address"
-                          {...field}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            handleAddressLookup(e.target.value);
-                          }}
+                          required
                         />
                       </FormControl>
                       <FormMessage />

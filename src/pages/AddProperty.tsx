@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -10,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { mockAuthService } from '@/services/mockAuthService';
 import AddPropertyForm from '@/components/AddPropertyForm';
+import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
 
 const addressSchema = z.object({
   address: z.string().min(1, 'Address is required'),
@@ -21,6 +21,7 @@ const AddProperty = () => {
   const [showForm, setShowForm] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [googlePlacesData, setGooglePlacesData] = useState<GooglePlacesData | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -71,6 +72,11 @@ const AddProperty = () => {
 
   const handleFormComplete = () => {
     handleBackToPortal();
+  };
+
+  // Handle Google Places data
+  const handleGooglePlacesDataChange = (data: GooglePlacesData) => {
+    setGooglePlacesData(data);
   };
 
   if (loading) {
@@ -158,9 +164,11 @@ const AddProperty = () => {
                       <FormItem>
                         <FormLabel>Property Address</FormLabel>
                         <FormControl>
-                          <Input
+                          <GooglePlacesAutocomplete
+                            value={field.value}
+                            onChange={field.onChange}
+                            onPlacesDataChange={handleGooglePlacesDataChange}
                             placeholder="123 Main St, Austin, TX"
-                            {...field}
                           />
                         </FormControl>
                         <FormMessage />

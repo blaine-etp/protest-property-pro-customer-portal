@@ -147,7 +147,6 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
           property_id: property.id,
           appeal_status: 'pending',
           exemption_status: 'pending',
-          auto_appeal_enabled: false,
           savings_amount: formData.estimatedSavings || 0,
         })
         .select()

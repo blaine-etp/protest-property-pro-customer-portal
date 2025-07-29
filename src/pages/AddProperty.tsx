@@ -22,6 +22,10 @@ const AddProperty = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [googlePlacesData, setGooglePlacesData] = useState<GooglePlacesData | null>(null);
+  
+  // Check URL parameter to enable database mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceDatabaseSave = urlParams.get('database') === 'true';
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -117,6 +121,7 @@ const AddProperty = () => {
         existingProfile={profile}
         onComplete={handleFormComplete}
         onBack={() => setShowForm(false)}
+        forceDatabaseSave={forceDatabaseSave}
       />
     );
   }
@@ -138,7 +143,14 @@ const AddProperty = () => {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Add Property</h1>
-              <p className="text-muted-foreground">Add another property to your account</p>
+              <p className="text-muted-foreground">
+                Add another property to your account
+                {forceDatabaseSave && (
+                  <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                    Database Mode
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         </div>

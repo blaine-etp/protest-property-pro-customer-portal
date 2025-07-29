@@ -7,9 +7,10 @@ import { mockAuthService } from '@/services/mockAuthService';
 interface AddPropertySubmissionProps {
   existingUserId: string;
   isTokenAccess: boolean;
+  forceDatabaseSave?: boolean;
 }
 
-export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddPropertySubmissionProps) => {
+export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceDatabaseSave = false }: AddPropertySubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -18,7 +19,8 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
     
     try {
       // Check if we're using mock auth (mock user IDs have UUID format starting with 550e8400)
-      const isMockMode = existingUserId.startsWith('550e8400');
+      // But skip mock mode if forceDatabaseSave is enabled
+      const isMockMode = existingUserId.startsWith('550e8400') && !forceDatabaseSave;
       
       if (isMockMode) {
         // Simulate mock property addition

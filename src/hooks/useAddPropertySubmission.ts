@@ -129,37 +129,56 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 4. Create owner record if entity is involved
-      let ownerId = null;
+      // 4. Create owner record for this property
+      let ownerName = '';
+      let ownerType = 'individual';
+      let entityRelationship = null;
+      let formEntityName = null;
+      let formEntityType = null;
+
       if (formData.isTrustEntity && formData.entityName) {
-        const { data: owner, error: ownerError } = await supabase
-          .from('owners')
-          .insert({
-            name: formData.entityName,
-            owner_type: formData.entityType?.toLowerCase() || 'entity',
-            property_id: property.id,
-            created_by_user_id: existingUserId,
-            entity_relationship: formData.relationshipToEntity,
-            form_entity_name: formData.entityName,
-            form_entity_type: formData.entityType,
-          })
-          .select()
-          .single();
+        // Entity/Trust owner
+        ownerName = formData.entityName;
+        ownerType = formData.entityType?.toLowerCase() || 'entity';
+        entityRelationship = formData.relationshipToEntity;
+        formEntityName = formData.entityName;
+        formEntityType = formData.entityType;
+      } else {
+        // Individual owner
+        ownerName = `${formData.firstName} ${formData.lastName}`;
+        ownerType = 'individual';
+      }
 
-        if (ownerError) {
-          throw new Error(`Owner creation failed: ${ownerError.message}`);
-        }
-        ownerId = owner.id;
+      const { data: owner, error: ownerError } = await supabase
+        .from('owners')
+        .insert({
+          name: ownerName,
+          owner_type: ownerType,
+          created_by_user_id: existingUserId,
+          entity_relationship: entityRelationship,
+          form_entity_name: formEntityName,
+          form_entity_type: formEntityType,
+          contact_info: {
+            email: formData.email,
+            phone: formData.phone
+          },
+          notes: formData.isTrustEntity ? `Entity: ${formData.entityName}` : null
+        })
+        .select()
+        .single();
 
-        // Update property with owner_id
-        const { error: propertyUpdateError } = await supabase
-          .from('properties')
-          .update({ owner_id: ownerId })
-          .eq('id', property.id);
+      if (ownerError) {
+        throw new Error(`Owner creation failed: ${ownerError.message}`);
+      }
 
-        if (propertyUpdateError) {
-          throw new Error(`Property owner update failed: ${propertyUpdateError.message}`);
-        }
+      // Update property with owner_id
+      const { error: propertyUpdateError } = await supabase
+        .from('properties')
+        .update({ owner_id: owner.id })
+        .eq('id', property.id);
+
+      if (propertyUpdateError) {
+        throw new Error(`Property owner update failed: ${propertyUpdateError.message}`);
       }
 
       // 5. Create application record for new property

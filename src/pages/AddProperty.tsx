@@ -134,6 +134,7 @@ const AddProperty = () => {
     return (
       <AddPropertyForm
         address={currentAddress}
+        googlePlacesData={googlePlacesData}
         existingProfile={profile}
         onComplete={handleFormComplete}
         onBack={() => setShowForm(false)}

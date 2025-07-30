@@ -6,9 +6,11 @@ import { ContactStep } from './form-steps/ContactStep';
 import { ReviewStep } from './form-steps/ReviewStep';
 import { FormData } from './MultiStepForm';
 import { useAddPropertySubmission } from '@/hooks/useAddPropertySubmission';
+import { GooglePlacesData } from './GooglePlacesAutocomplete';
 
 interface AddPropertyFormProps {
   address: string;
+  googlePlacesData: GooglePlacesData | null;
   existingProfile: any; // Profile data from database
   onComplete: () => void;
   onBack: () => void;
@@ -17,6 +19,7 @@ interface AddPropertyFormProps {
 
 const AddPropertyForm: React.FC<AddPropertyFormProps> = ({ 
   address, 
+  googlePlacesData,
   existingProfile, 
   onComplete,
   onBack,
@@ -31,7 +34,7 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [animationDirection, setAnimationDirection] = useState<'in' | 'out'>('in');
   
-  // Pre-populate form data from existing profile
+  // Pre-populate form data from existing profile and Google Places data
   const [formData, setFormData] = useState<FormData>({
     address: address,
     firstName: existingProfile.first_name || '',
@@ -42,6 +45,13 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     phone: existingProfile.phone || '',
     agreeToUpdates: existingProfile.agree_to_updates || true,
     includeAllProperties: false, // Default for new property
+    // Include Google Places data
+    placeId: googlePlacesData?.placeId,
+    formattedAddress: googlePlacesData?.formattedAddress || address,
+    addressComponents: googlePlacesData?.addressComponents,
+    latitude: googlePlacesData?.latitude,
+    longitude: googlePlacesData?.longitude,
+    county: googlePlacesData?.county,
   });
 
   const totalSteps = 3;

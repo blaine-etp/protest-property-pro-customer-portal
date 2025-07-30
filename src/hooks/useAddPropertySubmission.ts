@@ -50,7 +50,45 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
       }
 
       // Real Supabase implementation for non-mock users
-      // 1. Update existing profile with any changed personal info (except email/phone)
+      // 1. Find or create contact record for the user
+      let contactId = null;
+      const { data: existingContact, error: contactCheckError } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('email', formData.email)
+        .maybeSingle();
+
+      if (contactCheckError && contactCheckError.code !== 'PGRST116') {
+        throw new Error(`Contact check failed: ${contactCheckError.message}`);
+      }
+
+      if (existingContact) {
+        contactId = existingContact.id;
+        console.log('🔍 Using existing contact:', contactId);
+      } else {
+        // Create new contact record
+        const { data: newContact, error: contactError } = await supabase
+          .from('contacts')
+          .insert({
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            company: formData.isTrustEntity ? formData.entityName : null,
+            status: 'active',
+            source: 'property_signup'
+          })
+          .select()
+          .single();
+
+        if (contactError) {
+          throw new Error(`Contact creation failed: ${contactError.message}`);
+        }
+        contactId = newContact.id;
+        console.log('✅ Created new contact:', contactId);
+      }
+
+      // 2. Update existing profile with any changed personal info (except email/phone)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -66,11 +104,12 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         throw new Error(`Profile update failed: ${profileError.message}`);
       }
 
-      // 2. Create new property record
+      // 3. Create new property record
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
           user_id: existingUserId,
+          contact_id: contactId, // Link to contact
           situs_address: formData.address,
           parcel_number: formData.parcelNumber,
           estimated_savings: formData.estimatedSavings,
@@ -90,7 +129,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // 3. Create owner record if entity is involved
+      // 4. Create owner record if entity is involved
       let ownerId = null;
       if (formData.isTrustEntity && formData.entityName) {
         const { data: owner, error: ownerError } = await supabase
@@ -123,7 +162,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         }
       }
 
-      // 4. Create application record for new property
+      // 5. Create application record for new property
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
@@ -140,7 +179,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         throw new Error(`Application creation failed: ${applicationError.message}`);
       }
 
-      // 5. Create initial protest record for new property
+      // 6. Create initial protest record for new property
       const { data: protestData, error: protestError } = await supabase
         .from('protests')
         .insert({
@@ -156,7 +195,7 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         throw new Error(`Protest record creation failed: ${protestError.message}`);
       }
 
-      // 6. Create draft bill for the protest
+      // 7. Create draft bill for the protest
       const { error: billError } = await supabase
         .from('bills')
         .insert({

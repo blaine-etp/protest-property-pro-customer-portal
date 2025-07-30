@@ -15,9 +15,37 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
   const { toast } = useToast();
 
   const submitAddProperty = async (formData: FormData) => {
+    // Prevent double submissions
+    if (isSubmitting) {
+      console.log('🛑 Submission already in progress, ignoring duplicate call');
+      return { success: false, error: 'Submission already in progress' };
+    }
+    
     setIsSubmitting(true);
     
     try {
+      // Check for duplicate property address for this user
+      if (!existingUserId.startsWith('550e8400') || forceDatabaseSave) {
+        const { data: existingProperty, error: duplicateCheckError } = await supabase
+          .from('properties')
+          .select('id, situs_address')
+          .eq('user_id', existingUserId)
+          .eq('situs_address', formData.address)
+          .maybeSingle();
+
+        if (duplicateCheckError && duplicateCheckError.code !== 'PGRST116') {
+          throw new Error(`Duplicate check failed: ${duplicateCheckError.message}`);
+        }
+
+        if (existingProperty) {
+          toast({
+            title: "Property Already Exists",
+            description: "You already have a property at this address in your account.",
+            variant: "destructive",
+          });
+          return { success: false, error: 'Property already exists at this address' };
+        }
+      }
       // Check if we're using mock auth (mock user IDs have UUID format starting with 550e8400)
       // But skip mock mode if forceDatabaseSave is enabled
       const isMockMode = existingUserId.startsWith('550e8400') && !forceDatabaseSave;

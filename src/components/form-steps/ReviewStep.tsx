@@ -13,6 +13,7 @@ interface ReviewStepProps {
   onComplete: () => void;
   readOnlyFields?: string[];
   isAddPropertyMode?: boolean;
+  isSubmitting?: boolean;
 }
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({
@@ -22,6 +23,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   onComplete,
   readOnlyFields = [],
   isAddPropertyMode = false,
+  isSubmitting: propIsSubmitting = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -254,10 +256,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           type="button"
           variant="accent"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isAddPropertyMode ? propIsSubmitting : isSubmitting}
           className="flex-1"
         >
-          {isSubmitting ? "Submitting..." : "Submit Application"}
+          {(isAddPropertyMode ? propIsSubmitting : isSubmitting) ? "Submitting..." : "Submit Application"}
         </Button>
       </div>
     </div>

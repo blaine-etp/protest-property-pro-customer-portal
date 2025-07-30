@@ -215,13 +215,21 @@ const PropertyDetail = () => {
                 </div>
               )}
               
-              {!property.appeal_status?.auto_appeal_enabled && (
-                <div className="mt-4">
+              <div className="mt-4">
+                {property.appeal_status?.auto_appeal_enabled ? (
+                  <Button 
+                    onClick={handleToggleAutoAppeal} 
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    Deactivate Auto-Appeal
+                  </Button>
+                ) : (
                   <Button onClick={handleToggleAutoAppeal} className="bg-blue-600 hover:bg-blue-700">
                     Activate Auto-Appeal
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </CardContent>
           </Card>
 

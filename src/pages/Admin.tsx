@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import {
   Users,
   FileText,
@@ -8,10 +9,8 @@ import {
   BarChart3,
   Settings,
   Shield,
-  TrendingUp,
-  DollarSign,
-  FileCheck,
-  UserCheck,
+  Home,
+  Clock,
 } from "lucide-react";
 
 const adminTools = [
@@ -59,35 +58,36 @@ const adminTools = [
   },
 ];
 
-const quickStats = [
-  {
-    title: "Total Customers",
-    value: "1,234",
-    change: "+12%",
-    icon: UserCheck,
-  },
-  {
-    title: "Active Applications",
-    value: "89",
-    change: "+5%", 
-    icon: FileCheck,
-  },
-  {
-    title: "Monthly Revenue",
-    value: "$45,678",
-    change: "+23%",
-    icon: DollarSign,
-  },
-  {
-    title: "Success Rate",
-    value: "94.2%",
-    change: "+2.1%",
-    icon: TrendingUp,
-  },
-];
-
 export default function Admin() {
   const navigate = useNavigate();
+  const { stats, loading, error } = useDashboardStats();
+
+  const quickStats = stats ? [
+    {
+      title: "Number of Users",
+      value: stats.totalUsers.toLocaleString(),
+      change: stats.usersChange,
+      icon: Users,
+    },
+    {
+      title: "Number of Properties",
+      value: stats.totalProperties.toLocaleString(),
+      change: stats.propertiesChange,
+      icon: Home,
+    },
+    {
+      title: "Placeholder 1",
+      value: "--",
+      change: "0%",
+      icon: Clock,
+    },
+    {
+      title: "Placeholder 2",
+      value: "--",
+      change: "0%",
+      icon: Clock,
+    },
+  ] : [];
 
   return (
     <div className="space-y-6">
@@ -100,7 +100,9 @@ export default function Admin() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickStats.map((stat) => (
+        {loading && <div className="col-span-4 text-center text-slate-600">Loading stats...</div>}
+        {error && <div className="col-span-4 text-center text-red-600">Error loading stats: {error}</div>}
+        {!loading && !error && quickStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-600">

@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardStats {
-  totalContacts: number;
-  activeProperties: number;
-  openProtests: number;
-  generatedDocuments: number;
-  contactsChange: string;
+  totalUsers: number;
+  totalProperties: number;
+  placeholder1: number;
+  placeholder2: number;
+  usersChange: string;
   propertiesChange: string;
-  protestsChange: string;
-  documentsChange: string;
+  placeholder1Change: string;
+  placeholder2Change: string;
 }
 
 export function useDashboardStats() {
@@ -35,25 +35,18 @@ export function useDashboardStats() {
       const lastDayPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
       // Fetch current month data
-      const [contactsResult, propertiesResult, protestsResult, documentsResult] = await Promise.all([
-        supabase.from("contacts").select("id", { count: "exact", head: true }),
+      const [usersResult, propertiesResult] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("properties").select("id", { count: "exact", head: true }),
-        supabase
-          .from("protests")
-          .select("id", { count: "exact", head: true })
-          .in("appeal_status", ["pending", "in_progress", "submitted"]),
-        supabase.from("customer_documents").select("id", { count: "exact", head: true }),
       ]);
 
       // Fetch previous month data for comparison
       const [
-        prevContactsResult,
+        prevUsersResult,
         prevPropertiesResult,
-        prevProtestsResult,
-        prevDocumentsResult,
       ] = await Promise.all([
         supabase
-          .from("contacts")
+          .from("profiles")
           .select("id", { count: "exact", head: true })
           .lt("created_at", firstDayCurrentMonth.toISOString())
           .gte("created_at", firstDayPreviousMonth.toISOString()),
@@ -62,29 +55,14 @@ export function useDashboardStats() {
           .select("id", { count: "exact", head: true })
           .lt("created_at", firstDayCurrentMonth.toISOString())
           .gte("created_at", firstDayPreviousMonth.toISOString()),
-        supabase
-          .from("protests")
-          .select("id", { count: "exact", head: true })
-          .in("appeal_status", ["pending", "in_progress", "submitted"])
-          .lt("created_at", firstDayCurrentMonth.toISOString())
-          .gte("created_at", firstDayPreviousMonth.toISOString()),
-        supabase
-          .from("customer_documents")
-          .select("id", { count: "exact", head: true })
-          .lt("created_at", firstDayCurrentMonth.toISOString())
-          .gte("created_at", firstDayPreviousMonth.toISOString()),
       ]);
 
       // Check for errors
       const errors = [
-        contactsResult.error,
+        usersResult.error,
         propertiesResult.error,
-        protestsResult.error,
-        documentsResult.error,
-        prevContactsResult.error,
+        prevUsersResult.error,
         prevPropertiesResult.error,
-        prevProtestsResult.error,
-        prevDocumentsResult.error,
       ].filter(Boolean);
 
       if (errors.length > 0) {
@@ -92,32 +70,30 @@ export function useDashboardStats() {
       }
 
       // Calculate current counts
-      const totalContacts = contactsResult.count || 0;
-      const activeProperties = propertiesResult.count || 0;
-      const openProtests = protestsResult.count || 0;
-      const generatedDocuments = documentsResult.count || 0;
+      const totalUsers = usersResult.count || 0;
+      const totalProperties = propertiesResult.count || 0;
+      const placeholder1 = 0; // Placeholder for future metric
+      const placeholder2 = 0; // Placeholder for future metric
 
       // Calculate previous month counts
-      const prevContacts = prevContactsResult.count || 0;
+      const prevUsers = prevUsersResult.count || 0;
       const prevProperties = prevPropertiesResult.count || 0;
-      const prevProtests = prevProtestsResult.count || 0;
-      const prevDocuments = prevDocumentsResult.count || 0;
 
       // Calculate percentage changes
-      const contactsChange = calculatePercentageChange(totalContacts, prevContacts);
-      const propertiesChange = calculatePercentageChange(activeProperties, prevProperties);
-      const protestsChange = calculatePercentageChange(openProtests, prevProtests);
-      const documentsChange = calculatePercentageChange(generatedDocuments, prevDocuments);
+      const usersChange = calculatePercentageChange(totalUsers, prevUsers);
+      const propertiesChange = calculatePercentageChange(totalProperties, prevProperties);
+      const placeholder1Change = "0%"; // Placeholder
+      const placeholder2Change = "0%"; // Placeholder
 
       setStats({
-        totalContacts,
-        activeProperties,
-        openProtests,
-        generatedDocuments,
-        contactsChange,
+        totalUsers,
+        totalProperties,
+        placeholder1,
+        placeholder2,
+        usersChange,
         propertiesChange,
-        protestsChange,
-        documentsChange,
+        placeholder1Change,
+        placeholder2Change,
       });
     } catch (err) {
       console.error("Error fetching dashboard stats:", err);

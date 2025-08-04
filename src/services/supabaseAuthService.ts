@@ -17,7 +17,7 @@ export interface AuthProfile {
 }
 
 class SupabaseAuthService {
-  // Sign in with email and password
+  // Sign in with email and password (match mock service interface exactly)  
   async signInWithPassword({ email, password }: { email: string; password: string }) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -27,13 +27,22 @@ class SupabaseAuthService {
       
       if (error) {
         console.error('Sign in error:', error);
-        return { user: null, session: null, error };
+        return {
+          data: { user: null, session: null },
+          error: { message: error.message }
+        };
       }
       
-      return { user: data.user, session: data.session, error: null };
+      return {
+        data: { user: data.user, session: data.session },
+        error: null
+      };
     } catch (error) {
       console.error('Auth service error:', error);
-      return { user: null, session: null, error: error as AuthError };
+      return {
+        data: { user: null, session: null },
+        error: { message: (error as any)?.message || 'Authentication error' }
+      };
     }
   }
 
@@ -85,34 +94,35 @@ class SupabaseAuthService {
     }
   }
 
-  // Get current user
-  async getCurrentUser(): Promise<{ user: User | null; error: AuthError | null }> {
+  // Get current user (match mock service interface)
+  async getCurrentUser(): Promise<User | null> {
     try {
       const { data, error } = await supabase.auth.getUser();
       
       if (error) {
         console.error('Get user error:', error);
-        return { user: null, error };
+        return null;
       }
       
-      return { user: data.user, error: null };
+      return data.user;
     } catch (error) {
       console.error('Auth service error:', error);
-      return { user: null, error: error as AuthError };
+      return null;
     }
   }
 
-  // Auth state change listener
-  onAuthStateChange(callback: (event: string, session: Session | null) => void) {
+  // Auth state change listener (match mock service interface)
+  onAuthStateChange(callback: (user: User | null) => void) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      callback(event, session);
+      const user = session?.user ?? null;
+      callback(user);
     });
     
     return subscription;
   }
 
-  // Get user profile from profiles table
-  async getProfile(userId: string): Promise<{ profile: AuthProfile | null; error: any }> {
+  // Get user profile from profiles table (match mock service interface)
+  async getProfile(userId: string): Promise<{ data: AuthProfile | null; error: any }> {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -122,13 +132,13 @@ class SupabaseAuthService {
       
       if (error) {
         console.error('Get profile error:', error);
-        return { profile: null, error };
+        return { data: null, error };
       }
       
-      return { profile: data, error: null };
+      return { data, error: null };
     } catch (error) {
       console.error('Profile service error:', error);
-      return { profile: null, error };
+      return { data: null, error };
     }
   }
 }

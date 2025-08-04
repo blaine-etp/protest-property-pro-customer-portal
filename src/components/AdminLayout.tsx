@@ -207,7 +207,11 @@ export function AdminLayout() {
     });
 
     return () => {
-      unsubscribe();
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      } else {
+        unsubscribe.unsubscribe();
+      }
     };
   }, [navigate]);
 

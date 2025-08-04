@@ -33,7 +33,11 @@ export const Header = () => {
     });
 
     return () => {
-      unsubscribe();
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      } else {
+        unsubscribe.unsubscribe();
+      }
     };
   }, []);
 

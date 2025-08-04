@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 // =============================================================================
 // DEVELOPMENT MODE FLAG - REMOVE WHEN AUTHENTICATION IS READY
 // =============================================================================
-const DEVELOPMENT_MODE = true; // Set to false to re-enable authentication
+const DEVELOPMENT_MODE = false; // Set to false to re-enable authentication
 // =============================================================================
 
 const navigationItems = [
@@ -90,8 +90,13 @@ function AdminSidebar() {
       navigate("/");
       return;
     }
-    await authService.signOut();
-    navigate("/");
+    try {
+      await authService.signOut();
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/auth';
+    }
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -165,37 +170,62 @@ export function AdminLayout() {
 
   useEffect(() => {
     const checkAdminAccess = async () => {
-      // DEVELOPMENT MODE BYPASS - Skip authentication entirely
-      if (DEVELOPMENT_MODE) {
-        // Create mock user data for development
-        const mockUser = {
-          id: "dev-user-123",
-          email: "admin@dev.local",
-          user_metadata: {},
-          app_metadata: {},
-          aud: "authenticated",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          role: "authenticated",
-          email_confirmed_at: new Date().toISOString(),
-        } as User;
+      try {
+        // DEVELOPMENT MODE BYPASS - Skip authentication entirely
+        if (DEVELOPMENT_MODE) {
+          // Create mock user data for development
+          const mockUser = {
+            id: "dev-user-123",
+            email: "admin@dev.local",
+            user_metadata: {},
+            app_metadata: {},
+            aud: "authenticated",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            role: "authenticated",
+            email_confirmed_at: new Date().toISOString(),
+          } as User;
+          
+          setUser(mockUser);
+          setLoading(false);
+          return;
+        }
+
+        // Get current user and check authentication
+        const sessionResult = await authService.getSession();
+        const session = 'session' in sessionResult ? sessionResult.session : sessionResult.data?.session;
         
-        setUser(mockUser);
+        if (!session?.user) {
+          console.log('No session found, redirecting to auth');
+          navigate('/auth');
+          return;
+        }
+
+        // Get user profile to check permissions
+        const { data: profile } = await authService.getProfile(session.user.id);
+        
+        if (!profile) {
+          console.log('No profile found, redirecting to auth');
+          navigate('/auth');
+          return;
+        }
+
+        console.log('Profile permissions:', profile.permissions);
+        
+        // Check admin permissions
+        if (profile.permissions !== 'admin' && profile.permissions !== 'super_admin') {
+          console.log('Insufficient permissions, redirecting to customer portal');
+          navigate('/customer-portal');
+          return;
+        }
+
+        setUser(session.user);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        navigate('/auth');
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // Original authentication logic (disabled in development mode)
-      const currentUser = await authService.getCurrentUser();
-      
-      if (!currentUser) {
-        navigate("/auth");
-        return;
-      }
-
-      // In mock mode, assume user is admin
-      setUser(currentUser);
-      setLoading(false);
     };
 
     checkAdminAccess();

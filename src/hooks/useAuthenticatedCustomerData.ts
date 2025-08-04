@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { mockAuthService } from '@/services/mockAuthService';
-import { mockFormService } from '@/services/mockFormService';
+import { authService } from '@/services';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CustomerProfile {
@@ -44,7 +43,11 @@ export const useAuthenticatedCustomerData = () => {
 
       // Check if user is authenticated  
       console.log('🔍 Checking authentication...');
-      const { data: { session } } = await mockAuthService.getSession();
+      const sessionResult = await authService.getSession();
+      
+      // Handle different return types from mock vs supabase auth services
+      const session = 'session' in sessionResult ? sessionResult.session : sessionResult.data?.session;
+      
       console.log('🔍 Session result:', session);
       if (!session?.user) {
         console.log('🔍 No session or user found, session:', session);
@@ -53,13 +56,25 @@ export const useAuthenticatedCustomerData = () => {
       console.log('🔍 User authenticated:', session.user);
 
       // Fetch the profile for the authenticated user
-      const { data: profileData, error: profileError } = await mockAuthService.getProfile(session.user.id);
+      const { data: profileData, error: profileError } = await authService.getProfile(session.user.id);
 
       if (profileError || !profileData) {
         throw new Error('Profile not found');
       }
 
-      setProfile(profileData);
+      // Transform profile data to match CustomerProfile interface
+      const customerProfile: CustomerProfile = {
+        id: profileData.user_id, // Use user_id as the id field
+        user_id: profileData.user_id,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        email: profileData.email,
+        phone: profileData.phone,
+        lifetime_savings: profileData.lifetime_savings || 0,
+        is_authenticated: profileData.is_authenticated || true
+      };
+
+      setProfile(customerProfile);
 
       // Fetch properties for this user from Supabase
       const { data: propertiesData, error: propertiesError } = await supabase

@@ -264,7 +264,7 @@ const CustomerPortal = () => {
                         <div className="pt-4">
                           <Collapsible defaultOpen={properties.length === 1}>
                             <div className="flex items-center justify-between py-2 border-t">
-                              <h4 className="font-medium">PROPERTY TAXES</h4>
+                              <h4 className="font-medium">Property Details</h4>
                               <CollapsibleTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                   <ChevronDown className="h-4 w-4" />

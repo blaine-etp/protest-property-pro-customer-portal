@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { mockAuthService } from '@/services/mockAuthService';
+
 import AddPropertyForm from '@/components/AddPropertyForm';
 import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,48 +24,33 @@ const AddProperty = () => {
   const [loading, setLoading] = useState(true);
   const [googlePlacesData, setGooglePlacesData] = useState<GooglePlacesData | null>(null);
   
-  // Check URL parameter to enable database mode
-  const urlParams = new URLSearchParams(window.location.search);
-  const forceDatabaseSave = urlParams.get('database') === 'true';
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // If we're in database mode, fetch the real database profile
-        if (forceDatabaseSave) {
-          const { data: profileData, error } = await supabase
-            .from('profiles')
-            .select('user_id, first_name, last_name, email, phone, is_trust_entity, agree_to_updates, role')
-            .eq('user_id', '61075f98-529a-4c52-91c7-ee6a696bfa21')
-            .single();
-
-          if (error) {
-            console.error('Error fetching database profile:', error);
-            navigate('/auth');
-            return;
-          }
-
-          setProfile(profileData);
-        } else {
-          // Use regular mock auth flow
-          const sessionResult = await mockAuthService.getSession();
-          if (sessionResult?.data?.session?.user) {
-            const user = sessionResult.data.session.user;
-            const userData = {
-              user_id: user.id,
-              first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
-              last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
-              email: user.email,
-              phone: user.email === 'customer@example.com' ? '(555) 123-4567' : '(555) 987-6543',
-              role: 'homeowner',
-              is_trust_entity: false,
-              agree_to_updates: true
-            };
-            setProfile(userData);
-          } else {
-            navigate('/auth');
-          }
+        // Get current session from Supabase auth
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData.session) {
+          console.log('No authenticated session found, redirecting to auth');
+          navigate('/auth');
+          return;
         }
+
+        // Get user profile from profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, first_name, last_name, email, phone, is_trust_entity, agree_to_updates, role')
+          .eq('user_id', sessionData.session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          navigate('/auth');
+          return;
+        }
+
+        setProfile(profileData);
       } catch (error) {
         console.error('Error loading profile:', error);
         navigate('/auth');
@@ -75,7 +60,7 @@ const AddProperty = () => {
     };
 
     loadProfile();
-  }, [navigate, forceDatabaseSave]);
+  }, [navigate]);
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
@@ -141,7 +126,7 @@ const AddProperty = () => {
         existingProfile={profile}
         onComplete={handleFormComplete}
         onBack={() => setShowForm(false)}
-        forceDatabaseSave={forceDatabaseSave}
+        
       />
     );
   }
@@ -165,11 +150,6 @@ const AddProperty = () => {
               <h1 className="text-2xl font-bold text-foreground">Add Property</h1>
               <p className="text-muted-foreground">
                 Add another property to your account
-                {forceDatabaseSave && (
-                  <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                    Database Mode
-                  </span>
-                )}
               </p>
             </div>
           </div>

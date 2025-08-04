@@ -213,7 +213,7 @@ export function AdminLayout() {
         console.log('Profile permissions:', profile.permissions);
         
         // Check admin permissions
-        if (profile.permissions !== 'admin' && profile.permissions !== 'super_admin') {
+        if (profile.permissions !== 'administrator') {
           console.log('Insufficient permissions, redirecting to customer portal');
           navigate('/customer-portal');
           return;

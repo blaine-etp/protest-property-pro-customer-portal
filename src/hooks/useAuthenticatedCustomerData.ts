@@ -69,6 +69,7 @@ export const useAuthenticatedCustomerData = () => {
           situs_address,
           parcel_number,
           estimated_savings,
+          auto_appeal_enabled,
           protests (
             appeal_status,
             exemption_status,
@@ -90,9 +91,14 @@ export const useAuthenticatedCustomerData = () => {
         appeal_status: property.protests?.[0] ? {
           appeal_status: property.protests[0].appeal_status,
           exemption_status: property.protests[0].exemption_status,
-          auto_appeal_enabled: false, // Default value since it's not stored in protests table
+          auto_appeal_enabled: property.auto_appeal_enabled, // Use the database field
           savings_amount: property.protests[0].savings_amount
-        } : undefined
+        } : {
+          appeal_status: 'pending',
+          exemption_status: 'pending',
+          auto_appeal_enabled: property.auto_appeal_enabled, // Use the database field
+          savings_amount: 0
+        }
       }));
 
       setProperties(transformedProperties);
@@ -111,9 +117,20 @@ export const useAuthenticatedCustomerData = () => {
 
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
 
-      // Since auto_appeal_enabled is not currently stored in the database,
-      // we'll just update the local state for now
-      console.log('Auto appeal toggle requested for property:', propertyId);
+      console.log('Auto appeal toggle requested for property:', propertyId, 'new status:', newAutoAppealStatus);
+      
+      // Update the database first
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({ auto_appeal_enabled: newAutoAppealStatus })
+        .eq('id', propertyId);
+
+      if (updateError) {
+        console.error('Error updating auto appeal in database:', updateError);
+        throw new Error('Failed to update auto appeal setting');
+      }
+
+      console.log('✅ Auto appeal status updated in database successfully');
       
       // Update local state
       setProperties(prev => prev.map(p => 

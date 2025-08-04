@@ -10,6 +10,7 @@ import * as z from 'zod';
 import { mockAuthService } from '@/services/mockAuthService';
 import AddPropertyForm from '@/components/AddPropertyForm';
 import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
+import { supabase } from '@/integrations/supabase/client';
 
 const addressSchema = z.object({
   address: z.string().min(1, 'Address is required'),
@@ -30,19 +31,21 @@ const AddProperty = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // If we're in database mode, use the real database user
+        // If we're in database mode, fetch the real database profile
         if (forceDatabaseSave) {
-          const userData = {
-            user_id: '61075f98-529a-4c52-91c7-ee6a696bfa21', // Real database user ID
-            first_name: 'blaine',
-            last_name: 'smith',
-            email: 'rblainesmith+test@gmail.com',
-            phone: '(555) 123-4567',
-            role: 'homeowner',
-            is_trust_entity: false,
-            agree_to_updates: true
-          };
-          setProfile(userData);
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('user_id, first_name, last_name, email, phone, is_trust_entity, agree_to_updates, role')
+            .eq('user_id', '61075f98-529a-4c52-91c7-ee6a696bfa21')
+            .single();
+
+          if (error) {
+            console.error('Error fetching database profile:', error);
+            navigate('/auth');
+            return;
+          }
+
+          setProfile(profileData);
         } else {
           // Use regular mock auth flow
           const sessionResult = await mockAuthService.getSession();

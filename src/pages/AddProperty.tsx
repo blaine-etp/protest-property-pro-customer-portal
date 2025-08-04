@@ -10,7 +10,7 @@ import * as z from 'zod';
 
 import AddPropertyForm from '@/components/AddPropertyForm';
 import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
-import { supabase } from '@/integrations/supabase/client';
+import { authService } from '@/services';
 
 const addressSchema = z.object({
   address: z.string().min(1, 'Address is required'),
@@ -28,23 +28,19 @@ const AddProperty = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // Get current session from Supabase auth
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        // Get current user using authService
+        const currentUser = await authService.getCurrentUser();
         
-        if (sessionError || !sessionData.session) {
-          console.log('No authenticated session found, redirecting to auth');
+        if (!currentUser) {
+          console.log('No authenticated user found, redirecting to auth');
           navigate('/auth');
           return;
         }
 
-        // Get user profile from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('user_id, first_name, last_name, email, phone, is_trust_entity, agree_to_updates, role')
-          .eq('user_id', sessionData.session.user.id)
-          .single();
+        // Get user profile from profiles table using authService
+        const { data: profileData, error: profileError } = await authService.getProfile(currentUser.id);
 
-        if (profileError) {
+        if (profileError || !profileData) {
           console.error('Error fetching profile:', profileError);
           navigate('/auth');
           return;

@@ -92,8 +92,8 @@ class MockAuthService {
         {
           id: '61075f98-529a-4c52-91c7-ee6a696bfa22',
           user_id: '61075f98-529a-4c52-91c7-ee6a696bfa21',
-          first_name: 'dingus',
-          last_name: 'moist beard',
+          first_name: 'blaine',
+          last_name: 'smith',
           email: 'rblainesmith+test@gmail.com',
           permissions: 'customer',
           is_authenticated: true,

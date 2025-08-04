@@ -7,9 +7,10 @@ import { mockAuthService } from '@/services/mockAuthService';
 interface AddPropertySubmissionProps {
   existingUserId: string;
   isTokenAccess: boolean;
+  forceDatabaseSave?: boolean;
 }
 
-export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddPropertySubmissionProps) => {
+export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceDatabaseSave = false }: AddPropertySubmissionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -24,27 +25,59 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess }: AddP
     
     try {
       // Check for duplicate property address for this user
-      const { data: existingProperty, error: duplicateCheckError } = await supabase
-        .from('properties')
-        .select('id, situs_address')
-        .eq('user_id', existingUserId)
-        .eq('situs_address', formData.address)
-        .maybeSingle();
+      if (!existingUserId.startsWith('550e8400') || forceDatabaseSave) {
+        const { data: existingProperty, error: duplicateCheckError } = await supabase
+          .from('properties')
+          .select('id, situs_address')
+          .eq('user_id', existingUserId)
+          .eq('situs_address', formData.address)
+          .maybeSingle();
 
-      if (duplicateCheckError && duplicateCheckError.code !== 'PGRST116') {
-        throw new Error(`Duplicate check failed: ${duplicateCheckError.message}`);
+        if (duplicateCheckError && duplicateCheckError.code !== 'PGRST116') {
+          throw new Error(`Duplicate check failed: ${duplicateCheckError.message}`);
+        }
+
+        if (existingProperty) {
+          toast({
+            title: "Property Already Exists",
+            description: "You already have a property at this address in your account.",
+            variant: "destructive",
+          });
+          return { success: false, error: 'Property already exists at this address' };
+        }
       }
-
-      if (existingProperty) {
-        toast({
-          title: "Property Already Exists",
-          description: "You already have a property at this address in your account.",
-          variant: "destructive",
+      // Check if we're using mock auth (mock user IDs have UUID format starting with 550e8400)
+      // But skip mock mode if forceDatabaseSave is enabled
+      const isMockMode = existingUserId.startsWith('550e8400') && !forceDatabaseSave;
+      
+      if (isMockMode) {
+        // Simulate mock property addition
+        console.log('🎭 Mock mode: Simulating property addition...');
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Mock successful property creation
+        const mockPropertyId = `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12).padStart(12, '0')}`;
+        
+        console.log('🎭 Mock property created:', {
+          id: mockPropertyId,
+          address: formData.address,
+          user_id: existingUserId
         });
-        return { success: false, error: 'Property already exists at this address' };
+        
+        toast({
+          title: "Property Added Successfully",
+          description: "Your new property has been added to your account!",
+        });
+
+        return { 
+          success: true, 
+          propertyId: mockPropertyId 
+        };
       }
 
-      // Real Supabase implementation
+      // Real Supabase implementation for non-mock users
       // 1. Find or create contact record for the user
       let contactId = null;
       const { data: existingContact, error: contactCheckError } = await supabase

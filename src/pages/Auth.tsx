@@ -37,9 +37,9 @@ export default function Auth() {
         });
         
         // Check user permissions to determine redirect
-        const { data: profile, error: profileError } = await authService.getProfile(data.user.id);
+        const { data: profile } = await authService.getProfile(data.user.id);
           
-        if (!profileError && profile?.permissions === 'administrator') {
+        if (profile?.permissions === 'administrator') {
           navigate('/admin');
         } else {
           navigate('/customer-portal');

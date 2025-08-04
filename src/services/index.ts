@@ -9,13 +9,12 @@ import { mockAuthService } from './mockAuthService';
 import { mockFormService } from './mockFormService';
 import { mockStorageService } from './mockStorageService';
 import { supabaseStorageService } from './supabaseStorageService';
-import { supabaseAuthService } from './supabaseAuthService';
-import { supabaseFormService } from './supabaseFormService';
 
 // Master configuration flags - set to true when real integrations are ready
-const USE_SUPABASE_DATA = true; // Enable Supabase for data
-const USE_SUPABASE_AUTH = true; // Enable Supabase authentication
-const USE_SUPABASE_FORMS = true; // Enable Supabase form submissions
+const USE_AWS_DATA = false;
+const USE_SUPABASE_DATA = true; // Enable Supabase for bills
+const USE_SUPABASE_AUTH = false;
+const USE_SUPABASE_FORMS = false;
 const USE_SUPABASE_STORAGE = true;
 
 // AWS Configuration (to be set when ready)
@@ -24,8 +23,11 @@ const AWS_API_KEY = 'your-aws-api-key';
 
 // Data service factory
 function createDataService(): DataService {
-  if (USE_SUPABASE_DATA) {
-    console.log('🔗 Using Supabase Data Service');
+  if (USE_AWS_DATA) {
+    console.log('🔗 Using AWS Data Service');
+    return new AWSDataService(AWS_API_URL, AWS_API_KEY);
+  } else if (USE_SUPABASE_DATA) {
+    console.log('🔗 Using Supabase Data Service for Bills');
     return new SupabaseDataService();
   } else {
     console.log('🎭 Using Mock Data Service');
@@ -40,7 +42,8 @@ export const dataService = createDataService();
 function createAuthService() {
   if (USE_SUPABASE_AUTH) {
     console.log('🔗 Using Supabase Auth Service');
-    return supabaseAuthService;
+    // Return supabase auth when ready
+    throw new Error('Supabase auth not yet configured');
   } else {
     console.log('🎭 Using Mock Auth Service');
     return mockAuthService;
@@ -51,7 +54,8 @@ function createAuthService() {
 function createFormService() {
   if (USE_SUPABASE_FORMS) {
     console.log('🔗 Using Supabase Form Service');
-    return supabaseFormService;
+    // Return supabase form service when ready
+    throw new Error('Supabase forms not yet configured');
   } else {
     console.log('🎭 Using Mock Form Service');
     return mockFormService;
@@ -82,15 +86,15 @@ export { mockAuthService } from './mockAuthService';
 export { mockFormService } from './mockFormService';
 export { mockStorageService } from './mockStorageService';
 export { supabaseStorageService } from './supabaseStorageService';
-export { supabaseAuthService } from './supabaseAuthService';
-export { supabaseFormService } from './supabaseFormService';
 export * from './types';
 
 // Configuration information
 export const getServiceInfo = () => ({
   data: {
+    isUsingAWS: USE_AWS_DATA,
     isUsingSupabase: USE_SUPABASE_DATA,
-    source: USE_SUPABASE_DATA ? 'Supabase Database' : 'Mock Data'
+    source: USE_AWS_DATA ? 'AWS Database' : USE_SUPABASE_DATA ? 'Supabase Database' : 'Mock Data',
+    apiUrl: USE_AWS_DATA ? AWS_API_URL : 'N/A'
   },
   auth: {
     isUsingSupabase: USE_SUPABASE_AUTH,

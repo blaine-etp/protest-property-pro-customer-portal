@@ -846,7 +846,6 @@ export type Database = {
       properties: {
         Row: {
           assessed_value: number | null
-          auto_appeal_enabled: boolean
           contact_id: string | null
           county: string | null
           county_pid: string | null
@@ -869,7 +868,6 @@ export type Database = {
         }
         Insert: {
           assessed_value?: number | null
-          auto_appeal_enabled?: boolean
           contact_id?: string | null
           county?: string | null
           county_pid?: string | null
@@ -892,7 +890,6 @@ export type Database = {
         }
         Update: {
           assessed_value?: number | null
-          auto_appeal_enabled?: boolean
           contact_id?: string | null
           county?: string | null
           county_pid?: string | null

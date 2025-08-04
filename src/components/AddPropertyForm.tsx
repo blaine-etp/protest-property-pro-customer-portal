@@ -14,6 +14,7 @@ interface AddPropertyFormProps {
   existingProfile: any; // Profile data from database
   onComplete: () => void;
   onBack: () => void;
+  forceDatabaseSave?: boolean;
 }
 
 const AddPropertyForm: React.FC<AddPropertyFormProps> = ({ 
@@ -22,10 +23,12 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
   existingProfile, 
   onComplete,
   onBack,
+  forceDatabaseSave = false
 }) => {
   const { submitAddProperty, isSubmitting } = useAddPropertySubmission({
     existingUserId: existingProfile.user_id,
-    isTokenAccess: false,
+    isTokenAccess: false, // Using regular mock auth, not token access
+    forceDatabaseSave
   });
   const [currentStep, setCurrentStep] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -149,6 +152,11 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
             <h1 className="text-2xl font-bold text-foreground">Add Property</h1>
             <p className="text-muted-foreground">
               Complete the details for your new property
+              {forceDatabaseSave && (
+                <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                  Database Mode
+                </span>
+              )}
             </p>
           </div>
         </div>

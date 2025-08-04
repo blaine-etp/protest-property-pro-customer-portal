@@ -7,10 +7,9 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
+import { mockAuthService } from '@/services/mockAuthService';
 import AddPropertyForm from '@/components/AddPropertyForm';
 import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
-import { authService } from '@/services';
 
 const addressSchema = z.object({
   address: z.string().min(1, 'Address is required'),
@@ -24,29 +23,46 @@ const AddProperty = () => {
   const [loading, setLoading] = useState(true);
   const [googlePlacesData, setGooglePlacesData] = useState<GooglePlacesData | null>(null);
   
+  // Check URL parameter to enable database mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceDatabaseSave = urlParams.get('database') === 'true';
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // Get current user using authService
-        const currentUser = await authService.getCurrentUser();
-        
-        if (!currentUser) {
-          console.log('No authenticated user found, redirecting to auth');
-          navigate('/auth');
-          return;
+        // If we're in database mode, use the real database user
+        if (forceDatabaseSave) {
+          const userData = {
+            user_id: '61075f98-529a-4c52-91c7-ee6a696bfa21', // Real database user ID
+            first_name: 'blaine',
+            last_name: 'smith',
+            email: 'rblainesmith+test@gmail.com',
+            phone: '(555) 123-4567',
+            role: 'homeowner',
+            is_trust_entity: false,
+            agree_to_updates: true
+          };
+          setProfile(userData);
+        } else {
+          // Use regular mock auth flow
+          const sessionResult = await mockAuthService.getSession();
+          if (sessionResult?.data?.session?.user) {
+            const user = sessionResult.data.session.user;
+            const userData = {
+              user_id: user.id,
+              first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
+              last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
+              email: user.email,
+              phone: user.email === 'customer@example.com' ? '(555) 123-4567' : '(555) 987-6543',
+              role: 'homeowner',
+              is_trust_entity: false,
+              agree_to_updates: true
+            };
+            setProfile(userData);
+          } else {
+            navigate('/auth');
+          }
         }
-
-        // Get user profile from profiles table using authService
-        const { data: profileData, error: profileError } = await authService.getProfile(currentUser.id);
-
-        if (profileError || !profileData) {
-          console.error('Error fetching profile:', profileError);
-          navigate('/auth');
-          return;
-        }
-
-        setProfile(profileData);
       } catch (error) {
         console.error('Error loading profile:', error);
         navigate('/auth');
@@ -56,7 +72,7 @@ const AddProperty = () => {
     };
 
     loadProfile();
-  }, [navigate]);
+  }, [navigate, forceDatabaseSave]);
 
   const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
@@ -122,7 +138,7 @@ const AddProperty = () => {
         existingProfile={profile}
         onComplete={handleFormComplete}
         onBack={() => setShowForm(false)}
-        
+        forceDatabaseSave={forceDatabaseSave}
       />
     );
   }
@@ -146,6 +162,11 @@ const AddProperty = () => {
               <h1 className="text-2xl font-bold text-foreground">Add Property</h1>
               <p className="text-muted-foreground">
                 Add another property to your account
+                {forceDatabaseSave && (
+                  <span className="ml-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                    Database Mode
+                  </span>
+                )}
               </p>
             </div>
           </div>

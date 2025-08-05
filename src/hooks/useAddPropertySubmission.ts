@@ -244,6 +244,12 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
       }
 
       // 5. Create application record for new property
+      console.log('📝 Creating application record with signature data:', {
+        hasSignature: !!formData.signature,
+        signatureLength: formData.signature?.length || 0,
+        isOwnerVerified: formData.isOwnerVerified
+      });
+      
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({

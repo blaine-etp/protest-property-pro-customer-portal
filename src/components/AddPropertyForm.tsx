@@ -87,11 +87,23 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
     }
   };
 
-  const handleFormComplete = async (formData: FormData) => {
+  const handleFormComplete = async (signature?: string) => {
     // Prevent multiple submissions
     if (isSubmitting) return;
     
-    const result = await submitAddProperty(formData);
+    console.log('🖊️ AddPropertyForm received signature:', signature ? 'Present' : 'Missing');
+    
+    // Merge signature into form data if provided
+    const finalFormData = signature 
+      ? { ...formData, signature } 
+      : formData;
+    
+    console.log('📋 Final form data for submission:', {
+      hasSignature: !!finalFormData.signature,
+      signatureLength: finalFormData.signature?.length || 0
+    });
+    
+    const result = await submitAddProperty(finalFormData);
     if (result.success) {
       onComplete();
     }
@@ -119,18 +131,18 @@ const AddPropertyForm: React.FC<AddPropertyFormProps> = ({
             readOnlyFields={['email', 'phone']} // Only email and phone are read-only
           />
         );
-      case 3:
-        return (
-          <ReviewStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onPrev={prevStep}
-            onComplete={() => handleFormComplete(formData)}
-            readOnlyFields={['email', 'phone']} // Only email and phone are read-only
-            isAddPropertyMode={true}
-            isSubmitting={isSubmitting}
-          />
-        );
+        case 3:
+          return (
+            <ReviewStep
+              formData={formData}
+              updateFormData={updateFormData}
+              onPrev={prevStep}
+              onComplete={handleFormComplete}
+              readOnlyFields={['email', 'phone']} // Only email and phone are read-only
+              isAddPropertyMode={true}
+              isSubmitting={isSubmitting}
+            />
+          );
       default:
         return null;
     }

@@ -10,7 +10,7 @@ interface ReviewStepProps {
   formData: FormData;
   updateFormData: (data: Partial<FormData>) => void;
   onPrev: () => void;
-  onComplete: () => void;
+  onComplete: (signature?: string) => void;
   readOnlyFields?: string[];
   isAddPropertyMode?: boolean;
   isSubmitting?: boolean;
@@ -95,8 +95,9 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       updateFormData(updatedFormData);
 
       if (isAddPropertyMode) {
-        // For add property mode, use the onComplete callback which will handle the submission
-        onComplete();
+        // In add property mode, pass signature directly to avoid race condition
+        console.log('🖊️ Passing signature to completion handler:', signatureDataURL ? 'Present' : 'Missing');
+        onComplete(signatureDataURL);
       } else {
         // New simplified signup flow
         const result = await submitFormData(updatedFormData);

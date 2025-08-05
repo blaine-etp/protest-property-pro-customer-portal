@@ -131,7 +131,8 @@ serve(async (req) => {
         situs_address,
         include_all_properties,
         owner_id,
-        contact_id
+        contact_id,
+        county
       `)
       .eq('id', propertyId)
       .maybeSingle();
@@ -269,6 +270,12 @@ serve(async (req) => {
     const currentDate = new Date().toLocaleDateString('en-US');
     tryFillField(['date', 'Date', 'today', 'current_date', 'Date_af_date'], currentDate);
 
+    // Fill Appraisal District Name with county
+    const county = propertyData.county || '';
+    if (county) {
+      tryFillField(['Appraisal District Name'], county);
+    }
+
     // Determine ownership type and fill appropriate fields
     const isEntityOwner = ownerData && ownerData.owner_type && ownerData.owner_type !== 'individual';
     
@@ -311,9 +318,11 @@ serve(async (req) => {
       console.log('Processing individual ownership...');
       const fullName = `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim();
       if (fullName) {
+        // Fill both "Name" and "Name of Property Owner" fields for individual ownership
+        tryFillField(['Name'], fullName);
         tryFillField(['Name of Property Owner'], fullName);
       }
-      console.log('✓ Individual ownership field filled:', { fullName });
+      console.log('✓ Individual ownership fields filled:', { fullName });
     }
 
     // Fill property checkboxes using exact field names

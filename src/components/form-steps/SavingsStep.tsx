@@ -71,7 +71,7 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'homeowner':
-        return 'Home Owner';
+        return 'Property Owner';
       case 'property_manager':
         return 'Property Manager';
       case 'authorized_person':
@@ -282,7 +282,7 @@ export const SavingsStep: React.FC<SavingsStepProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="homeowner">Home Owner</SelectItem>
+                      <SelectItem value="homeowner">Property Owner</SelectItem>
                       <SelectItem value="property_manager">Property Manager</SelectItem>
                       <SelectItem value="authorized_person">Person Authorized by Home Owner</SelectItem>
                     </SelectContent>

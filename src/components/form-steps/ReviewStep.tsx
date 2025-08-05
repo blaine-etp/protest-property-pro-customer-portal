@@ -118,7 +118,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'homeowner':
-        return 'Home Owner';
+        return 'Property Owner';
       case 'property_manager':
         return 'Property Manager';
       case 'authorized_person':

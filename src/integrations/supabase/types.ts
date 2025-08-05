@@ -716,6 +716,57 @@ export type Database = {
           },
         ]
       }
+      evidence_uploads: {
+        Row: {
+          category: string | null
+          contact_id: string | null
+          content_type: string
+          created_at: string
+          description: string | null
+          file_path: string
+          file_size: number
+          id: string
+          original_filename: string
+          property_id: string
+          protest_id: string | null
+          tax_year: number
+          updated_at: string
+          uploaded_at: string
+        }
+        Insert: {
+          category?: string | null
+          contact_id?: string | null
+          content_type: string
+          created_at?: string
+          description?: string | null
+          file_path: string
+          file_size: number
+          id?: string
+          original_filename: string
+          property_id: string
+          protest_id?: string | null
+          tax_year?: number
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Update: {
+          category?: string | null
+          contact_id?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          file_path?: string
+          file_size?: number
+          id?: string
+          original_filename?: string
+          property_id?: string
+          protest_id?: string | null
+          tax_year?: number
+          updated_at?: string
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
       owners: {
         Row: {
           contact_info: Json | null

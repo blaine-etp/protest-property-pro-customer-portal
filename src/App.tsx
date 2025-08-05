@@ -39,6 +39,7 @@ import Resources from "./pages/Resources";
 import { CountyPage } from "./pages/CountyPage";
 import { BlogPost } from "./pages/BlogPost";
 import CountyTemplate from "./pages/CountyTemplate";
+import EvidenceUpload from "./pages/EvidenceUpload";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
           <Route path="/refer-friend" element={<ReferFriend />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/multi-property-contact" element={<MultiPropertyContact />} />
+          <Route path="/property/:propertyId/evidence" element={<EvidenceUpload />} />
           <Route path="/protest/:protestId" element={<ProtestDetail />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin" element={<AdminLayout />}>

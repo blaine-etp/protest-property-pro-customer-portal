@@ -29,6 +29,7 @@ import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerDa
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services';
 import DocumentsSection from '@/components/DocumentsSection';
+import { EvidenceSection } from '@/components/evidence/EvidenceSection';
 
 const CustomerPortal = () => {
   const navigate = useNavigate();
@@ -338,6 +339,20 @@ const CustomerPortal = () => {
                                   <div className="text-sm text-muted-foreground">
                                     No exemptions currently active for this property.
                                   </div>
+                                </CollapsibleContent>
+                              </Collapsible>
+
+                              {/* Evidence Section */}
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                                    <span className="font-medium">Evidence</span>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                                </CollapsibleTrigger>
+                                
+                                <CollapsibleContent className="pt-3">
+                                  <EvidenceSection propertyId={property.id} />
                                 </CollapsibleContent>
                               </Collapsible>
 

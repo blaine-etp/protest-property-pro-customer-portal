@@ -18,8 +18,10 @@ import {
   Gavel,
   Download,
   ExternalLink,
+  Camera,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { EvidenceSection } from "@/components/evidence/EvidenceSection";
 
 export default function AdminPropertyDetail() {
   const { propertyId } = useParams();
@@ -363,6 +365,19 @@ export default function AdminPropertyDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Evidence Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Camera className="h-5 w-5 text-purple-500" />
+              <h3 className="font-semibold">Property Evidence</h3>
+            </div>
+            <EvidenceSection propertyId={propertyId!} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Documents Section */}
       <Card>

@@ -25,7 +25,7 @@ export default function AdminPropertyDetail() {
   const { propertyId } = useParams();
   const navigate = useNavigate();
   const [propertyDetails, setPropertyDetails] = useState<any | null>(null);
-  const [documentData, setDocumentData] = useState<any | null>(null);
+  const [documentsData, setDocumentsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,23 +79,20 @@ export default function AdminPropertyDetail() {
       if (error) throw error;
       setPropertyDetails(data);
 
-      // Fetch associated document through owner relationship
-      if (data?.owner_id) {
-        const { data: docData, error: docError } = await supabase
-          .from('customer_documents')
-          .select(`
-            *,
-            owners(name),
-            contacts(first_name, last_name)
-          `)
-          .eq('owner_id', data.owner_id)
-          .maybeSingle();
+      // Fetch associated documents by property_id
+      const { data: docData, error: docError } = await supabase
+        .from('customer_documents')
+        .select(`
+          *,
+          owners(name),
+          contacts(first_name, last_name)
+        `)
+        .eq('property_id', id);
 
-        if (docError) {
-          console.error('Failed to load document:', docError);
-        } else {
-          setDocumentData(docData);
-        }
+      if (docError) {
+        console.error('Failed to load documents:', docError);
+      } else {
+        setDocumentsData(docData || []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load property details');
@@ -376,62 +373,68 @@ export default function AdminPropertyDetail() {
               <h3 className="font-semibold">Associated Documents</h3>
             </div>
             
-            {documentData ? (
+            {documentsData.length > 0 ? (
               <div className="space-y-3">
-                <div 
-                  className="p-4 bg-slate-50 rounded-lg border cursor-pointer hover:bg-slate-100 transition-colors"
-                  onClick={() => navigate(`/admin/document/${documentData.id}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {documentData.document_type.toUpperCase()}
-                        </Badge>
-                        <Badge variant={documentData.status === 'generated' ? 'default' : 'secondary'}>
-                          {documentData.status}
-                        </Badge>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium">
-                          {documentData.document_type === 'form-50-162' ? 'Form 50-162' : documentData.document_type}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Generated on {new Date(documentData.generated_at).toLocaleDateString()}
-                        </p>
-                      </div>
-
-                      {documentData.owners && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Owner</p>
-                          <p className="text-sm font-medium">{documentData.owners.name}</p>
+                {documentsData.map((document) => (
+                  <div 
+                    key={document.id}
+                    className="p-4 bg-slate-50 rounded-lg border cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => navigate(`/admin/document/${document.id}`)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {document.document_type.toUpperCase()}
+                          </Badge>
+                          <Badge variant={document.status === 'generated' ? 'default' : 'secondary'}>
+                            {document.status}
+                          </Badge>
                         </div>
-                      )}
-
-                      {documentData.contacts && (
+                        
                         <div>
-                          <p className="text-xs text-muted-foreground">Contact</p>
-                          <p className="text-sm font-medium">
-                            {documentData.contacts.first_name} {documentData.contacts.last_name}
+                          <p className="font-medium">
+                            {document.document_type === 'form-50-162' ? 'Form 50-162' : document.document_type}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Generated on {new Date(document.generated_at).toLocaleDateString()}
                           </p>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDownloadDocument(documentData.file_path)}
-                        className="flex items-center gap-1"
-                      >
-                        <Download className="h-3 w-3" />
-                        Download
-                      </Button>
+                        {document.owners && (
+                          <div>
+                            <p className="text-xs text-muted-foreground">Owner</p>
+                            <p className="text-sm font-medium">{document.owners.name}</p>
+                          </div>
+                        )}
+
+                        {document.contacts && (
+                          <div>
+                            <p className="text-xs text-muted-foreground">Contact</p>
+                            <p className="text-sm font-medium">
+                              {document.contacts.first_name} {document.contacts.last_name}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadDocument(document.file_path);
+                          }}
+                          className="flex items-center gap-1"
+                        >
+                          <Download className="h-3 w-3" />
+                          Download
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             ) : (
               <div className="p-4 bg-slate-50 rounded-lg border">

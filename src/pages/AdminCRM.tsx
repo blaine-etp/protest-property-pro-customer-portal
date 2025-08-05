@@ -46,6 +46,7 @@ import { DocumentsSection } from "@/components/crm/DocumentsSection";
 import { BillingSection } from "@/components/crm/BillingSection";
 import { OwnersSection } from "@/components/crm/OwnersSection";
 import { RelationshipViewer } from "@/components/crm/RelationshipViewer";
+import { UserDeleteButton } from "@/components/UserDeleteButton";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 export default function AdminCRM() {
@@ -128,10 +129,13 @@ export default function AdminCRM() {
             Comprehensive customer relationship and property tax protest management
           </p>
         </div>
-        <Button>
-          <Users className="h-4 w-4 mr-2" />
-          Add New Contact
-        </Button>
+        <div className="flex gap-2">
+          <UserDeleteButton />
+          <Button>
+            <Users className="h-4 w-4 mr-2" />
+            Add New Contact
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

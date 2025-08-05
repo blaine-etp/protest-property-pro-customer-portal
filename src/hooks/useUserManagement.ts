@@ -70,7 +70,7 @@ export const useUserManagement = () => {
       
       // Get all contacts linked to user properties
       const contactIds = userProperties ? [...new Set(userProperties.map(p => p.contact_id).filter(Boolean))] : [];
-      console.log(`Found ${contactIds.length} unique contacts for user properties`);
+      console.log(`Found ${contactIds.length} unique contacts for user`);
       
       // Get all owners created by this user
       const { data: userOwners } = await supabase
@@ -84,17 +84,31 @@ export const useUserManagement = () => {
       // DELETION PHASE - Following strict foreign key order
       console.log('🔥 Starting deletion in correct foreign key order...');
 
-      // 1. Delete bills first (they reference protests)
+      // 1. Delete bills first (they reference protests and user)
+      console.log('Deleting bills...');
+      let totalBillsDeleted = 0;
+      
+      // Delete bills by user_id
+      const { error: billsUserError, count: billsUserCount } = await supabase
+        .from('bills')
+        .delete({ count: 'exact' })
+        .eq('user_id', userId);
+      
+      if (billsUserError) throw new Error(`Bills (by user_id) deletion failed: ${billsUserError.message}`);
+      totalBillsDeleted += billsUserCount || 0;
+      
+      // Delete bills by protest_id (if any protests exist)
       if (protestIds.length > 0) {
-        console.log(`Deleting bills for ${protestIds.length} protests...`);
-        const { error: billsError, count } = await supabase
+        const { error: billsProtestError, count: billsProtestCount } = await supabase
           .from('bills')
           .delete({ count: 'exact' })
           .in('protest_id', protestIds);
         
-        if (billsError) throw new Error(`Bills deletion failed: ${billsError.message}`);
-        console.log(`✅ Deleted ${count || 0} bills`);
+        if (billsProtestError) throw new Error(`Bills (by protest_id) deletion failed: ${billsProtestError.message}`);
+        totalBillsDeleted += billsProtestCount || 0;
       }
+      
+      console.log(`✅ Deleted ${totalBillsDeleted} bills total`);
 
       // 2. Delete customer documents (reference many tables)
       console.log('Deleting customer documents...');

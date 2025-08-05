@@ -129,13 +129,7 @@ export default function AdminCRM() {
             Comprehensive customer relationship and property tax protest management
           </p>
         </div>
-        <div className="flex gap-2">
-          <UserDeleteButton />
-          <Button>
-            <Users className="h-4 w-4 mr-2" />
-            Add New Contact
-          </Button>
-        </div>
+        <UserDeleteButton />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

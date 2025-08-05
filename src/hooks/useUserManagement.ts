@@ -45,166 +45,185 @@ export const useUserManagement = () => {
   const deleteUser = async (userId: string, userName: string) => {
     try {
       setDeleting(userId);
-
-      console.log(`Starting deletion process for user: ${userName} (${userId})`);
+      console.log(`🗑️ Starting deletion process for user: ${userName} (${userId})`);
       
-      // Step 1: Get all properties, contacts, protests for this user to establish relationships
-      const { data: userProperties, error: propsError } = await supabase
+      // First, find all user-related data with proper relationships
+      console.log('📊 Gathering user data relationships...');
+      
+      // Get all user properties 
+      const { data: userProperties } = await supabase
         .from('properties')
         .select('id, contact_id, owner_id')
         .eq('user_id', userId);
       
-      if (propsError) {
-        throw new Error(`Failed to fetch user properties: ${propsError.message}`);
-      }
-      
       const propertyIds = userProperties?.map(p => p.id) || [];
-      const contactIds = userProperties ? [...new Set(userProperties.map(p => p.contact_id).filter(Boolean))] : [];
-      const ownerIds = userProperties ? [...new Set(userProperties.map(p => p.owner_id).filter(Boolean))] : [];
+      console.log(`Found ${propertyIds.length} properties for user`);
       
-      // Get protests for bills deletion
-      const { data: protests, error: protestsError } = await supabase
+      // Get all protests linked to user properties
+      const { data: userProtests } = await supabase
         .from('protests')
         .select('id')
         .in('property_id', propertyIds);
       
-      if (protestsError) {
-        throw new Error(`Failed to fetch protests: ${protestsError.message}`);
-      }
+      const protestIds = userProtests?.map(p => p.id) || [];
+      console.log(`Found ${protestIds.length} protests for user properties`);
       
-      const protestIds = protests?.map(p => p.id) || [];
+      // Get all contacts linked to user properties
+      const contactIds = userProperties ? [...new Set(userProperties.map(p => p.contact_id).filter(Boolean))] : [];
+      console.log(`Found ${contactIds.length} unique contacts for user properties`);
       
-      console.log(`Found ${propertyIds.length} properties, ${contactIds.length} contacts, ${ownerIds.length} owners, ${protestIds.length} protests`);
+      // Get all owners created by this user
+      const { data: userOwners } = await supabase
+        .from('owners')
+        .select('id')
+        .eq('created_by_user_id', userId);
       
-      // Step 2: Delete bills (they reference protests via protest_id)
+      const ownerIds = userOwners?.map(o => o.id) || [];
+      console.log(`Found ${ownerIds.length} owners created by user`);
+
+      // DELETION PHASE - Following strict foreign key order
+      console.log('🔥 Starting deletion in correct foreign key order...');
+
+      // 1. Delete bills first (they reference protests)
       if (protestIds.length > 0) {
-        const { error: billsError } = await supabase
+        console.log(`Deleting bills for ${protestIds.length} protests...`);
+        const { error: billsError, count } = await supabase
           .from('bills')
-          .delete()
+          .delete({ count: 'exact' })
           .in('protest_id', protestIds);
         
-        if (billsError) {
-          throw new Error(`Failed to delete bills: ${billsError.message}`);
-        }
-        console.log('✓ Deleted bills');
+        if (billsError) throw new Error(`Bills deletion failed: ${billsError.message}`);
+        console.log(`✅ Deleted ${count || 0} bills`);
       }
+
+      // 2. Delete customer documents (reference many tables)
+      console.log('Deleting customer documents...');
+      const { error: docError, count: docCount } = await supabase
+        .from('customer_documents')
+        .delete({ count: 'exact' })
+        .eq('user_id', userId);
       
-      // Step 3: Delete customer documents (reference multiple tables)
-      const { error: docsError1 } = await supabase.from('customer_documents').delete().eq('user_id', userId);
-      if (docsError1) throw new Error(`Failed to delete user documents: ${docsError1.message}`);
-      
-      if (contactIds.length > 0) {
-        const { error: docsError2 } = await supabase.from('customer_documents').delete().in('contact_id', contactIds);
-        if (docsError2) throw new Error(`Failed to delete contact documents: ${docsError2.message}`);
-      }
-      
+      if (docError) throw new Error(`Customer documents deletion failed: ${docError.message}`);
+      console.log(`✅ Deleted ${docCount || 0} customer documents`);
+
+      // 3. Delete communication_properties (reference properties)
       if (propertyIds.length > 0) {
-        const { error: docsError3 } = await supabase.from('customer_documents').delete().in('property_id', propertyIds);
-        if (docsError3) throw new Error(`Failed to delete property documents: ${docsError3.message}`);
-      }
-      
-      if (ownerIds.length > 0) {
-        const { error: docsError4 } = await supabase.from('customer_documents').delete().in('owner_id', ownerIds);
-        if (docsError4) throw new Error(`Failed to delete owner documents: ${docsError4.message}`);
-      }
-      console.log('✓ Deleted customer documents');
-      
-      // Step 4: Delete communication_properties (reference properties)
-      if (propertyIds.length > 0) {
-        const { error: commPropsError } = await supabase
+        console.log('Deleting communication properties...');
+        const { error: commPropError, count: commPropCount } = await supabase
           .from('communication_properties')
-          .delete()
+          .delete({ count: 'exact' })
           .in('property_id', propertyIds);
         
-        if (commPropsError) {
-          throw new Error(`Failed to delete communication properties: ${commPropsError.message}`);
-        }
-        console.log('✓ Deleted communication properties');
+        if (commPropError) throw new Error(`Communication properties deletion failed: ${commPropError.message}`);
+        console.log(`✅ Deleted ${commPropCount || 0} communication properties`);
       }
-      
-      // Step 5: Delete communications (reference contacts)
+
+      // 4. Delete communications (reference contacts)
       if (contactIds.length > 0) {
-        const { error: commsError } = await supabase
+        console.log('Deleting communications...');
+        const { error: commError, count: commCount } = await supabase
           .from('communications')
-          .delete()
+          .delete({ count: 'exact' })
           .in('contact_id', contactIds);
         
-        if (commsError) {
-          throw new Error(`Failed to delete communications: ${commsError.message}`);
-        }
-        console.log('✓ Deleted communications');
+        if (commError) throw new Error(`Communications deletion failed: ${commError.message}`);
+        console.log(`✅ Deleted ${commCount || 0} communications`);
       }
-      
-      // Step 6: Delete protests (they reference properties)
+
+      // 5. Delete protests (they reference properties)
       if (protestIds.length > 0) {
-        const { error: protestsDeleteError } = await supabase
+        console.log('Deleting protests...');
+        const { error: protestError, count: protestCount } = await supabase
           .from('protests')
-          .delete()
+          .delete({ count: 'exact' })
           .in('id', protestIds);
         
-        if (protestsDeleteError) {
-          throw new Error(`Failed to delete protests: ${protestsDeleteError.message}`);
-        }
-        console.log('✓ Deleted protests');
+        if (protestError) throw new Error(`Protests deletion failed: ${protestError.message}`);
+        console.log(`✅ Deleted ${protestCount || 0} protests`);
       }
+
+      // 6. Delete applications (reference user and properties)
+      console.log('Deleting applications...');
+      const { error: appError, count: appCount } = await supabase
+        .from('applications')
+        .delete({ count: 'exact' })
+        .eq('user_id', userId);
       
-      // Step 7: Delete applications (reference users and properties)
-      const { error: appsError } = await supabase.from('applications').delete().eq('user_id', userId);
-      if (appsError) throw new Error(`Failed to delete applications: ${appsError.message}`);
-      console.log('✓ Deleted applications');
-      
-      // Step 8: Delete properties (now that all references are gone)
+      if (appError) throw new Error(`Applications deletion failed: ${appError.message}`);
+      console.log(`✅ Deleted ${appCount || 0} applications`);
+
+      // 7. Delete properties (now that protests and applications are gone)
       if (propertyIds.length > 0) {
-        const { error: propsDeleteError } = await supabase
+        console.log('Deleting properties...');
+        const { error: propError, count: propCount } = await supabase
           .from('properties')
-          .delete()
+          .delete({ count: 'exact' })
           .in('id', propertyIds);
         
-        if (propsDeleteError) {
-          throw new Error(`Failed to delete properties: ${propsDeleteError.message}`);
-        }
-        console.log('✓ Deleted properties');
+        if (propError) throw new Error(`Properties deletion failed: ${propError.message}`);
+        console.log(`✅ Deleted ${propCount || 0} properties`);
       }
-      
-      // Step 9: Delete contacts (independent table)
+
+      // 8. Delete contacts (now that properties are gone)
       if (contactIds.length > 0) {
-        const { error: contactsError } = await supabase
+        console.log('Deleting contacts...');
+        const { error: contactError, count: contactCount } = await supabase
           .from('contacts')
-          .delete()
+          .delete({ count: 'exact' })
           .in('id', contactIds);
         
-        if (contactsError) {
-          throw new Error(`Failed to delete contacts: ${contactsError.message}`);
-        }
-        console.log('✓ Deleted contacts');
+        if (contactError) throw new Error(`Contacts deletion failed: ${contactError.message}`);
+        console.log(`✅ Deleted ${contactCount || 0} contacts`);
       }
+
+      // 9. Delete owners (they reference profiles via created_by_user_id)
+      if (ownerIds.length > 0) {
+        console.log('Deleting owners...');
+        const { error: ownerError, count: ownerCount } = await supabase
+          .from('owners')
+          .delete({ count: 'exact' })
+          .in('id', ownerIds);
+        
+        if (ownerError) throw new Error(`Owners deletion failed: ${ownerError.message}`);
+        console.log(`✅ Deleted ${ownerCount || 0} owners`);
+      }
+
+      // 10. Delete credit transactions, verification codes, referrals
+      console.log('Deleting user financial and auth data...');
       
-      // Step 10: Delete owners (they reference user_id via created_by_user_id)
-      const { error: ownersError } = await supabase.from('owners').delete().eq('created_by_user_id', userId);
-      if (ownersError) throw new Error(`Failed to delete owners: ${ownersError.message}`);
-      console.log('✓ Deleted owners');
+      const { error: creditError, count: creditCount } = await supabase
+        .from('credit_transactions')
+        .delete({ count: 'exact' })
+        .eq('user_id', userId);
       
-      // Step 11: Delete remaining user-specific data
-      const { error: creditsError } = await supabase.from('credit_transactions').delete().eq('user_id', userId);
-      if (creditsError) throw new Error(`Failed to delete credit transactions: ${creditsError.message}`);
+      if (creditError) throw new Error(`Credit transactions deletion failed: ${creditError.message}`);
+      console.log(`✅ Deleted ${creditCount || 0} credit transactions`);
+
+      const { error: verifyError, count: verifyCount } = await supabase
+        .from('verification_codes')
+        .delete({ count: 'exact' })
+        .eq('user_id', userId);
       
-      const { error: verifyError } = await supabase.from('verification_codes').delete().eq('user_id', userId);
-      if (verifyError) throw new Error(`Failed to delete verification codes: ${verifyError.message}`);
-      console.log('✓ Deleted user transactions and verification codes');
-      
-      // Step 12: Delete referral relationships (both as referrer and referee)
-      const { error: referralError } = await supabase
+      if (verifyError) throw new Error(`Verification codes deletion failed: ${verifyError.message}`);
+      console.log(`✅ Deleted ${verifyCount || 0} verification codes`);
+
+      const { error: referralError, count: referralCount } = await supabase
         .from('referral_relationships')
-        .delete()
+        .delete({ count: 'exact' })
         .or(`referrer_id.eq.${userId},referee_id.eq.${userId}`);
       
-      if (referralError) throw new Error(`Failed to delete referral relationships: ${referralError.message}`);
-      console.log('✓ Deleted referral relationships');
+      if (referralError) throw new Error(`Referral relationships deletion failed: ${referralError.message}`);
+      console.log(`✅ Deleted ${referralCount || 0} referral relationships`);
+
+      // 11. FINAL: Delete the profile (last step - nothing should reference it now)
+      console.log('Deleting user profile...');
+      const { error: profileError, count: profileCount } = await supabase
+        .from('profiles')
+        .delete({ count: 'exact' })
+        .eq('user_id', userId);
       
-      // Step 13: Finally delete the profile
-      const { error: profileError } = await supabase.from('profiles').delete().eq('user_id', userId);
-      if (profileError) throw new Error(`Failed to delete profile: ${profileError.message}`);
-      console.log('✓ Deleted profile');
+      if (profileError) throw new Error(`Profile deletion failed: ${profileError.message}`);
+      console.log(`✅ Deleted ${profileCount || 0} profile records`);
 
       // Remove from auth.users table (this will fail with anon key, but that's expected)
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);

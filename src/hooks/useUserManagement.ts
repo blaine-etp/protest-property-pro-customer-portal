@@ -48,6 +48,17 @@ export const useUserManagement = () => {
 
       // Delete all associated data in the correct order (respecting foreign key constraints)
       
+      // First, get all properties for this user, then delete associated protests
+      const { data: userProperties } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('user_id', userId);
+      
+      if (userProperties && userProperties.length > 0) {
+        const propertyIds = userProperties.map(p => p.id);
+        await supabase.from('protests').delete().in('property_id', propertyIds);
+      }
+      
       // Delete customer documents
       await supabase.from('customer_documents').delete().eq('user_id', userId);
       
@@ -57,7 +68,10 @@ export const useUserManagement = () => {
       // Delete applications
       await supabase.from('applications').delete().eq('user_id', userId);
       
-      // Delete properties
+      // Delete owners (they reference user_id via created_by_user_id)
+      await supabase.from('owners').delete().eq('created_by_user_id', userId);
+      
+      // Now delete properties (after protests are gone)
       await supabase.from('properties').delete().eq('user_id', userId);
       
       // Delete bills
@@ -69,7 +83,7 @@ export const useUserManagement = () => {
       // Delete referral relationships (both as referrer and referee)
       await supabase.from('referral_relationships').delete().or(`referrer_id.eq.${userId},referee_id.eq.${userId}`);
       
-      // Finally delete the profile
+      // Finally delete the profile (after owners are gone)
       await supabase.from('profiles').delete().eq('user_id', userId);
 
       // Remove from auth.users table (this will cascade delete any remaining references)

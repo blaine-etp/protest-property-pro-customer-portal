@@ -78,6 +78,40 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
       }
 
       // Real Supabase implementation for non-mock users
+      // 0. Ensure profile exists for the user (defensive programming)
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', existingUserId)
+        .maybeSingle();
+
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+        throw new Error(`Profile check failed: ${profileCheckError.message}`);
+      }
+
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        const { error: profileCreateError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: existingUserId,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            is_trust_entity: formData.isTrustEntity,
+            role: formData.role,
+            agree_to_updates: formData.agreeToUpdates,
+            is_authenticated: true,
+            permissions: 'user'
+          });
+
+        if (profileCreateError) {
+          throw new Error(`Profile creation failed: ${profileCreateError.message}`);
+        }
+        console.log('✅ Created missing profile for user:', existingUserId);
+      }
+
       // 1. Find or create contact record for the user
       let contactId = null;
       const { data: existingContact, error: contactCheckError } = await supabase

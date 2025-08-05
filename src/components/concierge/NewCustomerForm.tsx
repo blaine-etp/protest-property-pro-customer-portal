@@ -571,7 +571,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="homeowner">Homeowner</SelectItem>
+                          <SelectItem value="homeowner">Property Owner</SelectItem>
                           <SelectItem value="property_manager">Property Manager</SelectItem>
                           <SelectItem value="authorized_person">Authorized Person</SelectItem>
                         </SelectContent>

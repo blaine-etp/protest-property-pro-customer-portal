@@ -257,9 +257,10 @@ serve(async (req) => {
         tryFillField(['Name'], entityName);
       }
       
-      // Fill "Name of Property Owner" field with entity name and type
-      if (entityName) {
-        tryFillField(['Name of Property Owner'], entityName);
+      // Fill "Name of Property Owner" field with customer name
+      const customerName = `${customerData.first_name} ${customerData.last_name}`;
+      if (customerName.trim()) {
+        tryFillField(['Name of Property Owner'], customerName);
       }
       
       // Fill "Title" field with relationship to entity

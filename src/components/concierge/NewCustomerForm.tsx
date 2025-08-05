@@ -234,7 +234,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
         throw new Error(`Owner creation error: ${ownerError.message}`);
       }
 
-      // Create property record
+      // Create property record with Google Places data
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert([{
@@ -243,6 +243,13 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
           parcel_number: values.parcelNumber || null,
           include_all_properties: values.includeAllProperties,
           owner_id: owner.id,
+          // Add Google Places data
+          county: googlePlacesData?.county || null,
+          place_id: googlePlacesData?.placeId || null,
+          formatted_address: googlePlacesData?.formattedAddress || null,
+          google_address_components: googlePlacesData?.addressComponents || null,
+          latitude: googlePlacesData?.latitude || null,
+          longitude: googlePlacesData?.longitude || null,
         }])
         .select()
         .single();

@@ -300,9 +300,10 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         // Don't throw here as the main application was successful
       }
 
-      // Generate Form 50-162 automatically
+      // Generate Form 50-162 automatically (property-specific)
+      console.log('📄 Generating Form 50-162 for property:', property.id);
       try {
-        const { error: pdfError } = await supabase.functions.invoke('generate-form-50-162', {
+        const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-form-50-162', {
           body: { 
             propertyId: property.id, 
             userId: existingUserId 
@@ -310,13 +311,32 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         });
         
         if (pdfError) {
-          console.error('PDF generation failed:', pdfError);
+          console.error('❌ PDF generation failed:', pdfError);
+          toast({
+            title: "PDF Generation Warning",
+            description: "Property added successfully, but Form 50-162 generation failed",
+            variant: "destructive",
+          });
+        } else if (pdfData?.isExisting) {
+          console.log('📄 Using existing Form 50-162 for today:', pdfData.filename);
+          toast({
+            title: "Form 50-162 Already Generated",
+            description: "A Form 50-162 for this property was already generated today",
+          });
         } else {
-          console.log('Form 50-162 generated successfully');
+          console.log('✅ Form 50-162 generated successfully:', pdfData);
+          toast({
+            title: "Form 50-162 Generated", 
+            description: "Property-specific tax protest form created successfully",
+          });
         }
       } catch (pdfError) {
-        console.error('PDF generation error:', pdfError);
-        // Don't fail the submission if PDF generation fails
+        console.error('❌ PDF generation error:', pdfError);
+        toast({
+          title: "PDF Generation Warning",
+          description: "Property added successfully, but Form 50-162 generation failed",
+          variant: "destructive",
+        });
       }
 
       toast({

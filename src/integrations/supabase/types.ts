@@ -649,8 +649,10 @@ export type Database = {
           document_type: string
           file_path: string
           generated_at: string
+          generation_date: string | null
           id: string
           owner_id: string | null
+          property_id: string | null
           status: string
           updated_at: string
           user_id: string
@@ -661,8 +663,10 @@ export type Database = {
           document_type?: string
           file_path: string
           generated_at?: string
+          generation_date?: string | null
           id?: string
           owner_id?: string | null
+          property_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -673,13 +677,22 @@ export type Database = {
           document_type?: string
           file_path?: string
           generated_at?: string
+          generation_date?: string | null
           id?: string
           owner_id?: string | null
+          property_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customer_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_customer_documents_contact"
             columns: ["contact_id"]

@@ -64,6 +64,40 @@ serve(async (req) => {
       throw new Error('Property ID and User ID are required');
     }
 
+    // Get current date for generation tracking
+    const generationDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    console.log(`📅 Generation date: ${generationDate}`);
+    
+    // Check for existing form generated today for this property
+    console.log('🔍 Checking for existing Form 50-162 generated today...');
+    const { data: existingDocument, error: checkError } = await supabaseClient
+      .from('customer_documents')
+      .select('id, file_path')
+      .eq('user_id', userId)
+      .eq('property_id', propertyId)
+      .eq('document_type', 'form-50-162')
+      .eq('generation_date', generationDate)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('❌ Error checking for existing document:', checkError);
+      throw new Error(`Failed to check for existing documents: ${checkError.message}`);
+    }
+    
+    if (existingDocument) {
+      console.log('📄 Form 50-162 already generated today for this property:', existingDocument.file_path);
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Form 50-162 already generated today for this property',
+        filename: existingDocument.file_path,
+        documentId: existingDocument.id,
+        isExisting: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
     console.log('=== PDF Generation Starting ===');
 
     // Step 1: Fetch customer data
@@ -358,12 +392,14 @@ serve(async (req) => {
         .replace(/^-|-$/g, '');
     };
     
-    // Create customer-level prefix and document filename
+    // Create property-specific file organization with date-based naming
     const sanitizedFirstName = sanitizeName(customerData.first_name || 'unknown');
     const sanitizedLastName = sanitizeName(customerData.last_name || 'unknown');
     const customerPrefix = `${sanitizedFirstName}-${sanitizedLastName}-${userId}`;
-    const documentName = `50-162-${sanitizedFirstName}-${sanitizedLastName}-${userId}-${Date.now()}.pdf`;
-    const filename = `${customerPrefix}/${documentName}`;
+    const propertyPrefix = `property-${propertyId}`;
+    const dateFormatted = generationDate; // Already in YYYY-MM-DD format
+    const documentName = `50-162-${sanitizedFirstName}-${sanitizedLastName}-${userId}-${propertyId}-${dateFormatted}.pdf`;
+    const filename = `${customerPrefix}/${propertyPrefix}/${documentName}`;
     
     console.log('✓ Generated filename:', filename);
     
@@ -386,11 +422,13 @@ serve(async (req) => {
       .from('customer_documents')
       .insert({
         user_id: userId,
+        property_id: propertyId,
         owner_id: propertyData.owner_id,
         contact_id: propertyData.contact_id,
         document_type: 'form-50-162',
         file_path: filename,
-        status: 'generated'
+        status: 'generated',
+        generation_date: generationDate
       });
 
     if (recordError) {

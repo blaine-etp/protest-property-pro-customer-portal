@@ -30,6 +30,9 @@ import {
   FileCheck,
   Gavel,
   CreditCard,
+  UserPlus,
+  Building2,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -205,30 +208,22 @@ export default function AdminCRM() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Users className="h-6 w-6" />
-                  <span>New Contact</span>
+                  <UserPlus className="h-6 w-6" />
+                  <span>Add New Customer Property</span>
                 </Button>
                 <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Building className="h-6 w-6" />
-                  <span>Add Property</span>
+                  <Building2 className="h-6 w-6" />
+                  <span>Add Property to Existing Customer</span>
                 </Button>
                 <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Gavel className="h-6 w-6" />
-                  <span>File Protest</span>
+                  <FileSpreadsheet className="h-6 w-6" />
+                  <span>Update CRM Records via Spreadsheet Upload</span>
                 </Button>
                 <Button variant="outline" className="h-20 flex-col gap-2">
-                  <FileText className="h-6 w-6" />
-                  <span>Generate Form</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <CreditCard className="h-6 w-6" />
-                  <span>Import Bills</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Calendar className="h-6 w-6" />
-                  <span>Schedule Hearing</span>
+                  <GitBranch className="h-6 w-6" />
+                  <span>Add Referral Relationship</span>
                 </Button>
               </div>
             </CardContent>

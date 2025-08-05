@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerData';
 import DocumentsSection from '@/components/DocumentsSection';
+import { EvidenceSection } from '@/components/evidence/EvidenceSection';
 import { useToast } from '@/hooks/use-toast';
 
 const PropertyDetail = () => {
@@ -230,6 +231,16 @@ const PropertyDetail = () => {
                   </Button>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Evidence */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Evidence</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EvidenceSection propertyId={property.id} />
             </CardContent>
           </Card>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useDashboardStats } from './useDashboardStats';
 
 interface UserProfile {
   id: string;
@@ -19,6 +20,7 @@ export const useUserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const { refetch: refetchDashboardStats } = useDashboardStats();
 
   useEffect(() => {
     fetchUsers();
@@ -249,6 +251,7 @@ export const useUserManagement = () => {
 
       toast.success(`User ${userName} and all associated data deleted successfully`);
       await fetchUsers(); // Refresh the list
+      refetchDashboardStats(); // Refresh dashboard stats
     } catch (error: any) {
       console.error('Error deleting user:', error);
       toast.error(`Failed to delete user: ${error.message}`);

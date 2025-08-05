@@ -107,5 +107,17 @@ export function useDashboardStats() {
     fetchStats();
   }, []);
 
+  // Auto-refresh when component becomes visible (page focus)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (!loading) {
+        fetchStats();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loading]);
+
   return { stats, loading, error, refetch: fetchStats };
 }

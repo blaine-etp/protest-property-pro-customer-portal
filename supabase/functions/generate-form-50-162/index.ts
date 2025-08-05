@@ -248,13 +248,16 @@ serve(async (req) => {
       // Entity ownership - use entity data
       console.log('Processing entity ownership...');
       
-      // Fill "Name" field with entity name
-      const entityName = ownerData.form_entity_name || ownerData.name;
+      // Fill "Name" field with entity name and type (unless type is "other")
+      let entityName = ownerData.form_entity_name || ownerData.name;
+      if (entityName && ownerData.form_entity_type && ownerData.form_entity_type !== 'other') {
+        entityName = `${entityName} ${ownerData.form_entity_type}`;
+      }
       if (entityName) {
         tryFillField(['Name'], entityName);
       }
       
-      // Fill "Name of Property Owner" field with entity name
+      // Fill "Name of Property Owner" field with entity name and type
       if (entityName) {
         tryFillField(['Name of Property Owner'], entityName);
       }

@@ -234,6 +234,26 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
         throw new Error(`Owner creation error: ${ownerError.message}`);
       }
 
+      // Create contact record
+      const { data: contact, error: contactError } = await supabase
+        .from('contacts')
+        .insert([{
+          first_name: values.firstName,
+          last_name: values.lastName,
+          email: values.email,
+          phone: values.phone,
+          company: values.isTrustEntity ? values.entityName : null,
+          source: 'concierge_onboarding',
+          status: 'active',
+          notes: `Customer onboarded via concierge for property at ${values.address}`,
+        }])
+        .select()
+        .single();
+
+      if (contactError) {
+        throw new Error(`Contact creation error: ${contactError.message}`);
+      }
+
       // Create property record with Google Places data
       const { data: property, error: propertyError } = await supabase
         .from('properties')
@@ -243,6 +263,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
           parcel_number: values.parcelNumber || null,
           include_all_properties: values.includeAllProperties,
           owner_id: owner.id,
+          contact_id: contact.id,
           // Add Google Places data
           county: googlePlacesData?.county || null,
           place_id: googlePlacesData?.placeId || null,

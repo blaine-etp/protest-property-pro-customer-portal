@@ -186,6 +186,40 @@ export const ConciergeReviewStep: React.FC<ConciergeReviewStepProps> = ({
         throw new Error(`Application creation error: ${applicationError.message}`);
       }
 
+      // Create initial protest record for new property
+      const { data: protestData, error: protestError } = await supabase
+        .from('protests')
+        .insert({
+          property_id: property.id,
+          appeal_status: 'pending',
+          exemption_status: 'pending',
+          savings_amount: 0,
+        })
+        .select()
+        .single();
+
+      if (protestError) {
+        throw new Error(`Protest record creation failed: ${protestError.message}`);
+      }
+
+      // Create draft bill for the protest
+      const { error: billError } = await supabase
+        .from('bills')
+        .insert({
+          protest_id: protestData.id,
+          tax_year: new Date().getFullYear(),
+          status: 'draft',
+          total_assessed_value: 0,
+          total_protest_amount: 0,
+          total_fee_amount: 0,
+          contingency_fee_percent: 25.00
+        });
+
+      if (billError) {
+        console.error('Error creating bill:', billError);
+        // Don't throw here as the main application was successful
+      }
+
       // Generate documents
       const [form50162Response, servicesAgreementResponse] = await Promise.all([
         supabase.functions.invoke('generate-form-50-162', {
@@ -206,7 +240,7 @@ export const ConciergeReviewStep: React.FC<ConciergeReviewStepProps> = ({
 
       toast({
         title: "Property Added Successfully",
-        description: `New property added for ${customer.first_name} ${customer.last_name}. Documents have been generated and will be sent to ${customer.email}.`,
+        description: `New property added for ${customer.first_name} ${customer.last_name}. Protest and billing setup completed. Documents have been generated and will be sent to ${customer.email}.`,
       });
 
       onComplete();

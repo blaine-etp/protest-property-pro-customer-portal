@@ -16,21 +16,20 @@ import { ConciergeFormData } from '../AddPropertyMultiStepForm';
 import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
 
 const schema = z.object({
-  address: z.string().min(1, 'Property address is required'),
-  parcelNumber: z.string().optional(),
-  includeAllProperties: z.boolean(),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   isTrustEntity: z.boolean(),
   entityName: z.string().optional(),
   relationshipToEntity: z.string().optional(),
-  entityType: z.string().optional(),
-  role: z.string().min(1, 'Please select your role'),
+  entityType: z.enum(['LLC', 'Corporation', 'Partnership', 'Estate', 'Trust', 'Other']).optional(),
+  role: z.enum(['homeowner', 'property_manager', 'authorized_person']),
 }).refine((data) => {
   if (data.isTrustEntity) {
     return data.entityName && data.relationshipToEntity && data.entityType;
   }
   return true;
 }, {
-  message: "Entity information is required when 'Trust/Entity' is selected",
+  message: "Entity name, relationship, and type are required when property is owned by an entity",
   path: ["entityName"],
 });
 
@@ -61,44 +60,27 @@ export const ConciergePersonalInfoStep: React.FC<ConciergePersonalInfoStepProps>
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      address: formData.address || '',
-      parcelNumber: formData.parcelNumber || '',
-      includeAllProperties: formData.includeAllProperties || false,
+      firstName: formData.firstName || customer.first_name,
+      lastName: formData.lastName || customer.last_name,
       isTrustEntity: formData.isTrustEntity || false,
       entityName: formData.entityName || '',
       relationshipToEntity: formData.relationshipToEntity || '',
-      entityType: formData.entityType || '',
+      entityType: formData.entityType,
       role: formData.role || 'homeowner',
     },
   });
 
-  const watchIsTrustEntity = form.watch('isTrustEntity');
+  const isTrustEntity = form.watch('isTrustEntity');
 
   const onSubmit = (values: z.infer<typeof schema>) => {
     updateFormData(values);
     onNext();
   };
 
-  const handleGooglePlacesDataChange = (data: GooglePlacesData) => {
-    updateFormData({ googlePlacesData: data });
-    // Mock property verification lookup
-    setTimeout(() => {
-      const mockVerificationData = {
-        legalOwnerName: data.formattedAddress?.includes('Main') ? 'Smith Family Trust' : 
-                       data.formattedAddress?.includes('Oak') ? 'Johnson, Robert & Mary' :
-                       data.formattedAddress?.includes('Elm') ? 'ABC Properties LLC' :
-                       'Williams, John Michael',
-        parcelNumber: `PAR-${Math.floor(Math.random() * 900000) + 100000}`,
-        address: data.formattedAddress
-      };
-      updateFormData({ verificationData: mockVerificationData });
-    }, 1000);
-  };
-
   const estimatedSavings = 2847; // Mock value
 
   return (
-    <div className="space-y-8 animate-slide-in-right">
+    <div className="space-y-8">
       {/* Customer Summary */}
       <Card className="bg-primary/5 border-primary/20">
         <CardHeader>
@@ -126,133 +108,175 @@ export const ConciergePersonalInfoStep: React.FC<ConciergePersonalInfoStepProps>
       </Card>
 
       {/* Estimated Savings */}
-      <Card className="relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/20 border-primary/30">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        <CardContent className="relative p-8 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary/20 rounded-full p-4">
-              <DollarSign className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-foreground mb-2">Estimated Annual Tax Savings</h3>
-          <div className="text-4xl font-bold text-primary mb-4">
-            $<AnimatedCounter end={estimatedSavings} />
-          </div>
-          <p className="text-muted-foreground">
-            Based on similar properties in this area
+      <div className="relative bg-gradient-to-br from-primary/10 via-accent/10 to-primary/5 rounded-2xl p-8 mb-8 border border-primary/20 shadow-xl">
+        <div className="absolute inset-0 rounded-2xl opacity-10">
+          <div className="absolute top-4 right-4 w-16 h-16 bg-primary rounded-full"></div>
+          <div className="absolute bottom-4 left-4 w-12 h-12 bg-accent rounded-full"></div>
+          <div className="absolute top-1/2 left-1/4 w-8 h-8 bg-primary/30 rounded-full"></div>
+        </div>
+        
+        <div className="relative z-10 text-center">
+          <p className="text-lg text-muted-foreground mb-3 font-medium">
+            Estimated Annual Tax Savings
           </p>
-        </CardContent>
-      </Card>
+          <div className="flex items-center justify-center gap-2 text-5xl md:text-6xl font-bold text-primary mb-2">
+            <DollarSign className="w-12 h-12 md:w-16 md:h-16" />
+            <AnimatedCounter end={estimatedSavings} className="tabular-nums" />
+          </div>
+          <p className="text-sm text-muted-foreground/80 italic">
+            *Based on similar properties in this area
+          </p>
+        </div>
+      </div>
 
-      {/* Main Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
-            Property & Customer Information
-          </CardTitle>
-          <CardDescription>
-            Please provide the property details and customer information for this application.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Property Address */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">
+          We need three pieces of information from you:
+        </h3>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="address"
+                name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Property Address *</FormLabel>
+                    <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <GooglePlacesAutocomplete
-                        value={field.value}
-                        onChange={field.onChange}
-                        onPlacesDataChange={handleGooglePlacesDataChange}
-                        placeholder="Enter property address"
-                        required
-                      />
+                      <Input placeholder="First name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {/* Property Verification */}
-              {formData.verificationData && (
-                <Card className="bg-yellow-50 border-yellow-200">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2 text-yellow-800">
-                      <AlertTriangle className="h-5 w-5" />
-                      Property Verification
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-white rounded-lg p-4 border border-yellow-200">
-                      <h4 className="font-semibold text-yellow-800 mb-3">Property Records Found:</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium text-yellow-800">Legal Owner Name:</span>
-                          <p className="text-yellow-700 font-semibold">{formData.verificationData.legalOwnerName}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-yellow-800">Parcel Number:</span>
-                          <p className="text-yellow-700 font-semibold">{formData.verificationData.parcelNumber}</p>
-                        </div>
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Last name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="isTrustEntity"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className="text-base font-medium">
+                    Is this property owned by a trust, LLC, or other entity?
+                  </FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={(value) => field.onChange(value === 'true')}
+                      value={field.value ? 'true' : 'false'}
+                      className="flex flex-row space-x-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="false" id="no" />
+                        <FormLabel htmlFor="no" className="font-normal cursor-pointer">
+                          No
+                        </FormLabel>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="true" id="yes" />
+                        <FormLabel htmlFor="yes" className="font-normal cursor-pointer">
+                          Yes
+                        </FormLabel>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
               )}
+            />
 
-              {/* Parcel Number */}
-              <FormField
-                control={form.control}
-                name="parcelNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Parcel Number (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter parcel number if known" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {isTrustEntity && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="entityName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entity Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Entity Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <Separator />
-
-              {/* Entity Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Customer Information
-                </h3>
+                  <FormField
+                    control={form.control}
+                    name="relationshipToEntity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Relationship to Entity *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Owner, Agent, Trustee, etc." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}
-                  name="isTrustEntity"
+                  name="entityType"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormLabel>Is this property owned by a trust or entity?</FormLabel>
+                      <FormLabel>Type of Entity *</FormLabel>
                       <FormControl>
                         <RadioGroup
-                          onValueChange={(value) => field.onChange(value === 'true')}
-                          value={field.value ? 'true' : 'false'}
-                          className="flex flex-col space-y-2"
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="grid grid-cols-2 gap-4"
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="false" id="individual" />
-                            <label htmlFor="individual" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                              No, I am an individual property owner
-                            </label>
+                            <RadioGroupItem value="LLC" id="llc" />
+                            <FormLabel htmlFor="llc" className="font-normal cursor-pointer">
+                              LLC
+                            </FormLabel>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="true" id="trust-entity" />
-                            <label htmlFor="trust-entity" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                              Yes, this property is owned by a trust or entity
-                            </label>
+                            <RadioGroupItem value="Corporation" id="corporation" />
+                            <FormLabel htmlFor="corporation" className="font-normal cursor-pointer">
+                              Corporation
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Partnership" id="partnership" />
+                            <FormLabel htmlFor="partnership" className="font-normal cursor-pointer">
+                              Partnership
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Estate" id="estate" />
+                            <FormLabel htmlFor="estate" className="font-normal cursor-pointer">
+                              Estate
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Trust" id="trust" />
+                            <FormLabel htmlFor="trust" className="font-normal cursor-pointer">
+                              Trust
+                            </FormLabel>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="Other" id="other" />
+                            <FormLabel htmlFor="other" className="font-normal cursor-pointer">
+                              Other
+                            </FormLabel>
                           </div>
                         </RadioGroup>
                       </FormControl>
@@ -260,150 +284,52 @@ export const ConciergePersonalInfoStep: React.FC<ConciergePersonalInfoStepProps>
                     </FormItem>
                   )}
                 />
-
-                {watchIsTrustEntity && (
-                  <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/30">
-                    <h4 className="font-medium text-foreground">Entity Details</h4>
-                    
-                    <FormField
-                      control={form.control}
-                      name="entityName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Trust/Entity Name *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter the full legal name of the trust or entity"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="relationshipToEntity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Your Relationship to Entity *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="e.g., Trustee, Managing Member, President"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="entityType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Entity Type *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select entity type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="trust">Trust</SelectItem>
-                              <SelectItem value="llc">LLC</SelectItem>
-                              <SelectItem value="corporation">Corporation</SelectItem>
-                              <SelectItem value="partnership">Partnership</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Your Role *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="homeowner">Homeowner</SelectItem>
-                          <SelectItem value="property_manager">Property Manager</SelectItem>
-                          <SelectItem value="authorized_person">Authorized Person</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+            )}
 
-              <Separator />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Relationship to the Property</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="homeowner">Property Owner</SelectItem>
+                      <SelectItem value="property_manager">Property Manager</SelectItem>
+                      <SelectItem value="authorized_person">Person Authorized by Home Owner</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              {/* Property Options */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Property Options
-                </h3>
-                
-                <FormField
-                  control={form.control}
-                  name="includeAllProperties"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="text-sm leading-relaxed">
-                          Include all properties listed under this address
-                        </FormLabel>
-                        <p className="text-xs text-muted-foreground">
-                          Check this if there are multiple properties at this address that should be included in the protest.
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onPrev}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
-                <Button
-                  type="submit"
-                  variant="accent"
-                  className="flex-1"
-                >
-                  Continue
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onPrev}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              <Button
+                type="submit"
+                variant="accent"
+                className="flex-1"
+              >
+                Continue
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 };

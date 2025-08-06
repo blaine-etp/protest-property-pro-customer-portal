@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ConciergePersonalInfoStep } from './form-steps/ConciergePersonalInfoStep';
-import { ConciergeVerificationStep } from './form-steps/ConciergeVerificationStep';
+import { ConciergeContactStep } from './form-steps/ConciergeContactStep';
 import { ConciergeReviewStep } from './form-steps/ConciergeReviewStep';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -13,15 +13,23 @@ export interface ConciergeFormData {
   parcelNumber?: string;
   includeAllProperties: boolean;
   
+  // Personal information
+  firstName?: string;
+  lastName?: string;
+  
   // Personal/Entity information
   isTrustEntity: boolean;
   entityName?: string;
   relationshipToEntity?: string;
-  entityType?: string;
-  role: string;
+  entityType?: 'LLC' | 'Corporation' | 'Partnership' | 'Estate' | 'Trust' | 'Other';
+  role: 'homeowner' | 'property_manager' | 'authorized_person';
+  
+  // Contact information
+  phone?: string;
+  agreeToUpdates?: boolean;
   
   // Verification
-  isOwnerVerified: boolean;
+  isOwnerVerified?: boolean;
   
   // Google Places data
   googlePlacesData?: any;
@@ -48,11 +56,11 @@ interface AddPropertyMultiStepFormProps {
   verificationData?: any;
 }
 
-const steps = [
-  'Personal Information',
-  'Verification',
-  'Review & Submit'
-];
+  const steps = [
+    'Personal Information',
+    'Contact Details',
+    'Review & Submit'
+  ];
 
 export const AddPropertyMultiStepForm: React.FC<AddPropertyMultiStepFormProps> = ({
   customer,
@@ -70,11 +78,14 @@ export const AddPropertyMultiStepForm: React.FC<AddPropertyMultiStepFormProps> =
     address: initialAddress,
     parcelNumber: '',
     includeAllProperties: false,
+    firstName: customer.first_name,
+    lastName: customer.last_name,
     isTrustEntity: false,
     entityName: '',
     relationshipToEntity: '',
-    entityType: '',
     role: 'homeowner',
+    phone: customer.phone || '',
+    agreeToUpdates: true,
     isOwnerVerified: false,
     googlePlacesData,
     verificationData
@@ -116,35 +127,35 @@ export const AddPropertyMultiStepForm: React.FC<AddPropertyMultiStepFormProps> =
   };
 
   const renderStep = () => {
-    const commonProps = {
-      formData,
-      updateFormData,
-      customer
-    };
-
     switch (currentStep) {
       case 0:
         return (
           <ConciergePersonalInfoStep
-            {...commonProps}
+            formData={formData}
+            updateFormData={updateFormData}
             onNext={nextStep}
             onPrev={onBack}
+            customer={customer}
           />
         );
       case 1:
         return (
-          <ConciergeVerificationStep
-            {...commonProps}
+          <ConciergeContactStep
+            formData={formData}
+            updateFormData={updateFormData}
             onNext={nextStep}
             onPrev={prevStep}
+            customer={customer}
           />
         );
       case 2:
         return (
           <ConciergeReviewStep
-            {...commonProps}
-            onComplete={handleFormComplete}
+            formData={formData}
+            updateFormData={updateFormData}
             onPrev={prevStep}
+            onComplete={onSuccess}
+            customer={customer}
           />
         );
       default:

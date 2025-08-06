@@ -108,9 +108,13 @@ export const ConciergeContactStep: React.FC<ConciergeContactStepProps> = ({
                   <Input
                     type="tel"
                     placeholder="(555) 123-4567"
+                    disabled={true}
                     {...field}
                   />
                 </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Phone is pre-populated from customer record and cannot be changed
+                </p>
                 <FormMessage />
               </FormItem>
             )}

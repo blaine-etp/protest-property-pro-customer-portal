@@ -51,60 +51,25 @@ export const ConciergeReviewStep: React.FC<ConciergeReviewStepProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Get the existing owner for this customer
-      const { data: existingOwners, error: ownersError } = await supabase
+      // Always create a new owner record for each property based on form data
+      const { data: owner, error: ownerError } = await supabase
         .from('owners')
-        .select('id')
-        .eq('created_by_user_id', customer.user_id)
-        .limit(1);
+        .insert([{
+          name: formData.isTrustEntity ? formData.entityName : `${customer.first_name} ${customer.last_name}`,
+          owner_type: formData.isTrustEntity ? (formData.entityType?.toLowerCase() || 'trust') : 'individual',
+          created_by_user_id: customer.user_id,
+          form_entity_name: formData.entityName,
+          form_entity_type: formData.entityType,
+          entity_relationship: formData.relationshipToEntity,
+        }])
+        .select()
+        .single();
 
-      if (ownersError) {
-        throw new Error(`Error finding customer owner: ${ownersError.message}`);
+      if (ownerError) {
+        throw new Error(`Owner creation error: ${ownerError.message}`);
       }
 
-      let ownerId: string;
-
-      if (existingOwners && existingOwners.length > 0) {
-        ownerId = existingOwners[0].id;
-        
-        // Update existing owner with entity information if provided
-        if (formData.isTrustEntity) {
-          const { error: updateError } = await supabase
-            .from('owners')
-            .update({
-              name: formData.entityName || `${customer.first_name} ${customer.last_name}`,
-               owner_type: formData.isTrustEntity ? (formData.entityType?.toLowerCase() || 'trust') : 'individual',
-              form_entity_name: formData.entityName,
-              form_entity_type: formData.entityType,
-              entity_relationship: formData.relationshipToEntity,
-            })
-            .eq('id', ownerId);
-
-          if (updateError) {
-            throw new Error(`Owner update error: ${updateError.message}`);
-          }
-        }
-      } else {
-        // Create owner record if none exists
-        const { data: owner, error: ownerError } = await supabase
-          .from('owners')
-          .insert([{
-            name: formData.isTrustEntity ? formData.entityName : `${customer.first_name} ${customer.last_name}`,
-            owner_type: formData.isTrustEntity ? (formData.entityType?.toLowerCase() || 'trust') : 'individual',
-            created_by_user_id: customer.user_id,
-            form_entity_name: formData.entityName,
-            form_entity_type: formData.entityType,
-            entity_relationship: formData.relationshipToEntity,
-          }])
-          .select()
-          .single();
-
-        if (ownerError) {
-          throw new Error(`Owner creation error: ${ownerError.message}`);
-        }
-
-        ownerId = owner.id;
-      }
+      const ownerId = owner.id;
 
       // Get existing contact for this customer
       const { data: existingContacts, error: contactsError } = await supabase

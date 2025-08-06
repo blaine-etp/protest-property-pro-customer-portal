@@ -73,7 +73,7 @@ export const ConciergeReviewStep: React.FC<ConciergeReviewStepProps> = ({
             .from('owners')
             .update({
               name: formData.entityName || `${customer.first_name} ${customer.last_name}`,
-              owner_type: formData.isTrustEntity ? 'entity' : 'individual',
+               owner_type: formData.isTrustEntity ? (formData.entityType?.toLowerCase() || 'trust') : 'individual',
               form_entity_name: formData.entityName,
               form_entity_type: formData.entityType,
               entity_relationship: formData.relationshipToEntity,
@@ -90,7 +90,7 @@ export const ConciergeReviewStep: React.FC<ConciergeReviewStepProps> = ({
           .from('owners')
           .insert([{
             name: formData.isTrustEntity ? formData.entityName : `${customer.first_name} ${customer.last_name}`,
-            owner_type: formData.isTrustEntity ? 'entity' : 'individual',
+            owner_type: formData.isTrustEntity ? (formData.entityType?.toLowerCase() || 'trust') : 'individual',
             created_by_user_id: customer.user_id,
             form_entity_name: formData.entityName,
             form_entity_type: formData.entityType,

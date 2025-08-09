@@ -21,7 +21,8 @@ import {
   AlertCircle,
   MessageSquare,
   Bot,
-  Download
+  Download,
+  Camera
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -30,9 +31,11 @@ import { ProtestStatusSelect } from "@/components/protest/ProtestStatusSelect";
 import { ProtestComments } from "@/components/protest/ProtestComments";
 import { ProtestAIChat } from "@/components/protest/ProtestAIChat";
 import { ProtestDocuments } from "@/components/protest/ProtestDocuments";
+import { EvidenceProtestSection } from "@/components/evidence/EvidenceProtestSection";
 
 interface ProtestDetail {
   id: string;
+  property_id?: string;
   situs_address: string | null;
   owner_name: string | null;
   county: string | null;
@@ -83,6 +86,7 @@ export default function AdminProtestDetail() {
   const [protest, setProtest] = useState<ProtestDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [evidenceCount, setEvidenceCount] = useState(0);
 
   useEffect(() => {
     if (protestId) {
@@ -90,11 +94,17 @@ export default function AdminProtestDetail() {
     }
   }, [protestId]);
 
+  useEffect(() => {
+    if (protest?.property_id && protest?.tax_year) {
+      fetchEvidenceCount();
+    }
+  }, [protest?.property_id, protest?.tax_year]);
+
   const fetchProtestDetail = async () => {
     try {
       const { data, error } = await supabase
         .from('protests')
-        .select('*')
+        .select('*, property_id')
         .eq('id', protestId)
         .single();
 
@@ -109,6 +119,23 @@ export default function AdminProtestDetail() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEvidenceCount = async () => {
+    if (!protest?.property_id || !protest?.tax_year) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('evidence_uploads')
+        .select('id')
+        .eq('property_id', protest.property_id)
+        .eq('tax_year', protest.tax_year);
+
+      if (error) throw error;
+      setEvidenceCount(data?.length || 0);
+    } catch (error) {
+      console.error('Error fetching evidence count:', error);
     }
   };
 
@@ -249,7 +276,7 @@ export default function AdminProtestDetail() {
       </div>
 
       {/* Status & Quick Info */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -298,13 +325,27 @@ export default function AdminProtestDetail() {
             <p className="text-lg font-semibold">{formatDate(protest.hearing_date)}</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Camera className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Evidence Files</span>
+            </div>
+            <p className="text-2xl font-bold">{evidenceCount}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {evidenceCount === 0 ? 'No evidence uploaded' : 'Files uploaded by customer'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="evidence">Evidence</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
           <TabsTrigger value="chat">AI Assistant</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
@@ -517,6 +558,14 @@ export default function AdminProtestDetail() {
 
         <TabsContent value="documents">
           <ProtestDocuments protestId={protest.id} />
+        </TabsContent>
+
+        <TabsContent value="evidence">
+          <EvidenceProtestSection 
+            protestId={protest.id} 
+            propertyId={protest.property_id}
+            taxYear={protest.tax_year}
+          />
         </TabsContent>
 
         <TabsContent value="comments">

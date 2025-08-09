@@ -345,7 +345,9 @@ export default function AdminProtestDetail() {
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="evidence">Evidence</TabsTrigger>
+          <TabsTrigger value="evidence">
+            Evidence {evidenceCount > 0 && `(${evidenceCount})`}
+          </TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
           <TabsTrigger value="chat">AI Assistant</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>

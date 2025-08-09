@@ -51,14 +51,22 @@ export function ProtestSection() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedCounties, setSelectedCounties] = useState<string[]>([]);
+  const [evidenceFilter, setEvidenceFilter] = useState<string>("");
   const [filingDateStart, setFilingDateStart] = useState<Date | undefined>();
   const [filingDateEnd, setFilingDateEnd] = useState<Date | undefined>();
   const [minAssessedValue, setMinAssessedValue] = useState<number | undefined>();
   const [maxAssessedValue, setMaxAssessedValue] = useState<number | undefined>();
+  const [evidenceData, setEvidenceData] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadProtests();
   }, []);
+
+  useEffect(() => {
+    if (protests.length > 0) {
+      loadEvidenceData();
+    }
+  }, [protests]);
 
   const loadProtests = async () => {
     try {
@@ -99,6 +107,37 @@ export function ProtestSection() {
     }
   };
 
+  const loadEvidenceData = async () => {
+    if (protests.length === 0) return;
+    
+    try {
+      // Get evidence counts for all protests
+      const propertyIds = protests
+        .map(p => p.property_id)
+        .filter(Boolean);
+      
+      if (propertyIds.length === 0) return;
+
+      const { data, error } = await supabase
+        .from('evidence_uploads')
+        .select('property_id, tax_year')
+        .in('property_id', propertyIds);
+
+      if (error) throw error;
+
+      // Create evidence count mapping by property_id + tax_year
+      const evidenceCounts: Record<string, number> = {};
+      data?.forEach(evidence => {
+        const key = `${evidence.property_id}-${evidence.tax_year}`;
+        evidenceCounts[key] = (evidenceCounts[key] || 0) + 1;
+      });
+
+      setEvidenceData(evidenceCounts);
+    } catch (error) {
+      console.error('Error loading evidence data:', error);
+    }
+  };
+
   // Helper function to get normalized status
   const getNormalizedStatus = (status: string | null): ProtestStatus => {
     if (!status) return PROTEST_STATUSES.PENDING;
@@ -121,6 +160,13 @@ export function ProtestSection() {
     // County filter
     const matchesCounty = selectedCounties.length === 0 || selectedCounties.includes(protest.county || '');
     
+    // Evidence filter
+    const evidenceKey = `${protest.property_id}-${protest.tax_year}`;
+    const evidenceCount = evidenceData[evidenceKey] || 0;
+    const matchesEvidence = !evidenceFilter || 
+      (evidenceFilter === 'with_evidence' && evidenceCount > 0) ||
+      (evidenceFilter === 'without_evidence' && evidenceCount === 0);
+    
     // Assessed value filter
     const assessedValue = protest.assessed_value || 0;
     const matchesAssessedValue = (minAssessedValue === undefined || assessedValue >= minAssessedValue) &&
@@ -129,7 +175,7 @@ export function ProtestSection() {
     // Date filter (basic check for now)
     const matchesDate = true; // Would need proper date parsing for real implementation
     
-    return matchesSearch && matchesStatus && matchesCounty && matchesAssessedValue && matchesDate;
+    return matchesSearch && matchesStatus && matchesCounty && matchesEvidence && matchesAssessedValue && matchesDate;
   });
 
   // Get unique values for filters - show normalized status labels
@@ -143,6 +189,7 @@ export function ProtestSection() {
   const activeFiltersCount = 
     selectedStatuses.length +
     selectedCounties.length +
+    (evidenceFilter ? 1 : 0) +
     (filingDateStart || filingDateEnd ? 1 : 0) +
     (minAssessedValue !== undefined || maxAssessedValue !== undefined ? 1 : 0) +
     (searchTerm ? 1 : 0);
@@ -151,6 +198,7 @@ export function ProtestSection() {
     setSearchTerm("");
     setSelectedStatuses([]);
     setSelectedCounties([]);
+    setEvidenceFilter("");
     setFilingDateStart(undefined);
     setFilingDateEnd(undefined);
     setMinAssessedValue(undefined);
@@ -372,6 +420,22 @@ export function ProtestSection() {
               onSelectionChange={setSelectedCounties}
               placeholder="All counties"
             />
+
+            <MultiSelectFilter
+              label="Evidence Status"
+              options={["With Evidence", "Without Evidence"]}
+              selectedValues={evidenceFilter ? [evidenceFilter === 'with_evidence' ? 'With Evidence' : 'Without Evidence'] : []}
+              onSelectionChange={(values) => {
+                if (values.length === 0) {
+                  setEvidenceFilter("");
+                } else if (values.includes("With Evidence")) {
+                  setEvidenceFilter("with_evidence");
+                } else if (values.includes("Without Evidence")) {
+                  setEvidenceFilter("without_evidence");
+                }
+              }}
+              placeholder="All protests"
+            />
             
             <DateRangeFilter
               label="Filing Date"
@@ -436,11 +500,22 @@ export function ProtestSection() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  
-                  <div>
-                    <h4 className="font-semibold text-lg mb-1">{protest.properties?.situs_address || protest.situs_address || 'Address not available'}</h4>
-                    <p className="text-sm text-muted-foreground">Tax Year: {protest.tax_year || new Date().getFullYear()}</p>
-                  </div>
+                   
+                   <div>
+                     <div className="flex items-center justify-between">
+                       <h4 className="font-semibold text-lg mb-1">{protest.properties?.situs_address || protest.situs_address || 'Address not available'}</h4>
+                       {(() => {
+                         const evidenceKey = `${protest.property_id}-${protest.tax_year}`;
+                         const evidenceCount = evidenceData[evidenceKey] || 0;
+                         return evidenceCount > 0 ? (
+                           <Badge variant="secondary" className="text-xs">
+                             📁 {evidenceCount} file{evidenceCount > 1 ? 's' : ''}
+                           </Badge>
+                         ) : null;
+                       })()}
+                     </div>
+                     <p className="text-sm text-muted-foreground">Tax Year: {protest.tax_year || new Date().getFullYear()}</p>
+                   </div>
                   
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">

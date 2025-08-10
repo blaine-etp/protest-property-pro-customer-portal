@@ -193,7 +193,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
               onComplete={(formData) => {
                 // Navigate to email verification with the email from form data
                 navigate(`/email-verification?email=${encodeURIComponent(formData.email)}`);
-              }} 
+              }}
             />
           </div>
         )}

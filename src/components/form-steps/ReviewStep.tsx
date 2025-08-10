@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 import { useSimplifiedFormSubmission } from '@/hooks/useSimplifiedFormSubmission';
+import { useNavigate } from 'react-router-dom';
 
 interface ReviewStepProps {
   formData: FormData;
@@ -30,6 +31,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [hasSignature, setHasSignature] = useState(false);
   const { toast } = useToast();
   const { submitFormData, isSubmitting } = useSimplifiedFormSubmission();
+  const navigate = useNavigate();
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
@@ -102,16 +104,17 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         // New simplified signup flow
         const result = await submitFormData(updatedFormData);
         if (result.success) {
-          // Show success message and redirect to sign in
+          // Show success message and delegate navigation to parent
           toast({
             title: "Application Submitted!",
             description: "Please check your email to complete account setup.",
           });
-          // Redirect to home page with success message
-          window.location.href = "/?signup=success";
+          onComplete(signatureDataURL);
         } else if (result.redirectTo) {
-          window.location.href = result.redirectTo;
+          // Use client-side navigation for special cases (e.g., existing account)
+          navigate(result.redirectTo);
         }
+
       }
     }
   };

@@ -27,10 +27,10 @@ export const useSimplifiedFormSubmission = () => {
             description: "This email is already registered. Please sign in to access your account.",
             variant: "destructive",
           });
-          return { 
-            success: false, 
+          return {
+            success: false,
             error: "EMAIL_EXISTS_AUTHENTICATED",
-            redirectTo: "/auth"
+            redirectTo: `/auth?email=${encodeURIComponent(formData.email)}`,
           };
         } else {
           toast({
@@ -38,9 +38,10 @@ export const useSimplifiedFormSubmission = () => {
             description: "You've already submitted an application with this email. Please check your email for account setup instructions.",
             variant: "destructive",
           });
-          return { 
-            success: false, 
-            error: "EMAIL_EXISTS_PENDING"
+          return {
+            success: false,
+            error: "EMAIL_EXISTS_PENDING",
+            redirectTo: `/email-verification?email=${encodeURIComponent(formData.email)}`,
           };
         }
       }
@@ -91,8 +92,34 @@ export const useSimplifiedFormSubmission = () => {
       console.log('Signup session check:', { activeUserId, expectedUserId: userId });
 
       if (!activeUserId || activeUserId !== userId) {
-        // Without a session matching the new user, RLS will block inserts to owners/properties/applications
-        throw new Error('We could not establish a secure session for the new account. Please verify your email (or sign in) and try again.');
+        // No active session yet (email confirmation required). Create a lightweight contact lead and redirect to verification.
+        try {
+          await supabase
+            .from('contacts')
+            .insert({
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              email: formData.email,
+              phone: formData.phone,
+              company: formData.isTrustEntity ? formData.entityName : null,
+              source: 'property_signup_pending',
+              status: 'pending',
+              notes: `Pending verification lead for ${formData.address}`,
+            });
+        } catch (leadError) {
+          console.error('Lead contact creation failed (non-blocking):', leadError);
+        }
+
+        toast({
+          title: 'Verify your email',
+          description: 'We sent you a link to finish setting up your account. Please check your email.',
+        });
+
+        return {
+          success: true,
+          redirectTo: `/email-verification?email=${encodeURIComponent(formData.email)}`,
+          userId,
+        };
       }
 
       // Step 4: Create user profile (this will use auth.uid() in RLS)
@@ -341,7 +368,8 @@ export const useSimplifiedFormSubmission = () => {
         success: true,
         profileId: profile.id, 
         propertyId: property.id,
-        userId: userId
+        userId: userId,
+        redirectTo: `/email-verification?email=${encodeURIComponent(formData.email)}`,
       };
     } catch (error: any) {
       console.error('Form submission error:', error);

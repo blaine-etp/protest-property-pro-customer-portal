@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { authService } from '@/services';
+import { authService, supabaseAuthService } from '@/services';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
-  const [mode, setMode] = useState<'signin' | 'reset'>('signin');
+  const [mode, setMode] = useState<'signin' | 'reset' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +85,30 @@ export default function Auth() {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabaseAuthService.signUp({ email, password });
+      if (error) throw error;
+
+      toast({
+        title: 'Check your email',
+        description: 'We sent you a verification link to complete your signup.',
+      });
+      navigate(`/email-verification?email=${encodeURIComponent(email)}`);
+    } catch (error: any) {
+      toast({
+        title: 'Signup Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -98,17 +122,18 @@ export default function Auth() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {mode === 'signin' ? 'Sign In' : 'Reset Password'}
+              {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
             </CardTitle>
             <CardDescription>
-              {mode === 'signin' 
+              {mode === 'signin'
                 ? 'Enter your email and password to access your account.'
-                : 'Enter your email to receive password reset instructions.'
-              }
+                : mode === 'signup'
+                  ? 'Create your account with email and password.'
+                  : 'Enter your email to receive password reset instructions.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={mode === 'signin' ? handleSignIn : handlePasswordReset} className="space-y-4">
+            <form onSubmit={mode === 'signin' ? handleSignIn : mode === 'signup' ? handleSignUp : handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -121,7 +146,7 @@ export default function Auth() {
                 />
               </div>
 
-              {mode === 'signin' && (
+              {mode !== 'reset' && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
@@ -137,12 +162,13 @@ export default function Auth() {
 
               <Button type="submit" className="w-full" disabled={isLoading}>
                 <Mail className="h-4 w-4 mr-2" />
-                {isLoading 
-                  ? 'Processing...' 
-                  : mode === 'signin' 
-                    ? 'Sign In' 
-                    : 'Send Reset Email'
-                }
+                {isLoading
+                  ? 'Processing...'
+                  : mode === 'signin'
+                    ? 'Sign In'
+                    : mode === 'signup'
+                      ? 'Create Account'
+                      : 'Send Reset Email'}
               </Button>
             </form>
 
@@ -157,11 +183,18 @@ export default function Auth() {
                   </button>
                   <div className="text-sm text-muted-foreground">
                     Don't have an account?{' '}
-                    <Link to="/" className="text-primary hover:underline">
-                      Submit a new application
-                    </Link>
+                    <button onClick={() => setMode('signup')} className="text-primary hover:underline">
+                      Create one
+                    </button>
                   </div>
                 </>
+              ) : mode === 'signup' ? (
+                <div className="text-sm text-muted-foreground">
+                  Already have an account?{' '}
+                  <button onClick={() => setMode('signin')} className="text-primary hover:underline">
+                    Sign in
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={() => setMode('signin')}

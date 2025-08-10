@@ -85,6 +85,16 @@ export const useSimplifiedFormSubmission = () => {
 
       const userId = authUser.user.id;
 
+      // IMPORTANT: Ensure we have an active session for this user before inserts protected by RLS
+      const { data: sessionData } = await supabase.auth.getSession();
+      const activeUserId = sessionData?.session?.user?.id;
+      console.log('Signup session check:', { activeUserId, expectedUserId: userId });
+
+      if (!activeUserId || activeUserId !== userId) {
+        // Without a session matching the new user, RLS will block inserts to owners/properties/applications
+        throw new Error('We could not establish a secure session for the new account. Please verify your email (or sign in) and try again.');
+      }
+
       // Step 4: Create user profile (this will use auth.uid() in RLS)
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -106,7 +116,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Profile creation failed: ${profileError.message}`);
       }
 
-      // Step 5: Create owner record
+      // Step 5: Create owner record (RLS requires created_by_user_id = auth.uid())
       let ownerName = '';
       let ownerType = 'individual';
       
@@ -140,7 +150,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Owner creation failed: ${ownerError.message}`);
       }
 
-      // Step 6: Create contact record
+      // Step 6: Create contact record (table is permissive; no user_id RLS)
       const { data: contact, error: contactError } = await supabase
         .from('contacts')
         .insert({
@@ -160,7 +170,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Contact creation failed: ${contactError.message}`);
       }
 
-      // Step 7: Create property record
+      // Step 7: Create property record (RLS requires user_id = auth.uid())
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
@@ -186,7 +196,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Property creation failed: ${propertyError.message}`);
       }
 
-      // Step 8: Create application record
+      // Step 8: Create application record (RLS requires user_id = auth.uid())
       const { data: application, error: applicationError } = await supabase
         .from('applications')
         .insert({
@@ -203,7 +213,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Application creation failed: ${applicationError.message}`);
       }
 
-      // Step 9: Create initial protest record
+      // Step 9: Create initial protest record (RLS is scoped via property ownership)
       const { data: protestData, error: protestError } = await supabase
         .from('protests')
         .insert({
@@ -219,7 +229,7 @@ export const useSimplifiedFormSubmission = () => {
         throw new Error(`Protest record creation failed: ${protestError.message}`);
       }
 
-      // Step 10: Create draft bill for the protest
+      // Step 10: Create draft bill for the protest (RLS requires user_id = auth.uid())
       const { error: billError } = await supabase
         .from('bills')
         .insert({
@@ -319,7 +329,7 @@ export const useSimplifiedFormSubmission = () => {
         console.error('PDF generation error:', pdfError);
       }
 
-      // Step 10: Sign out the temporary user session
+      // Sign out the temporary user session
       await supabase.auth.signOut();
 
       toast({
@@ -349,7 +359,7 @@ export const useSimplifiedFormSubmission = () => {
       
       let errorMessage = error.message;
       if (error.message?.includes('row-level security')) {
-        errorMessage = 'There was an authentication issue. Please try again or contact support.';
+        errorMessage = 'There was an authentication issue. Please sign in and try again.';
       }
       
       toast({

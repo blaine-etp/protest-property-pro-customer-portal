@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from 'react';
-import { mockAuthService } from '@/services/mockAuthService';
-import { mockFormService } from '@/services/mockFormService';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseAuthService } from '@/services/supabaseAuthService';
 
 interface CustomerProfile {
   id: string;
@@ -37,31 +37,59 @@ export const useAuthenticatedCustomerData = () => {
     fetchCustomerData();
   }, []);
 
+  const ensureProfileExists = async (userId: string, email: string | undefined | null) => {
+    // Try to load existing profile
+    const { data: existing, error: getError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (!getError && existing) return existing as CustomerProfile;
+
+    // Create a minimal profile if missing (allowed by RLS for the authenticated user)
+    const fallbackFirst = (supabase.auth as any)?._state?.user?.user_metadata?.first_name
+      || (email ? email.split('@')[0] : 'New');
+    const fallbackLast = (supabase.auth as any)?._state?.user?.user_metadata?.last_name || 'User';
+
+    const { data: created, error: insertError } = await supabase
+      .from('profiles')
+      .insert({
+        user_id: userId,
+        email: email ?? '',
+        first_name: fallbackFirst || 'New',
+        last_name: fallbackLast || 'User',
+        is_authenticated: true,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      throw new Error(`Failed to create profile: ${insertError.message}`);
+    }
+
+    return created as CustomerProfile;
+  };
+
   const fetchCustomerData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Check if user is authenticated  
-      console.log('🔍 Checking authentication...');
-      const { data: { session } } = await mockAuthService.getSession();
+      // Real auth: read current session from Supabase
+      console.log('🔍 Checking authentication (Supabase)...');
+      const { data: { session } } = await supabaseAuthService.getSession();
       console.log('🔍 Session result:', session);
+
       if (!session?.user) {
-        console.log('🔍 No session or user found, session:', session);
         throw new Error('User not authenticated');
       }
-      console.log('🔍 User authenticated:', session.user);
 
-      // Fetch the profile for the authenticated user
-      const { data: profileData, error: profileError } = await mockAuthService.getProfile(session.user.id);
+      // Ensure profile exists (create if missing)
+      const ensuredProfile = await ensureProfileExists(session.user.id, session.user.email);
+      setProfile(ensuredProfile);
 
-      if (profileError || !profileData) {
-        throw new Error('Profile not found');
-      }
-
-      setProfile(profileData);
-
-      // Fetch properties for this user from Supabase
+      // Fetch properties scoped by user_id (RLS will additionally enforce this)
       const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select(`
@@ -79,9 +107,9 @@ export const useAuthenticatedCustomerData = () => {
 
       if (propertiesError) {
         console.error('Error fetching properties:', propertiesError);
+        throw new Error(propertiesError.message);
       }
 
-      // Transform the data to match expected format
       const transformedProperties = (propertiesData || []).map((property: any) => ({
         id: property.id,
         address: property.situs_address,
@@ -90,7 +118,7 @@ export const useAuthenticatedCustomerData = () => {
         appeal_status: property.protests?.[0] ? {
           appeal_status: property.protests[0].appeal_status,
           exemption_status: property.protests[0].exemption_status,
-          auto_appeal_enabled: false, // Default value since it's not stored in protests table
+          auto_appeal_enabled: false, // not stored yet; default locally
           savings_amount: property.protests[0].savings_amount
         } : undefined
       }));
@@ -98,7 +126,9 @@ export const useAuthenticatedCustomerData = () => {
       setProperties(transformedProperties);
     } catch (err: any) {
       console.error('Error fetching customer data:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to load data');
+      setProfile(null);
+      setProperties([]);
     } finally {
       setLoading(false);
     }
@@ -110,13 +140,10 @@ export const useAuthenticatedCustomerData = () => {
       if (!property?.appeal_status) return;
 
       const newAutoAppealStatus = !property.appeal_status.auto_appeal_enabled;
-
-      // Since auto_appeal_enabled is not currently stored in the database,
-      // we'll just update the local state for now
       console.log('Auto appeal toggle requested for property:', propertyId);
-      
-      // Update local state
-      setProperties(prev => prev.map(p => 
+
+      // Local-only update for now
+      setProperties(prev => prev.map(p =>
         p.id === propertyId && p.appeal_status
           ? {
               ...p,

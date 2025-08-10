@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { mockAuthService } from '@/services/mockAuthService';
+import { supabaseAuthService } from '@/services/supabaseAuthService';
 import AddPropertyForm from '@/components/AddPropertyForm';
 import { GooglePlacesAutocomplete, GooglePlacesData } from '@/components/GooglePlacesAutocomplete';
 
@@ -30,38 +30,24 @@ const AddProperty = () => {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        // If we're in database mode, use the real database user
-        if (forceDatabaseSave) {
+        const sessionResult = await supabaseAuthService.getSession();
+        if (sessionResult?.data?.session?.user) {
+          const user = sessionResult.data.session.user;
+          const { data: dbProfile } = await supabaseAuthService.getProfile(user.id);
           const userData = {
-            user_id: '61075f98-529a-4c52-91c7-ee6a696bfa21', // Real database user ID
-            first_name: 'blaine',
-            last_name: 'smith',
-            email: 'rblainesmith+test@gmail.com',
-            phone: '(555) 123-4567',
-            role: 'homeowner',
-            is_trust_entity: false,
-            agree_to_updates: true
+            user_id: user.id,
+            first_name: dbProfile?.first_name || '',
+            last_name: dbProfile?.last_name || '',
+            email: dbProfile?.email || user.email || '',
+            phone: dbProfile?.phone || '',
+            role: (dbProfile as any)?.role || 'homeowner',
+            is_trust_entity: (dbProfile as any)?.is_trust_entity || false,
+            agree_to_updates: (dbProfile as any)?.agree_to_updates ?? true
           };
+          console.log('👤 Loaded profile for AddProperty', { userId: user.id, hasDbProfile: !!dbProfile });
           setProfile(userData);
         } else {
-          // Use regular mock auth flow
-          const sessionResult = await mockAuthService.getSession();
-          if (sessionResult?.data?.session?.user) {
-            const user = sessionResult.data.session.user;
-            const userData = {
-              user_id: user.id,
-              first_name: user.email === 'customer@example.com' ? 'John' : 'Demo',
-              last_name: user.email === 'customer@example.com' ? 'Doe' : 'User',
-              email: user.email,
-              phone: user.email === 'customer@example.com' ? '(555) 123-4567' : '(555) 987-6543',
-              role: 'homeowner',
-              is_trust_entity: false,
-              agree_to_updates: true
-            };
-            setProfile(userData);
-          } else {
-            navigate('/auth');
-          }
+          navigate('/auth');
         }
       } catch (error) {
         console.error('Error loading profile:', error);

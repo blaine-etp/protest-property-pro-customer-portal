@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FormData } from '@/components/MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
-import { mockAuthService } from '@/services/mockAuthService';
-
 interface AddPropertySubmissionProps {
   existingUserId: string;
   isTokenAccess: boolean;
@@ -78,6 +76,16 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
       }
 
       // Real Supabase implementation for non-mock users
+      // Preflight: ensure the authenticated user matches the existingUserId to satisfy RLS
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+      const authUserId = activeSession?.user?.id;
+      console.log('🔐 RLS preflight', { authUserId, existingUserId, isTokenAccess, forceDatabaseSave });
+      if (!authUserId) {
+        throw new Error('You are not signed in. Please sign in and try again.');
+      }
+      if (authUserId !== existingUserId) {
+        throw new Error('Session mismatch detected. Please sign out and sign back in.');
+      }
       // 0. Ensure profile exists for the user (defensive programming)
       const { data: existingProfile, error: profileCheckError } = await supabase
         .from('profiles')

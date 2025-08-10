@@ -6,6 +6,7 @@ import { MockDataService } from './mockDataService';
 import { SupabaseDataService } from './supabaseDataService';
 import { AWSDataService } from './awsDataService';
 import { mockAuthService } from './mockAuthService';
+import { supabaseAuthService } from './supabaseAuthService';
 import { mockFormService } from './mockFormService';
 import { mockStorageService } from './mockStorageService';
 import { supabaseStorageService } from './supabaseStorageService';
@@ -13,7 +14,7 @@ import { supabaseStorageService } from './supabaseStorageService';
 // Master configuration flags - set to true when real integrations are ready
 const USE_AWS_DATA = false;
 const USE_SUPABASE_DATA = true; // Enable Supabase for bills
-const USE_SUPABASE_AUTH = false;
+const USE_SUPABASE_AUTH = true;
 const USE_SUPABASE_FORMS = false;
 const USE_SUPABASE_STORAGE = true;
 
@@ -42,8 +43,7 @@ export const dataService = createDataService();
 function createAuthService() {
   if (USE_SUPABASE_AUTH) {
     console.log('🔗 Using Supabase Auth Service');
-    // Return supabase auth when ready
-    throw new Error('Supabase auth not yet configured');
+    return supabaseAuthService;
   } else {
     console.log('🎭 Using Mock Auth Service');
     return mockAuthService;
@@ -83,6 +83,7 @@ export { MockDataService } from './mockDataService';
 export { SupabaseDataService } from './supabaseDataService';
 export { AWSDataService } from './awsDataService';
 export { mockAuthService } from './mockAuthService';
+export { supabaseAuthService } from './supabaseAuthService';
 export { mockFormService } from './mockFormService';
 export { mockStorageService } from './mockStorageService';
 export { supabaseStorageService } from './supabaseStorageService';

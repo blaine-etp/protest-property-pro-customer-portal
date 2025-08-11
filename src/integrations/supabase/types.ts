@@ -835,6 +835,69 @@ export type Database = {
           },
         ]
       }
+      pending_signups: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          county: string | null
+          created_at: string
+          email: string
+          first_name: string | null
+          form_data: Json | null
+          formatted_address: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          place_id: string | null
+          postal_code: string | null
+          signup_pid: string | null
+          state: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          form_data?: Json | null
+          formatted_address?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          place_id?: string | null
+          postal_code?: string | null
+          signup_pid?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          form_data?: Json | null
+          formatted_address?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          place_id?: string | null
+          postal_code?: string | null
+          signup_pid?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agree_to_updates: boolean | null

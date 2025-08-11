@@ -102,17 +102,15 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         onComplete(signatureDataURL);
       } else {
         // New simplified signup flow
-        const result = await submitFormData(updatedFormData);
-        if (result.redirectTo) {
-          // Prefer explicit redirects when provided by submission hook
-          navigate(result.redirectTo);
+        const result = await submitFormData(updatedFormData as any);
+        if ((result as any)?.didRedirect) {
+          // Redirect handled by submission hook via magic link
           return;
         }
-        if (result.success) {
-          // Show success message and delegate navigation to parent
+        if ((result as any)?.success) {
           toast({
             title: "Application Submitted!",
-            description: "Please check your email to complete account setup.",
+            description: "You're being redirected...",
           });
           onComplete();
         }

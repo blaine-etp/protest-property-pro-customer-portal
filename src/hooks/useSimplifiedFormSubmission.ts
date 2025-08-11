@@ -7,395 +7,59 @@ export const useSimplifiedFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  const cleanupAuthState = () => {
+    try {
+      localStorage.removeItem('supabase.auth.token');
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      if (typeof sessionStorage !== 'undefined') {
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      }
+    } catch {}
+  };
+
   const submitFormData = async (formData: FormData) => {
     setIsSubmitting(true);
-    
     try {
-      // Step 1: Check if email already exists in profiles table
-      const { data: existingProfiles, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('email, is_authenticated')
-        .eq('email', formData.email);
-
-      if (profileCheckError) {
-        console.error('Profile check error:', profileCheckError);
-      } else if (existingProfiles && existingProfiles.length > 0) {
-        const existingProfile = existingProfiles[0];
-        if (existingProfile.is_authenticated) {
-          toast({
-            title: "Email Already Registered",
-            description: "This email is already registered. Please sign in to access your account.",
-            variant: "destructive",
-          });
-          return {
-            success: false,
-            error: "EMAIL_EXISTS_AUTHENTICATED",
-            redirectTo: `/auth?email=${encodeURIComponent(formData.email)}`,
-          };
-        } else {
-          toast({
-            title: "Application Already Submitted",
-            description: "You've already submitted an application with this email. Please check your email for account setup instructions.",
-            variant: "destructive",
-          });
-          return {
-            success: false,
-            error: "EMAIL_EXISTS_PENDING",
-            redirectTo: `/email-verification?email=${encodeURIComponent(formData.email)}`,
-          };
-        }
-      }
-
-      // Step 2: Check if address already exists
-      const { data: existingProperties, error: addressCheckError } = await supabase
-        .from('properties')
-        .select('situs_address, formatted_address')
-        .or(`situs_address.eq."${formData.address}",formatted_address.eq."${formData.formattedAddress || formData.address}"`);
-
-      if (addressCheckError) {
-        console.error('Address check error:', addressCheckError);
-      } else if (existingProperties && existingProperties.length > 0) {
-        toast({
-          title: "Property Already Registered",
-          description: "This property address has already been registered for tax appeal services.",
-          variant: "destructive",
-        });
-        return { 
-          success: false, 
-          error: "ADDRESS_EXISTS"
-        };
-      }
-
-      // Step 3: Create the Supabase user with email and temporary password
-      const tempPassword = `temp_${crypto.randomUUID()}`;
-      const { data: authUser, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: tempPassword,
-        options: {
-          emailRedirectTo: `${window.location.origin}/set-password`,
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName
-          }
-        }
+      const { data, error } = await supabase.functions.invoke('submit-application', {
+        body: {
+          formData,
+          origin: window.location.origin,
+        },
       });
 
-      if (authError || !authUser.user) {
-        throw new Error(`User creation failed: ${authError?.message}`);
+      if (error) throw new Error(error.message || 'Submission failed');
+      if (!data?.success) throw new Error(data?.error || 'Submission failed');
+
+      const magicLink: string | undefined = data?.magicLink;
+      if (magicLink) {
+        // Clean up any stale auth and redirect to magic link for instant portal access
+        cleanupAuthState();
+        try { await supabase.auth.signOut({ scope: 'global' } as any); } catch {}
+        window.location.href = magicLink;
+        return { success: true, didRedirect: true } as const;
       }
-
-      const userId = authUser.user.id;
-
-      // IMPORTANT: Ensure we have an active session for this user before inserts protected by RLS
-      const { data: sessionData } = await supabase.auth.getSession();
-      const activeUserId = sessionData?.session?.user?.id;
-      console.log('Signup session check:', { activeUserId, expectedUserId: userId });
-
-      if (!activeUserId || activeUserId !== userId) {
-        // No active session yet (email confirmation required). Create a lightweight contact lead and redirect to verification.
-        try {
-          await supabase
-            .from('contacts')
-            .insert({
-              first_name: formData.firstName,
-              last_name: formData.lastName,
-              email: formData.email,
-              phone: formData.phone,
-              company: formData.isTrustEntity ? formData.entityName : null,
-              source: 'property_signup_pending',
-              status: 'pending',
-              notes: `Pending verification lead for ${formData.address}`,
-            });
-        } catch (leadError) {
-          console.error('Lead contact creation failed (non-blocking):', leadError);
-        }
-
-        toast({
-          title: 'Verify your email',
-          description: 'We sent you a link to finish setting up your account. Please check your email.',
-        });
-
-        return {
-          success: true,
-          redirectTo: `/email-verification?email=${encodeURIComponent(formData.email)}`,
-          userId,
-        };
-      }
-
-      // Step 4: Create user profile (this will use auth.uid() in RLS)
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: userId,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          is_trust_entity: formData.isTrustEntity,
-          role: formData.role,
-          agree_to_updates: formData.agreeToUpdates,
-          is_authenticated: false, // Will be set to true when they set their password
-        })
-        .select()
-        .single();
-
-      if (profileError) {
-        throw new Error(`Profile creation failed: ${profileError.message}`);
-      }
-
-      // Step 5: Create owner record (RLS requires created_by_user_id = auth.uid())
-      let ownerName = '';
-      let ownerType = 'individual';
-      
-      if (formData.isTrustEntity && formData.entityName) {
-        ownerName = formData.entityName;
-        ownerType = formData.entityType?.toLowerCase() || 'entity';
-      } else {
-        ownerName = `${formData.firstName} ${formData.lastName}`;
-      }
-
-      const { data: owner, error: ownerError } = await supabase
-        .from('owners')
-        .insert({
-          name: ownerName,
-          owner_type: ownerType,
-          created_by_user_id: userId,
-          entity_relationship: formData.relationshipToEntity,
-          form_entity_name: formData.entityName,
-          form_entity_type: formData.entityType,
-          notes: `Relationship to property: ${formData.role || 'homeowner'}`,
-          // Default mailing address to situs address initially
-          mailing_address: formData.address,
-          mailing_city: formData.county ? `${formData.county.replace(' County', '')}, TX` : 'Austin, TX',
-          mailing_state: 'TX',
-          mailing_zip: '78701', // Default - will be updated by AWS integration
-        })
-        .select()
-        .single();
-
-      if (ownerError) {
-        throw new Error(`Owner creation failed: ${ownerError.message}`);
-      }
-
-      // Step 6: Create contact record (table is permissive; no user_id RLS)
-      const { data: contact, error: contactError } = await supabase
-        .from('contacts')
-        .insert({
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          company: formData.isTrustEntity ? formData.entityName : null,
-          source: 'property_signup',
-          status: 'active',
-          notes: `Primary contact for property at ${formData.address}`,
-        })
-        .select()
-        .single();
-
-      if (contactError) {
-        throw new Error(`Contact creation failed: ${contactError.message}`);
-      }
-
-      // Step 7: Create property record (RLS requires user_id = auth.uid())
-      const { data: property, error: propertyError } = await supabase
-        .from('properties')
-        .insert({
-          user_id: userId,
-          owner_id: owner.id,
-          contact_id: contact.id,
-          situs_address: formData.address,
-          parcel_number: formData.parcelNumber,
-          estimated_savings: formData.estimatedSavings,
-          include_all_properties: formData.includeAllProperties,
-          // Google Places data
-          place_id: formData.placeId,
-          formatted_address: formData.formattedAddress,
-          google_address_components: formData.addressComponents,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          county: formData.county,
-        })
-        .select()
-        .single();
-
-      if (propertyError) {
-        throw new Error(`Property creation failed: ${propertyError.message}`);
-      }
-
-      // Step 8: Create application record (RLS requires user_id = auth.uid())
-      const { data: application, error: applicationError } = await supabase
-        .from('applications')
-        .insert({
-          user_id: userId,
-          property_id: property.id,
-          signature: formData.signature,
-          is_owner_verified: formData.isOwnerVerified,
-          status: 'submitted',
-        })
-        .select()
-        .single();
-
-      if (applicationError) {
-        throw new Error(`Application creation failed: ${applicationError.message}`);
-      }
-
-      // Step 9: Create initial protest record (RLS is scoped via property ownership)
-      const { data: protestData, error: protestError } = await supabase
-        .from('protests')
-        .insert({
-          property_id: property.id,
-          appeal_status: 'pending',
-          exemption_status: 'pending',
-          savings_amount: formData.estimatedSavings || 0,
-        })
-        .select()
-        .single();
-
-      if (protestError) {
-        throw new Error(`Protest record creation failed: ${protestError.message}`);
-      }
-
-      // Step 10: Create draft bill for the protest (RLS requires user_id = auth.uid())
-      const { error: billError } = await supabase
-        .from('bills')
-        .insert({
-          protest_id: protestData.id,
-          tax_year: new Date().getFullYear(),
-          status: 'draft',
-          total_assessed_value: formData.estimatedSavings ? Number(formData.estimatedSavings) * 4 : 0,
-          total_protest_amount: 0,
-          total_fee_amount: 0,
-          contingency_fee_percent: 25.00
-        });
-
-      if (billError) {
-        console.error('Error creating bill:', billError);
-        // Don't throw here as the main application was successful
-      }
-
-      // Step 11: Handle referral code if provided
-      if (formData.referralCode) {
-        try {
-          const { data: referrerProfile, error: referrerError } = await supabase
-            .from('profiles')
-            .select('user_id, email, first_name, last_name')
-            .eq('referral_code', formData.referralCode)
-            .single();
-
-          if (referrerError || !referrerProfile) {
-            console.error('Referrer not found for code:', formData.referralCode);
-          } else if (referrerProfile.email !== formData.email) {
-            const { error: referralError } = await supabase
-              .from('referral_relationships')
-              .insert({
-                referrer_id: referrerProfile.user_id,
-                referee_id: userId,
-                referral_code: formData.referralCode,
-                referee_email: formData.email,
-                referee_first_name: formData.firstName,
-                referee_last_name: formData.lastName,
-                status: 'completed'
-              });
-
-            if (referralError) {
-              console.error('Failed to create referral relationship:', referralError);
-            }
-          }
-        } catch (referralError) {
-          console.error('Referral processing error:', referralError);
-        }
-      }
-
-      // Step 12: Generate PDFs and update documents_generated flag
-      try {
-        console.log(`Generating documents for property ${property.id} and user ${userId}`);
-        
-        // Wait for document generation to complete
-        const documentPromises = await Promise.allSettled([
-          supabase.functions.invoke('generate-form-50-162', {
-            body: { propertyId: property.id, userId }
-          }),
-          supabase.functions.invoke('generate-services-agreement', {
-            body: { propertyId: property.id, userId }
-          })
-        ]);
-
-        // Log detailed results
-        let documentsGenerated = 0;
-        documentPromises.forEach((result, index) => {
-          const docType = index === 0 ? 'Form 50-162' : 'Services Agreement';
-          if (result.status === 'fulfilled') {
-            console.log(`${docType} generation completed:`, result.value);
-            if (result.value?.data && !result.value?.error) {
-              documentsGenerated++;
-            } else {
-              console.error(`${docType} generation error:`, result.value?.error);
-            }
-          } else {
-            console.error(`${docType} generation failed:`, result.reason);
-          }
-        });
-
-        // Only update documents_generated flag if both documents were created successfully
-        if (documentsGenerated === 2) {
-          const { error: updateError } = await supabase
-            .from('protests')
-            .update({ documents_generated: true })
-            .eq('property_id', property.id);
-
-          if (updateError) {
-            console.error('Failed to update documents_generated flag:', updateError);
-          } else {
-            console.log('Documents generated flag updated successfully');
-          }
-        } else {
-          console.warn(`Only ${documentsGenerated}/2 documents generated successfully`);
-        }
-      } catch (pdfError) {
-        console.error('PDF generation error:', pdfError);
-      }
-
-      // Sign out the temporary user session
-      await supabase.auth.signOut();
 
       toast({
-        title: "Application Submitted Successfully",
-        description: "Your application has been submitted! Please check your email to set up your account.",
+        title: 'Application Submitted',
+        description: 'Your application was submitted successfully.',
       });
-
-      return { 
-        success: true,
-        profileId: profile.id, 
-        propertyId: property.id,
-        userId: userId,
-        redirectTo: `/email-verification?email=${encodeURIComponent(formData.email)}`,
-      };
-    } catch (error: any) {
-      console.error('Form submission error:', error);
-      
-      // If we created a user but failed later, try to clean up
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        if (session?.session?.user) {
-          console.log('Cleaning up failed signup session...');
-          await supabase.auth.signOut();
-        }
-      } catch (cleanupError) {
-        console.error('Cleanup error:', cleanupError);
-      }
-      
-      let errorMessage = error.message;
-      if (error.message?.includes('row-level security')) {
-        errorMessage = 'There was an authentication issue. Please sign in and try again.';
-      }
-      
+      return { success: true } as const;
+    } catch (err: any) {
+      console.error('Form submission error:', err);
       toast({
-        title: "Submission Failed",
-        description: errorMessage,
-        variant: "destructive",
+        title: 'Submission Failed',
+        description: err.message || 'Please try again.',
+        variant: 'destructive',
       });
-      return { success: false, error: errorMessage };
+      return { success: false, error: err.message } as const;
     } finally {
       setIsSubmitting(false);
     }

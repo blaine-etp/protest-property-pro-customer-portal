@@ -200,14 +200,17 @@ export function AdminLayout() {
 
     checkAdminAccess();
 
-    const unsubscribe = authService.onAuthStateChange((user) => {
-      if (!user) {
-        navigate("/");
-      }
-    });
+    let unsubscribe: (() => void) | undefined;
+    if (!DEVELOPMENT_MODE) {
+      unsubscribe = authService.onAuthStateChange((user) => {
+        if (!user) {
+          navigate("/auth");
+        }
+      });
+    }
 
     return () => {
-      unsubscribe();
+      unsubscribe?.();
     };
   }, [navigate]);
 

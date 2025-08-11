@@ -72,6 +72,9 @@ export const Header = () => {
               <Link to="/about" className="text-foreground hover:text-primary transition-colors">
                 About
               </Link>
+              <Link to="/admin" className="text-foreground hover:text-primary transition-colors">
+                Admin
+              </Link>
               <a href="#contact" className="text-foreground hover:text-primary transition-colors">
                 Contact
               </a>

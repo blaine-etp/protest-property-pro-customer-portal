@@ -1,4 +1,5 @@
 import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   const content = {
@@ -105,6 +106,7 @@ export const Footer = () => {
               <a href={content.legal.privacyUrl} className="hover:text-background transition-colors">{content.legal.privacy}</a>
               <a href={content.legal.termsUrl} className="hover:text-background transition-colors">{content.legal.terms}</a>
               <a href={content.legal.licenseUrl} className="hover:text-background transition-colors">{content.legal.license}</a>
+              <Link to="/admin" className="hover:text-background transition-colors">Admin</Link>
             </div>
           </div>
         </div>

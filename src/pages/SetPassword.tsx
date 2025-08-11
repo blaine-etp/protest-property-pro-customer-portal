@@ -27,8 +27,11 @@ export default function SetPassword() {
         const access_token = hashParams.get('access_token');
         const refresh_token = hashParams.get('refresh_token');
 
-        // 2) Or from "code" query param (some flows)
-        const code = new URLSearchParams(window.location.search).get('code');
+        // 2) Or from "code" or "token_hash" query params (invite/recovery/magic link)
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const token_hash = urlParams.get('token_hash');
+        const type = urlParams.get('type');
 
         if (access_token && refresh_token) {
           const { error } = await supabase.auth.setSession({ access_token, refresh_token });
@@ -36,6 +39,16 @@ export default function SetPassword() {
           setIsEmailConfirmed(true);
           toast({ title: 'Email Confirmed', description: 'Please set your password to complete setup.' });
           // Clean URL
+          window.history.replaceState(null, '', window.location.pathname);
+          return;
+        }
+
+        // Handle OTP-based links (e.g., type=invite or type=recovery)
+        if (token_hash && type) {
+          const { error } = await supabase.auth.verifyOtp({ type: type as any, token_hash });
+          if (error) throw error;
+          setIsEmailConfirmed(true);
+          toast({ title: 'Email Confirmed', description: 'Please set your password to complete setup.' });
           window.history.replaceState(null, '', window.location.pathname);
           return;
         }

@@ -27,11 +27,14 @@ export default function SetPassword() {
         const access_token = hashParams.get('access_token');
         const refresh_token = hashParams.get('refresh_token');
 
-        // 2) Or from "code" or "token_hash" query params (invite/recovery/magic link)
+        // 2) Or from "code" or "token" or "token_hash" query params (invite/recovery/magic link)
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const token_hash = urlParams.get('token_hash');
+        const token = urlParams.get('token');
         const type = urlParams.get('type');
+
+        console.debug('[SetPassword] Params detected', { access_token, refresh_token, code, token_hash, token, type });
 
         if (access_token && refresh_token) {
           const { error } = await supabase.auth.setSession({ access_token, refresh_token });
@@ -44,8 +47,9 @@ export default function SetPassword() {
         }
 
         // Handle OTP-based links (e.g., type=invite or type=recovery)
-        if (token_hash && type) {
-          const { error } = await supabase.auth.verifyOtp({ type: type as any, token_hash });
+        if ((token || token_hash) && type) {
+          console.debug('[SetPassword] Verifying OTP via link', { type, using: token_hash ? 'token_hash' : 'token' });
+          const { error } = await supabase.auth.verifyOtp({ type: type as any, token_hash: token_hash ?? token! });
           if (error) throw error;
           setIsEmailConfirmed(true);
           toast({ title: 'Email Confirmed', description: 'Please set your password to complete setup.' });
@@ -223,7 +227,7 @@ export default function SetPassword() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading || !isEmailConfirmed}>
+              <Button type="submit" className="w-full" disabled={isLoading || password.length < 6 || password !== confirmPassword}>
                 <Lock className="h-4 w-4 mr-2" />
                 {isLoading ? 'Setting Password...' : 'Set Password'}
               </Button>
@@ -232,6 +236,9 @@ export default function SetPassword() {
             <div className="mt-6 text-center">
               <p className="text-xs text-muted-foreground">
                 After setting your password, you'll be automatically signed in and redirected to your dashboard.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Having trouble? <Link to="/auth" className="underline hover:text-primary">Request a new link</Link> and try again.
               </p>
             </div>
           </CardContent>

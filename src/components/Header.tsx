@@ -60,21 +60,39 @@ export const Header = () => {
 
           {!isResourcesPage && (
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#services" className="text-foreground hover:text-primary transition-colors">
-                Services
-              </a>
-              <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">
-                How It Works
-              </a>
+              {location.pathname === '/' ? (
+                <a href="#services" className="text-foreground hover:text-primary transition-colors">
+                  Services
+                </a>
+              ) : (
+                <Link to="/#services" className="text-foreground hover:text-primary transition-colors">
+                  Services
+                </Link>
+              )}
+              {location.pathname === '/' ? (
+                <a href="#how-it-works" className="text-foreground hover:text-primary transition-colors">
+                  How It Works
+                </a>
+              ) : (
+                <Link to="/#how-it-works" className="text-foreground hover:text-primary transition-colors">
+                  How It Works
+                </Link>
+              )}
               <Link to="/resources" className="text-foreground hover:text-primary transition-colors">
                 Resources
               </Link>
               <Link to="/about" className="text-foreground hover:text-primary transition-colors">
                 About
               </Link>
-              <a href="#contact" className="text-foreground hover:text-primary transition-colors">
-                Contact
-              </a>
+              {location.pathname === '/' ? (
+                <a href="#contact" className="text-foreground hover:text-primary transition-colors">
+                  Contact
+                </a>
+              ) : (
+                <Link to="/#contact" className="text-foreground hover:text-primary transition-colors">
+                  Contact
+                </Link>
+              )}
             </nav>
           )}
 

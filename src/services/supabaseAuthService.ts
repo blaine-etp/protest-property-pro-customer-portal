@@ -36,7 +36,7 @@ export class SupabaseAuthService {
 
   async signUp({ email, password }: { email: string; password: string }): Promise<AuthResponse> {
     try {
-      const redirectUrl = `${window.location.origin}/email-verification`;
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -54,7 +54,8 @@ export class SupabaseAuthService {
 
   async resetPasswordForEmail(email: string, options?: { redirectTo?: string }): Promise<{ error: any }> {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, options);
+      const redirectTo = options?.redirectTo ?? `${window.location.origin}/set-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       
       return { error };
     } catch (error) {

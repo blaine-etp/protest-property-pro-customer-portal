@@ -19,17 +19,14 @@ export default function SetPassword() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check if this is from an email confirmation link
+    // Check if this is from an email confirmation or recovery link
     const handleAuthCallback = async () => {
       try {
-        // Get the current session to see if user was just confirmed
         const { data: { session }, error } = await supabase.auth.getSession();
-        
         if (error) {
           console.error('Session error:', error);
           return;
         }
-
         if (session?.user) {
           setIsEmailConfirmed(true);
           toast({
@@ -42,7 +39,15 @@ export default function SetPassword() {
       }
     };
 
+    // Listen for password recovery or sign-in events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        setIsEmailConfirmed(true);
+      }
+    });
+
     handleAuthCallback();
+    return () => subscription.unsubscribe();
   }, [toast]);
 
   const handleSetPassword = async (e: React.FormEvent) => {

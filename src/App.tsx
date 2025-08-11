@@ -40,7 +40,7 @@ import { CountyPage } from "./pages/CountyPage";
 import { BlogPost } from "./pages/BlogPost";
 import CountyTemplate from "./pages/CountyTemplate";
 import EvidenceUpload from "./pages/EvidenceUpload";
-
+import AuthCallback from "./pages/AuthCallback";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -53,8 +53,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/email-verification" element={<EmailVerification />} />
-          <Route path="/customer-portal" element={<CustomerPortal />} />
           <Route path="/property/:propertyId" element={<PropertyDetail />} />
           <Route path="/setup-account" element={<SetupAccount />} />
           <Route path="/account" element={<Account />} />

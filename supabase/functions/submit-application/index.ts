@@ -54,7 +54,7 @@ serve(async (req: Request) => {
       // Create user (idempotent-ish): if already exists, we'll look it up via listUsers
       const { data: createUserRes, error: createUserErr } = await admin.auth.admin.createUser({
         email,
-        email_confirm: true,
+        email_confirm: false, // Do not auto-confirm so invite email can be sent
         user_metadata: { first_name: firstName, last_name: lastName },
       });
       if (createUserRes?.user?.id) {

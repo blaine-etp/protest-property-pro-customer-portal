@@ -32,7 +32,7 @@ import { Badge } from "@/components/ui/badge";
 // =============================================================================
 // DEVELOPMENT MODE FLAG - REMOVE WHEN AUTHENTICATION IS READY
 // =============================================================================
-const DEVELOPMENT_MODE = true; // Set to false to re-enable authentication
+const DEVELOPMENT_MODE = false; // Set to false to re-enable authentication
 // =============================================================================
 
 const navigationItems = [

@@ -63,6 +63,21 @@ export class SupabaseAuthService {
     }
   }
 
+  async signInWithMagicLink(email: string): Promise<{ error: any }> {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
+  }
+
   async getSession(): Promise<{ data: { session: Session | null }; error: any }> {
     try {
       const { data, error } = await supabase.auth.getSession();

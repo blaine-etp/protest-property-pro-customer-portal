@@ -9,7 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
-  const [mode, setMode] = useState<'signin' | 'reset' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'reset' | 'signup' | 'magic-link'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function Auth() {
         // Check user permissions to determine redirect
         const { data: profile } = await authService.getProfile(data.user.id);
           
-        if (profile?.permissions === 'administrator') {
+        if (profile?.permissions === 'admin' || profile?.permissions === 'administrator') {
           navigate('/admin');
         } else {
           navigate('/customer-portal');
@@ -109,6 +109,30 @@ export default function Auth() {
     }
   };
 
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabaseAuthService.signInWithMagicLink(email);
+      if (error) throw error;
+
+      toast({
+        title: 'Magic link sent!',
+        description: 'Check your email for a sign-in link.',
+      });
+      setMode('signin');
+    } catch (error: any) {
+      toast({
+        title: 'Magic Link Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -122,18 +146,23 @@ export default function Auth() {
         <Card>
           <CardHeader>
             <CardTitle>
-              {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
+              {mode === 'signin' ? 'Sign In' 
+               : mode === 'signup' ? 'Create Account' 
+               : mode === 'magic-link' ? 'Magic Link Sign In'
+               : 'Reset Password'}
             </CardTitle>
             <CardDescription>
               {mode === 'signin'
                 ? 'Enter your email and password to access your account.'
                 : mode === 'signup'
                   ? 'Create your account with email and password.'
-                  : 'Enter your email to receive password reset instructions.'}
+                  : mode === 'magic-link'
+                    ? 'Enter your email to receive a magic sign-in link.'
+                    : 'Enter your email to receive password reset instructions.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={mode === 'signin' ? handleSignIn : mode === 'signup' ? handleSignUp : handlePasswordReset} className="space-y-4">
+            <form onSubmit={mode === 'signin' ? handleSignIn : mode === 'signup' ? handleSignUp : mode === 'magic-link' ? handleMagicLink : handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -146,7 +175,7 @@ export default function Auth() {
                 />
               </div>
 
-              {mode !== 'reset' && (
+              {mode !== 'reset' && mode !== 'magic-link' && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
@@ -168,7 +197,9 @@ export default function Auth() {
                     ? 'Sign In'
                     : mode === 'signup'
                       ? 'Create Account'
-                      : 'Send Reset Email'}
+                      : mode === 'magic-link'
+                        ? 'Send Magic Link'
+                        : 'Send Reset Email'}
               </Button>
             </form>
 
@@ -181,11 +212,22 @@ export default function Auth() {
                   >
                     Forgot your password?
                   </button>
+                  <button
+                    onClick={() => setMode('magic-link')}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors block w-full"
+                  >
+                    Sign in with magic link
+                  </button>
                   <div className="text-sm text-muted-foreground">
                     Don't have an account?{' '}
                     <button onClick={() => setMode('signup')} className="text-primary hover:underline">
                       Create one
                     </button>
+                  </div>
+                  <div className="pt-4 border-t">
+                    <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                      Admin Portal
+                    </Link>
                   </div>
                 </>
               ) : mode === 'signup' ? (

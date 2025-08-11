@@ -204,7 +204,24 @@ serve(async (req: Request) => {
       }
     }
 
-    // 9) Generate magic link to sign the user in immediately
+    // 9) Send password setup email (non-blocking)
+    try {
+      if (origin) {
+        const setPasswordRedirect = `${origin}/set-password`;
+        const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, { redirectTo: setPasswordRedirect } as any);
+        if (resetErr) {
+          console.log("Password email send failed:", resetErr.message);
+        } else {
+          console.log("Password email initiated for:", email);
+        }
+      } else {
+        console.log("No origin provided; skipping password email send");
+      }
+    } catch (e: any) {
+      console.log("Password email attempt error:", e?.message || e);
+    }
+
+    // 10) Generate magic link to sign the user in immediately
     const redirectTo = `${origin || ""}/customer-portal`;
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: "magiclink",

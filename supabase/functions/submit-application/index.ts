@@ -41,21 +41,32 @@ serve(async (req: Request) => {
 
     // 1) Get or create auth user
     let userId: string | null = null;
-    const { data: existingUserRes, error: getUserErr } = await admin.auth.admin.getUserByEmail(email);
-    if (getUserErr) console.log("getUserByEmail error:", getUserErr);
 
-    if (existingUserRes?.user) {
-      userId = existingUserRes.user.id;
+    // Try to resolve via existing profile first (fast path)
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("user_id")
+      .eq("email", email)
+      .maybeSingle();
+    if (existingProfile?.user_id) {
+      userId = existingProfile.user_id as string;
     } else {
+      // Create user (idempotent-ish): if already exists, we'll look it up via listUsers
       const { data: createUserRes, error: createUserErr } = await admin.auth.admin.createUser({
         email,
         email_confirm: true,
         user_metadata: { first_name: firstName, last_name: lastName },
       });
-      if (createUserErr || !createUserRes?.user) {
-        throw new Error(createUserErr?.message || "Failed to create user");
+      if (createUserRes?.user?.id) {
+        userId = createUserRes.user.id;
+      } else {
+        // If user exists, fallback to listing and finding by email
+        const { data: usersList, error: listErr } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        if (listErr) throw new Error(createUserErr?.message || listErr.message || "Failed to resolve user");
+        const found = usersList.users?.find((u: any) => (u.email || "").toLowerCase() === email.toLowerCase());
+        if (!found) throw new Error(createUserErr?.message || "User exists but could not be retrieved");
+        userId = found.id;
       }
-      userId = createUserRes.user.id;
     }
 
     if (!userId) throw new Error("User id not found");

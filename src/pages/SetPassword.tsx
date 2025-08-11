@@ -19,9 +19,37 @@ export default function SetPassword() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Check if this is from an email confirmation or recovery link
-    const handleAuthCallback = async () => {
+    const init = async () => {
       try {
+        // 1) Try to establish a session from URL hash tokens (invite/recovery)
+        const hash = window.location.hash || '';
+        const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+        const access_token = hashParams.get('access_token');
+        const refresh_token = hashParams.get('refresh_token');
+
+        // 2) Or from "code" query param (some flows)
+        const code = new URLSearchParams(window.location.search).get('code');
+
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (error) throw error;
+          setIsEmailConfirmed(true);
+          toast({ title: 'Email Confirmed', description: 'Please set your password to complete setup.' });
+          // Clean URL
+          window.history.replaceState(null, '', window.location.pathname);
+          return;
+        }
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          setIsEmailConfirmed(true);
+          toast({ title: 'Email Confirmed', description: 'Please set your password to complete setup.' });
+          window.history.replaceState(null, '', window.location.pathname);
+          return;
+        }
+
+        // 3) Fallback: check existing session
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Session error:', error);
@@ -29,24 +57,25 @@ export default function SetPassword() {
         }
         if (session?.user) {
           setIsEmailConfirmed(true);
-          toast({
-            title: "Email Confirmed",
-            description: "Please set your password to complete setup.",
-          });
         }
       } catch (error) {
         console.error('Auth callback error:', error);
+        toast({
+          title: 'Link invalid or expired',
+          description: 'Request a new password link from the sign-in page.',
+          variant: 'destructive',
+        });
       }
     };
 
     // Listen for password recovery or sign-in events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         setIsEmailConfirmed(true);
       }
     });
 
-    handleAuthCallback();
+    init();
     return () => subscription.unsubscribe();
   }, [toast]);
 
@@ -181,7 +210,7 @@ export default function SetPassword() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || !isEmailConfirmed}>
                 <Lock className="h-4 w-4 mr-2" />
                 {isLoading ? 'Setting Password...' : 'Set Password'}
               </Button>

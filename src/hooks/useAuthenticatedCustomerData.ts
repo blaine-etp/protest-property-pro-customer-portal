@@ -35,8 +35,22 @@ export const useAuthenticatedCustomerData = () => {
 
   useEffect(() => {
     fetchCustomerData();
-  }, []);
 
+    // Refetch on auth changes to prevent cross-account data bleed
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        setTimeout(() => {
+          fetchCustomerData();
+        }, 0);
+      }
+      if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        setProperties([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const ensureProfileExists = async (userId: string, email: string | undefined | null) => {
     // Try to load existing profile
     const { data: existing, error: getError } = await supabase

@@ -24,13 +24,13 @@ export default function AuthCallback() {
 
       // After magic link / email confirmation
       if (event === 'SIGNED_IN' && session?.user) {
-        // Decide destination based on permissions
-        (async () => {
+        // Defer any Supabase calls to avoid deadlocks
+        setTimeout(async () => {
           try {
             const { data: profile } = await supabase
               .from('profiles')
               .select('permissions')
-              .eq('user_id', session.user.id)
+              .eq('user_id', session.user!.id)
               .single();
 
             const isAdmin = profile?.permissions === 'administrator' || profile?.permissions === 'admin';
@@ -38,7 +38,7 @@ export default function AuthCallback() {
           } catch {
             navigate('/customer-portal', { replace: true });
           }
-        })();
+        }, 0);
       }
     });
 
@@ -46,9 +46,9 @@ export default function AuthCallback() {
     const params = parseHashParams(window.location.hash);
     const type = params.get('type');
 
-    if (type === 'recovery') {
+    if (type === 'recovery' || type === 'invite' || type === 'signup') {
       // Let Supabase process tokens, then go to set-password
-      setTimeout(() => navigate('/set-password', { replace: true }), 50);
+      setTimeout(() => navigate('/set-password', { replace: true }), 0);
     }
 
     // 3) Clean URL hash for aesthetics

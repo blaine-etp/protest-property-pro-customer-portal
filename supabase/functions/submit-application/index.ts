@@ -208,11 +208,18 @@ serve(async (req: Request) => {
     try {
       if (origin) {
         const setPasswordRedirect = `${origin}/set-password`;
-        const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, { redirectTo: setPasswordRedirect } as any);
-        if (resetErr) {
-          console.log("Password email send failed:", resetErr.message);
+        // Prefer sending an invite for first-time users; fall back to password reset if invite fails
+        const inviteRes: any = await admin.auth.admin.inviteUserByEmail(email, { redirectTo: setPasswordRedirect } as any);
+        if (inviteRes?.error) {
+          console.log("Invite failed, trying password reset:", inviteRes.error?.message);
+          const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, { redirectTo: setPasswordRedirect } as any);
+          if (resetErr) {
+            console.log("Password email send failed:", resetErr.message);
+          } else {
+            console.log("Password reset email initiated for:", email);
+          }
         } else {
-          console.log("Password email initiated for:", email);
+          console.log("Invite email initiated for:", email);
         }
       } else {
         console.log("No origin provided; skipping password email send");

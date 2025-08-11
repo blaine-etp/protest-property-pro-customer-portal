@@ -7,6 +7,7 @@ import { EvidenceUploadModal } from './EvidenceUploadModal';
 import { EvidenceGallery } from './EvidenceGallery';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSignedUrls } from '@/hooks/useSignedUrl';
 
 interface EvidenceItem {
   id: string;
@@ -32,6 +33,10 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const { toast } = useToast();
+
+  // Get signed URLs for evidence images
+  const evidencePaths = evidence.map(item => item.file_path);
+  const { signedUrls, loading: urlsLoading } = useSignedUrls('property-evidence', evidencePaths, 7200);
 
   useEffect(() => {
     fetchEvidence();
@@ -155,11 +160,21 @@ export const EvidenceSection: React.FC<EvidenceSectionProps> = ({
               {evidence.slice(0, 4).map((item) => (
                 <div key={item.id} className="relative group">
                   <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-                    <img
-                      src={`${supabase.storage.from('property-evidence').getPublicUrl(item.file_path).data.publicUrl}`}
-                      alt={item.description || item.original_filename}
-                      className="w-full h-full object-cover"
-                    />
+                    {urlsLoading || !signedUrls[item.file_path] ? (
+                      <div className="w-full h-full bg-muted animate-pulse flex items-center justify-center">
+                        <Camera className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <img
+                        src={signedUrls[item.file_path]}
+                        alt={item.description || item.original_filename}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-muted flex items-center justify-center"><span class="text-sm text-muted-foreground">Failed to load</span></div>';
+                        }}
+                      />
+                    )}
                   </div>
                   <button
                     onClick={() => handleDeleteEvidence(item.id, item.file_path)}

@@ -180,7 +180,24 @@ serve(async (req: Request) => {
       });
     if (protestErr) console.log("Protest creation warning:", protestErr.message);
 
-    // 8) Handle referral code (non-blocking)
+    // 8) Generate Form 50-162 document (non-blocking)
+    try {
+      const { data: documentData, error: documentError } = await admin.functions.invoke('generate-form-50-162', {
+        body: { 
+          propertyId: property.id, 
+          userId: userId 
+        }
+      });
+      if (documentError) {
+        console.log("Document generation warning:", documentError.message);
+      } else {
+        console.log("Form 50-162 generated successfully for property:", property.id);
+      }
+    } catch (e: any) {
+      console.log("Document generation error:", e?.message || e);
+    }
+
+    // 9) Handle referral code (non-blocking)
     if (formData.referralCode) {
       try {
         const { data: referrerProfile } = await admin

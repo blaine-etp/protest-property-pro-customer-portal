@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 import { useSimplifiedFormSubmission } from '@/hooks/useSimplifiedFormSubmission';
@@ -27,8 +29,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   isSubmitting: propIsSubmitting = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const typedCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [signatureMode, setSignatureMode] = useState<'typed' | 'drawn'>('typed');
   const { toast } = useToast();
   const { submitFormData, isSubmitting } = useSimplifiedFormSubmission();
   const navigate = useNavigate();
@@ -65,15 +69,49 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   };
 
   const clearSignature = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setHasSignature(false);
+    if (signatureMode === 'drawn') {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setHasSignature(false);
+        }
       }
+    } else {
+      setHasSignature(false);
     }
   };
+
+  const generateTypedSignature = () => {
+    const canvas = typedCanvasRef.current;
+    if (!canvas || !formData.firstName || !formData.lastName) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Set font and style for cursive signature
+    ctx.font = '36px Dancing Script, cursive';
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Draw the name in cursive
+    const fullName = `${formData.firstName} ${formData.lastName}`;
+    ctx.fillText(fullName, canvas.width / 2, canvas.height / 2);
+    
+    setHasSignature(true);
+  };
+
+  // Generate typed signature when mode changes to typed or name changes
+  React.useEffect(() => {
+    if (signatureMode === 'typed' && formData.firstName && formData.lastName) {
+      generateTypedSignature();
+    }
+  }, [signatureMode, formData.firstName, formData.lastName]);
 
   const handleSubmit = async () => {
     if (!hasSignature) {
@@ -86,7 +124,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     }
 
     // Save signature to form data
-    const canvas = canvasRef.current;
+    const canvas = signatureMode === 'drawn' ? canvasRef.current : typedCanvasRef.current;
     if (canvas) {
       const signatureDataURL = canvas.toDataURL();
       const updatedFormData = { 
@@ -219,31 +257,78 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       </div>
 
       <div>
-        <h4 className="font-medium mb-2">Digital Signature</h4>
-        <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4">
-          <canvas
-            ref={canvasRef}
-            width={400}
-            height={150}
-            className="w-full border rounded cursor-crosshair bg-background"
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-          />
-          <div className="flex justify-between items-center mt-2">
-            <span className="text-sm text-muted-foreground">
-              Sign above with your mouse or finger
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={clearSignature}
-            >
-              Clear
-            </Button>
+        <h4 className="font-medium mb-4">Digital Signature</h4>
+        
+        {/* Signature Mode Selection */}
+        <RadioGroup 
+          value={signatureMode} 
+          onValueChange={(value: 'typed' | 'drawn') => setSignatureMode(value)}
+          className="mb-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="typed" id="typed" />
+            <Label htmlFor="typed">Type my signature</Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="drawn" id="drawn" />
+            <Label htmlFor="drawn">Draw my signature</Label>
+          </div>
+        </RadioGroup>
+
+        <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-4">
+          {signatureMode === 'typed' ? (
+            <>
+              {/* Typed Signature Preview */}
+              <div className="w-full h-[150px] border rounded bg-background flex items-center justify-center">
+                <canvas
+                  ref={typedCanvasRef}
+                  width={400}
+                  height={150}
+                  className="max-w-full"
+                />
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-sm text-muted-foreground">
+                  Your typed signature: {formData.firstName} {formData.lastName}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearSignature}
+                >
+                  Clear
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Hand-drawn Signature Canvas */}
+              <canvas
+                ref={canvasRef}
+                width={400}
+                height={150}
+                className="w-full border rounded cursor-crosshair bg-background"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+              />
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-sm text-muted-foreground">
+                  Sign above with your mouse or finger
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={clearSignature}
+                >
+                  Clear
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

@@ -295,6 +295,8 @@ export const useAddPropertySubmission = ({ existingUserId, isTokenAccess, forceD
         .from('bills')
         .insert({
           protest_id: protestData.id,
+          contact_id: contactId,
+          user_id: existingUserId,
           tax_year: new Date().getFullYear(),
           status: 'draft',
           total_assessed_value: formData.estimatedSavings ? Number(formData.estimatedSavings) * 4 : 0,

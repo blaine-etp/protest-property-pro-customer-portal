@@ -172,6 +172,8 @@ export const ConciergeReviewStep: React.FC<ConciergeReviewStepProps> = ({
         .from('bills')
         .insert({
           protest_id: protestData.id,
+          contact_id: contactId,
+          user_id: customer.user_id,
           tax_year: new Date().getFullYear(),
           status: 'draft',
           total_assessed_value: 0,

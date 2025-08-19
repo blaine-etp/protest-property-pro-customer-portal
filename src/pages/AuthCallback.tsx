@@ -13,12 +13,23 @@ function parseHashParams(hash: string) {
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [showFallback, setShowFallback] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
+    // Check if this is a password recovery link
+    const hashParams = parseHashParams(window.location.hash);
+    const urlParams = new URLSearchParams(window.location.search);
+    const authType = hashParams.get('type') || urlParams.get('type');
+    
+    if (authType === 'recovery') {
+      setIsPasswordRecovery(true);
+    }
+
     // 1) Listen for auth events first to avoid missing session init
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Route password recovery to set-password
       if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
         // Clean hash and navigate
         setTimeout(() => {
           cleanUrlHash();
@@ -28,7 +39,7 @@ export default function AuthCallback() {
       }
 
       // After magic link / email confirmation
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event === 'SIGNED_IN' && session?.user && !isPasswordRecovery) {
         // Defer any Supabase calls to avoid deadlocks
         setTimeout(async () => {
           try {
@@ -51,7 +62,7 @@ export default function AuthCallback() {
 
     // 2) Check for existing session first
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      if (session?.user && !isPasswordRecovery) {
         setTimeout(async () => {
           try {
             const { data: profile } = await supabase

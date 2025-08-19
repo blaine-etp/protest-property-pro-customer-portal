@@ -312,8 +312,7 @@ export const NewCustomerForm: React.FC<NewCustomerFormProps> = ({ onBack, onSucc
         console.error('Services agreement generation error:', servicesAgreementResponse.error);
       }
 
-      // Sign out the temporary user session
-      await supabase.auth.signOut();
+      // Note: We don't sign out here to keep the admin session active
 
       toast({
         title: "Customer Onboarded Successfully",

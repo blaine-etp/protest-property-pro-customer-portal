@@ -24,7 +24,8 @@ const Index = () => {
   useEffect(() => {
     const hash = window.location.hash || '';
     if (hash.includes('access_token') || hash.includes('type=recovery')) {
-      navigate('/auth/callback', { replace: true });
+      // Preserve the hash when redirecting to auth callback
+      navigate(`/auth/callback${hash}`, { replace: true });
     }
   }, [navigate]);
 

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, ArrowRight, Users, Building, FileText, CreditCard, Gavel } from "lucide-react";
+import { X, ArrowRight, Users, Building, FileText, CreditCard, Gavel, Mail } from "lucide-react";
 
 interface RelationshipViewerProps {
   entityId: string;
@@ -10,39 +10,134 @@ interface RelationshipViewerProps {
 
 export function RelationshipViewer({ entityId, onClose }: RelationshipViewerProps) {
   const entityData = {
-    contacts: {
-      name: "John Smith",
-      type: "Contact",
+    profiles: {
+      name: "User Profile",
+      type: "Profile",
       icon: Users,
       color: "blue",
       data: {
-        email: "john.smith@email.com",
-        phone: "(555) 123-4567",
-        status: "Active",
+        columns: "user_id (PK), first_name, last_name, email, phone, role, permissions",
+        rls_policy: "Users can only access their own profile, admins can access all",
+        relationships: "1:M with properties, applications, referral_relationships",
       },
       relationships: [
-        { type: "owns", target: "123 Main Street", targetType: "Property", count: 2 },
-        { type: "has filed", target: "Protest #001", targetType: "Protest", count: 1 },
-        { type: "received", target: "Form 50-162", targetType: "Document", count: 3 },
+        { type: "owns", target: "Properties", targetType: "properties", count: "1:M" },
+        { type: "submits", target: "Applications", targetType: "applications", count: "1:M" },
+        { type: "creates", target: "Owners", targetType: "owners", count: "1:M" },
+        { type: "participates in", target: "Referral Relationships", targetType: "referral_relationships", count: "1:M" },
+      ]
+    },
+    contacts: {
+      name: "Contact Records",
+      type: "Contact",
+      icon: Users,
+      color: "green",
+      data: {
+        columns: "id (PK), first_name, last_name, email, phone, company, status",
+        rls_policy: "Public access to all data (no restrictions)",
+        relationships: "1:M with communications, customer_documents",
+      },
+      relationships: [
+        { type: "receives", target: "Communications", targetType: "communications", count: "1:M" },
+        { type: "has", target: "Customer Documents", targetType: "customer_documents", count: "1:M" },
+        { type: "uploads", target: "Evidence", targetType: "evidence_uploads", count: "1:M" },
       ]
     },
     properties: {
-      name: "123 Main Street",
-      type: "Property",
+      name: "Property Records",
+      type: "Property", 
       icon: Building,
-      color: "purple",
+      color: "orange",
       data: {
-        address: "123 Main Street, Austin, TX 78701",
-        assessedValue: "$450,000",
-        taxYear: "2024",
+        columns: "id (PK), user_id (FK), situs_address, parcel_number, county, assessed_value",
+        rls_policy: "Users can only access their own properties, admins can access all",
+        relationships: "M:1 with profiles, 1:M with protests, evidence_uploads",
       },
       relationships: [
-        { type: "owned by", target: "John Smith", targetType: "Contact", count: 1 },
-        { type: "has bill", target: "TAX-2024-001", targetType: "Bill", count: 1 },
-        { type: "has protest", target: "Protest #001", targetType: "Protest", count: 1 },
+        { type: "owned by", target: "User Profile", targetType: "profiles", count: "M:1" },
+        { type: "has", target: "Protests", targetType: "protests", count: "1:M" },
+        { type: "has", target: "Evidence Uploads", targetType: "evidence_uploads", count: "1:M" },
+        { type: "referenced in", target: "Applications", targetType: "applications", count: "1:M" },
       ]
     },
-    // Add more entity types as needed
+    protests: {
+      name: "Tax Protests",
+      type: "Protest",
+      icon: Gavel,
+      color: "red",
+      data: {
+        columns: "id (PK), property_id (FK), tax_year, assessed_value, protest_amount, appeal_status",
+        rls_policy: "Access via property ownership - users can only see protests for their properties",
+        relationships: "M:1 with properties, 1:M with evidence_uploads",
+      },
+      relationships: [
+        { type: "filed for", target: "Property", targetType: "properties", count: "M:1" },
+        { type: "has", target: "Evidence Uploads", targetType: "evidence_uploads", count: "1:M" },
+        { type: "generates", target: "Bills", targetType: "bills", count: "1:1" },
+      ]
+    },
+    customer_documents: {
+      name: "Customer Documents", 
+      type: "Document",
+      icon: FileText,
+      color: "gray",
+      data: {
+        columns: "id (PK), user_id (FK), document_type, file_path, status, contact_id, property_id",
+        rls_policy: "Users can only access their own documents, admins can access all",
+        relationships: "M:1 with profiles, contacts, properties",
+      },
+      relationships: [
+        { type: "belongs to", target: "User Profile", targetType: "profiles", count: "M:1" },
+        { type: "relates to", target: "Contact", targetType: "contacts", count: "M:1" },
+        { type: "relates to", target: "Property", targetType: "properties", count: "M:1" },
+      ]
+    },
+    communications: {
+      name: "Communications",
+      type: "Communication",
+      icon: Mail,
+      color: "pink", 
+      data: {
+        columns: "id (PK), contact_id (FK), subject, message, status, priority, inquiry_type",
+        rls_policy: "Public access to all data (no restrictions)",
+        relationships: "M:1 with contacts, M:M with properties via junction table",
+      },
+      relationships: [
+        { type: "sent to", target: "Contact", targetType: "contacts", count: "M:1" },
+        { type: "relates to", target: "Properties", targetType: "communication_properties", count: "M:M" },
+      ]
+    },
+    bills: {
+      name: "Billing Records",
+      type: "Bill",
+      icon: CreditCard,
+      color: "emerald",
+      data: {
+        columns: "id (PK), user_id (FK), protest_id (FK), tax_year, total_assessed_value, status",
+        rls_policy: "Users can only access their own bills, admins can access all",
+        relationships: "M:1 with profiles and protests",
+      },
+      relationships: [
+        { type: "billed to", target: "User Profile", targetType: "profiles", count: "M:1" },
+        { type: "generated from", target: "Protest", targetType: "protests", count: "1:1" },
+      ]
+    },
+    referral_relationships: {
+      name: "Referral System",
+      type: "Referral",
+      icon: Users,
+      color: "violet",
+      data: {
+        columns: "id (PK), referrer_id (FK), referee_id (FK), status, referral_code, credit_awarded_amount",
+        rls_policy: "Public access to all data (no restrictions)", 
+        relationships: "M:1 with profiles (referrer & referee), 1:M with credit_transactions",
+      },
+      relationships: [
+        { type: "referrer", target: "User Profile", targetType: "profiles", count: "M:1" },
+        { type: "referee", target: "User Profile", targetType: "profiles", count: "M:1" },
+        { type: "generates", target: "Credit Transactions", targetType: "credit_transactions", count: "1:M" },
+      ]
+    },
   };
 
   const entity = entityData[entityId as keyof typeof entityData];
@@ -145,11 +240,9 @@ export function RelationshipViewer({ entityId, onClose }: RelationshipViewerProp
                         <Badge variant="outline" className="text-xs">
                           {relationship.targetType}
                         </Badge>
-                        {relationship.count > 1 && (
-                          <Badge variant="secondary" className="text-xs">
-                            {relationship.count} items
-                          </Badge>
-                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          {relationship.count}
+                        </Badge>
                       </div>
                     </div>
                   </div>

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -972,6 +972,9 @@ export type Database = {
       }
       properties: {
         Row: {
+          agent_status_source: string
+          agent_status_tax_year: number | null
+          agent_status_updated_at: string | null
           assessed_value: number | null
           auto_appeal_enabled: boolean
           contact_id: string | null
@@ -984,6 +987,7 @@ export type Database = {
           google_address_components: Json | null
           id: string
           include_all_properties: boolean | null
+          is_active_agent: boolean | null
           latitude: number | null
           longitude: number | null
           owner_id: string | null
@@ -995,6 +999,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agent_status_source?: string
+          agent_status_tax_year?: number | null
+          agent_status_updated_at?: string | null
           assessed_value?: number | null
           auto_appeal_enabled?: boolean
           contact_id?: string | null
@@ -1007,6 +1014,7 @@ export type Database = {
           google_address_components?: Json | null
           id?: string
           include_all_properties?: boolean | null
+          is_active_agent?: boolean | null
           latitude?: number | null
           longitude?: number | null
           owner_id?: string | null
@@ -1018,6 +1026,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agent_status_source?: string
+          agent_status_tax_year?: number | null
+          agent_status_updated_at?: string | null
           assessed_value?: number | null
           auto_appeal_enabled?: boolean
           contact_id?: string | null
@@ -1030,6 +1041,7 @@ export type Database = {
           google_address_components?: Json | null
           id?: string
           include_all_properties?: boolean | null
+          is_active_agent?: boolean | null
           latitude?: number | null
           longitude?: number | null
           owner_id?: string | null
@@ -1070,6 +1082,51 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      property_agent_status_events: {
+        Row: {
+          changed_by_user_id: string | null
+          created_at: string
+          external_payload: Json | null
+          external_reference: string | null
+          id: string
+          new_agent_status_source: string
+          new_is_active_agent: boolean | null
+          notes: string | null
+          previous_agent_status_source: string | null
+          previous_is_active_agent: boolean | null
+          property_id: string
+          tax_year: number
+        }
+        Insert: {
+          changed_by_user_id?: string | null
+          created_at?: string
+          external_payload?: Json | null
+          external_reference?: string | null
+          id?: string
+          new_agent_status_source: string
+          new_is_active_agent?: boolean | null
+          notes?: string | null
+          previous_agent_status_source?: string | null
+          previous_is_active_agent?: boolean | null
+          property_id: string
+          tax_year?: number
+        }
+        Update: {
+          changed_by_user_id?: string | null
+          created_at?: string
+          external_payload?: Json | null
+          external_reference?: string | null
+          id?: string
+          new_agent_status_source?: string
+          new_is_active_agent?: boolean | null
+          notes?: string | null
+          previous_agent_status_source?: string | null
+          previous_is_active_agent?: boolean | null
+          property_id?: string
+          tax_year?: number
+        }
+        Relationships: []
       }
       protests: {
         Row: {
@@ -1276,7 +1333,7 @@ export type Database = {
         Returns: boolean
       }
       can_create_profile: {
-        Args: { profile_user_id: string; profile_email: string }
+        Args: { profile_email: string; profile_user_id: string }
         Returns: boolean
       }
       get_user_permissions: {

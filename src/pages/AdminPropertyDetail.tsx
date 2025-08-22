@@ -19,6 +19,10 @@ import {
   Download,
   ExternalLink,
   Camera,
+  Shield,
+  ShieldCheck,
+  ShieldX,
+  ShieldQuestion,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { EvidenceSection } from "@/components/evidence/EvidenceSection";
@@ -139,6 +143,25 @@ export default function AdminPropertyDetail() {
     }
   };
 
+  // Helper functions for agent status
+  const getAgentStatusLabel = (property: any) => {
+    if (property.is_active_agent === true) return 'Active Agent';
+    if (property.is_active_agent === false) return 'Not Active Agent';
+    return 'Unknown';
+  };
+
+  const getAgentStatusColor = (property: any) => {
+    if (property.is_active_agent === true) return 'green';
+    if (property.is_active_agent === false) return 'red';
+    return 'gray';
+  };
+
+  const getAgentStatusIcon = (property: any) => {
+    if (property.is_active_agent === true) return <ShieldCheck className="h-4 w-4" />;
+    if (property.is_active_agent === false) return <ShieldX className="h-4 w-4" />;
+    return <ShieldQuestion className="h-4 w-4" />;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -220,6 +243,54 @@ export default function AdminPropertyDetail() {
                     <p className="text-sm text-muted-foreground">Parcel Number</p>
                     <p className="font-medium font-mono text-sm">{propertyDetails.parcel_number}</p>
                   </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Auto Appeal</p>
+                  <Badge variant={propertyDetails.auto_appeal_enabled ? 'default' : 'secondary'} className="text-xs">
+                    {propertyDetails.auto_appeal_enabled ? 'Enabled' : 'Disabled'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Agent Status */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-500" />
+                <h3 className="font-semibold">Agent Status</h3>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Current Status</p>
+                  <Badge 
+                    variant={getAgentStatusColor(propertyDetails) as any} 
+                    className="flex items-center gap-1 w-fit"
+                  >
+                    {getAgentStatusIcon(propertyDetails)}
+                    {getAgentStatusLabel(propertyDetails)}
+                  </Badge>
+                </div>
+                {propertyDetails.agent_status_source && propertyDetails.agent_status_source !== 'unknown' && (
+                  <>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Source</p>
+                      <p className="font-medium text-sm capitalize">{propertyDetails.agent_status_source.replace('_', ' ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tax Year</p>
+                      <p className="font-medium text-sm">{propertyDetails.agent_status_tax_year}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Last Updated</p>
+                      <p className="font-medium text-sm">
+                        {new Date(propertyDetails.agent_status_updated_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

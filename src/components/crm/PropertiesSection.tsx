@@ -26,6 +26,10 @@ import {
   Database,
   User,
   X,
+  Shield,
+  ShieldCheck,
+  ShieldX,
+  ShieldQuestion,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { FilterPanel } from "./filters/FilterPanel";
@@ -41,12 +45,14 @@ interface PropertyFilters {
   search: string;
   counties: string[];
   statuses: string[];
+  agentStatuses: string[];
 }
 
 const defaultFilters: PropertyFilters = {
   search: "",
   counties: [],
   statuses: [],
+  agentStatuses: [],
 };
 
 export function PropertiesSection() {
@@ -136,6 +142,25 @@ export function PropertiesSection() {
     return 'Completed';
   };
 
+  // Helper functions for agent status
+  const getAgentStatusLabel = (property: any) => {
+    if (property.is_active_agent === true) return 'Active Agent';
+    if (property.is_active_agent === false) return 'Not Active Agent';
+    return 'Unknown';
+  };
+
+  const getAgentStatusColor = (property: any) => {
+    if (property.is_active_agent === true) return 'green';
+    if (property.is_active_agent === false) return 'red';
+    return 'gray';
+  };
+
+  const getAgentStatusIcon = (property: any) => {
+    if (property.is_active_agent === true) return <ShieldCheck className="h-4 w-4" />;
+    if (property.is_active_agent === false) return <ShieldX className="h-4 w-4" />;
+    return <ShieldQuestion className="h-4 w-4" />;
+  };
+
   // Filter properties based on search and filters
   const filteredProperties = properties.filter(property => {
     // Search filter
@@ -151,7 +176,11 @@ export function PropertiesSection() {
     const matchesCounty = filters.counties.length === 0 || 
       (property.county && filters.counties.includes(property.county));
     
-    return matchesSearch && matchesStatus && matchesCounty;
+    // Agent status filter
+    const agentStatusLabel = getAgentStatusLabel(property);
+    const matchesAgentStatus = filters.agentStatuses.length === 0 || filters.agentStatuses.includes(agentStatusLabel);
+    
+    return matchesSearch && matchesStatus && matchesCounty && matchesAgentStatus;
   });
 
   // Get unique values for filters
@@ -161,6 +190,10 @@ export function PropertiesSection() {
   
   const uniqueCounties = Array.from(new Set(
     properties.map(p => p.county).filter(Boolean)
+  ));
+
+  const uniqueAgentStatuses = Array.from(new Set(
+    properties.map(p => getAgentStatusLabel(p))
   ));
 
   // Calculate statistics
@@ -179,6 +212,7 @@ export function PropertiesSection() {
     if (filters.search) count++;
     if (filters.counties.length > 0) count++;
     if (filters.statuses.length > 0) count++;
+    if (filters.agentStatuses.length > 0) count++;
     return count;
   };
 
@@ -365,6 +399,14 @@ export function PropertiesSection() {
           onSelectionChange={(values) => updateFilter("counties", values)}
           placeholder="All counties"
         />
+        
+        <MultiSelectFilter
+          label="Agent Status"
+          options={uniqueAgentStatuses}
+          selectedValues={filters.agentStatuses}
+          onSelectionChange={(values) => updateFilter("agentStatuses", values)}
+          placeholder="All agent statuses"
+        />
       </FilterPanel>
 
       <Tabs value={viewMode} onValueChange={setViewMode}>
@@ -419,7 +461,7 @@ export function PropertiesSection() {
                        </DropdownMenu>
                     </div>
                     
-                     <div className="space-y-2 mt-4">
+                        <div className="space-y-2 mt-4">
                        {property.contacts && (
                          <div className="flex items-center gap-2">
                            <User className="h-4 w-4 text-slate-500" />
@@ -440,12 +482,25 @@ export function PropertiesSection() {
                          <span className="text-sm">{property.owner?.name || 'Not specified'}</span>
                        </div>
                        <div className="flex items-center gap-2">
-                         <span className="text-sm font-medium text-slate-600">Client Status:</span>
-                         <Badge variant="secondary" className="text-xs">Active Client</Badge>
+                         <span className="text-sm font-medium text-slate-600">Agent Status:</span>
+                         <Badge 
+                           variant={getAgentStatusColor(property) as any} 
+                           className="flex items-center gap-1 text-xs"
+                         >
+                           {getAgentStatusIcon(property)}
+                           {getAgentStatusLabel(property)}
+                         </Badge>
+                         {property.agent_status_source !== 'unknown' && (
+                           <span className="text-xs text-slate-500">
+                             ({property.agent_status_source} - {property.agent_status_tax_year})
+                           </span>
+                         )}
                        </div>
                        <div className="flex items-center gap-2">
                          <span className="text-sm font-medium text-slate-600">Auto Protest:</span>
-                         <Badge variant="outline" className="text-xs text-green-600 border-green-600">Enabled</Badge>
+                         <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                           {property.auto_appeal_enabled ? 'Enabled' : 'Disabled'}
+                         </Badge>
                        </div>
                      </div>
                   </CardHeader>
@@ -485,6 +540,7 @@ export function PropertiesSection() {
                     <TableHead>Address</TableHead>
                     <TableHead>County</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Agent Status</TableHead>
                     <TableHead>Assessed Value</TableHead>
                     <TableHead>Potential Savings</TableHead>
                     <TableHead>Created</TableHead>
@@ -505,6 +561,22 @@ export function PropertiesSection() {
                             {getStatusIcon(propertyStatus)}
                             {propertyStatus}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Badge 
+                              variant={getAgentStatusColor(property) as any} 
+                              className="flex items-center gap-1 w-fit"
+                            >
+                              {getAgentStatusIcon(property)}
+                              {getAgentStatusLabel(property)}
+                            </Badge>
+                            {property.agent_status_source !== 'unknown' && (
+                              <div className="text-xs text-slate-500">
+                                Source: {property.agent_status_source}
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           {activeProtest ? `$${(activeProtest.assessed_value || 0).toLocaleString()}` : 'N/A'}

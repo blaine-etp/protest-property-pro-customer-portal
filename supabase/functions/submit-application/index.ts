@@ -25,6 +25,18 @@ serve(async (req: Request) => {
       });
     }
 
+    // Validate Place ID and formatted address
+    if (!formData?.placeId || !formData?.formattedAddress || formData.formattedAddress.length < 10) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Place ID is required to continue. Please contact support.",
+        code: "MISSING_PLACE_ID" 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {

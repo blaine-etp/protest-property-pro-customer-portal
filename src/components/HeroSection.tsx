@@ -6,6 +6,7 @@ import austinSkyline from "@/assets/austin-skyline.jpg";
 import { AnimatedCounter } from "./AnimatedCounter";
 import MultiStepForm from "./MultiStepForm";
 import { GooglePlacesAutocomplete } from "./GooglePlacesAutocomplete";
+import { SupportDialog } from "./SupportDialog";
 import type { FormData } from "./MultiStepForm";
 
 interface HeroSectionProps {
@@ -18,11 +19,17 @@ interface HeroSectionProps {
 export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm, referralCode, initialAddress = "" }) => {
   const [address, setAddress] = useState(initialAddress);
   const [placesData, setPlacesData] = useState<Partial<FormData>>({});
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (address.trim()) {
+      // Check if we have a valid Google Place ID
+      if (!placesData.placeId) {
+        setShowSupportDialog(true);
+        return;
+      }
       setShowForm(true);
     }
   };
@@ -198,6 +205,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ showForm, setShowForm,
           </div>
         )}
       </div>
+      
+      <SupportDialog 
+        open={showSupportDialog} 
+        onOpenChange={setShowSupportDialog}
+      />
     </section>
   );
 };

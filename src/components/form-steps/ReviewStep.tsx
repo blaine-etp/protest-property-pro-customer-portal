@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { FormData } from '../MultiStepForm';
 import { useToast } from '@/hooks/use-toast';
 import { useSimplifiedFormSubmission } from '@/hooks/useSimplifiedFormSubmission';
+import { SupportDialog } from '../SupportDialog';
 import { useNavigate } from 'react-router-dom';
 
 interface ReviewStepProps {
@@ -33,6 +34,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [signatureMode, setSignatureMode] = useState<'typed' | 'drawn'>('typed');
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
   const { toast } = useToast();
   const { submitFormData, isSubmitting } = useSimplifiedFormSubmission();
   const navigate = useNavigate();
@@ -114,6 +116,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   }, [signatureMode, formData.firstName, formData.lastName]);
 
   const handleSubmit = async () => {
+    // Check for Place ID before proceeding
+    if (!formData.placeId) {
+      setShowSupportDialog(true);
+      return;
+    }
+
     if (!hasSignature) {
       toast({
         title: "Signature Required",
@@ -151,6 +159,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
             description: "You're being redirected...",
           });
           onComplete();
+        }
+        // Check if we need to show support dialog for missing place ID
+        if ((result as any)?.showSupport) {
+          setShowSupportDialog(true);
         }
 
       }
@@ -351,6 +363,11 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           {(isAddPropertyMode ? propIsSubmitting : isSubmitting) ? "Submitting..." : "Submit Application"}
         </Button>
       </div>
+      
+      <SupportDialog 
+        open={showSupportDialog} 
+        onOpenChange={setShowSupportDialog}
+      />
     </div>
   );
 };

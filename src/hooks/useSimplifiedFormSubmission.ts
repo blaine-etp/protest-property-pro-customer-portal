@@ -39,7 +39,12 @@ export const useSimplifiedFormSubmission = () => {
       });
 
       if (error || !data?.success) {
-        throw new Error(error?.message || data?.error || 'Submission failed');
+        const errorMessage = error?.message || data?.error || 'Submission failed';
+        const errorCode = data?.code;
+        if (errorCode === 'MISSING_PLACE_ID') {
+          return { success: false, showSupport: true, error: errorMessage } as const;
+        }
+        throw new Error(errorMessage);
       }
 
       const magicLink: string | undefined = data?.magicLink;
@@ -71,7 +76,13 @@ export const useSimplifiedFormSubmission = () => {
           throw new Error(text || `HTTP ${res.status}`);
         }
         const data = await res.json();
-        if (!data?.success) throw new Error(data?.error || 'Submission failed');
+        if (!data?.success) {
+          const errorCode = data?.code;
+          if (errorCode === 'MISSING_PLACE_ID') {
+            return { success: false, showSupport: true, error: data?.error || 'Place ID required' } as const;
+          }
+          throw new Error(data?.error || 'Submission failed');
+        }
 
         const magicLink: string | undefined = data?.magicLink;
         if (magicLink) {

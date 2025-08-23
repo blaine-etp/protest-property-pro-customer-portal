@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Download, FileSpreadsheet, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
 interface DatasetConfig {
   id: string;
@@ -75,22 +76,50 @@ export default function AdminReporting() {
 
   const currentDataset = datasets.find(d => d.id === selectedDataset);
 
+  // Reset state when dataset changes
+  useEffect(() => {
+    if (selectedDataset) {
+      setFilters({});
+      setPreviewData([]);
+      setTotalRecords(0);
+    }
+  }, [selectedDataset]);
+
   const fetchPreview = async () => {
     if (!currentDataset) return;
 
     setLoading(true);
     try {
-      let query = supabase.from(currentDataset.table as any).select('*');
+      let query = supabase.from(currentDataset.table as any).select(currentDataset.fields.join(','));
+      let countQuery = supabase.from(currentDataset.table as any).select('*', { count: 'exact', head: true });
       
-      // Apply filters
+      // Apply type-aware filters
       Object.entries(filters).forEach(([field, value]) => {
-        if (value) {
-          query = query.ilike(field, `%${value}%`);
+        if (value && value !== '__all__') {
+          const filterConfig = currentDataset.filters?.find(f => f.field === field);
+          
+          if (filterConfig?.type === 'select') {
+            query = query.eq(field, value);
+            countQuery = countQuery.eq(field, value);
+          } else if (filterConfig?.type === 'date') {
+            query = query.gte(field, value);
+            countQuery = countQuery.gte(field, value);
+          } else if (field === 'tax_year') {
+            const yearValue = parseInt(value);
+            if (!isNaN(yearValue)) {
+              query = query.eq(field, yearValue);
+              countQuery = countQuery.eq(field, yearValue);
+            }
+          } else {
+            query = query.ilike(field, `%${value}%`);
+            countQuery = countQuery.ilike(field, `%${value}%`);
+          }
         }
       });
 
       // Get count first
-      const { count } = await supabase.from(currentDataset.table as any).select('*', { count: 'exact', head: true });
+      const { count, error: countError } = await countQuery;
+      if (countError) throw countError;
       setTotalRecords(count || 0);
 
       // Get preview data (first 100 records)
@@ -98,12 +127,21 @@ export default function AdminReporting() {
       
       if (error) throw error;
       setPreviewData(data || []);
+      
+      if (!data || data.length === 0) {
+        toast({
+          title: "No Results",
+          description: "No records found matching the current filters.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to fetch preview data",
+        description: `Failed to fetch preview data: ${error.message}`,
         variant: "destructive",
       });
+      setPreviewData([]);
+      setTotalRecords(0);
     }
     setLoading(false);
   };
@@ -113,13 +151,26 @@ export default function AdminReporting() {
 
     setLoading(true);
     try {
-      // Fetch all data for export
-      let query = supabase.from(currentDataset.table as any).select('*');
+      // Fetch all data for export with same filters as preview
+      let query = supabase.from(currentDataset.table as any).select(currentDataset.fields.join(','));
       
-      // Apply filters
+      // Apply same type-aware filters as fetchPreview
       Object.entries(filters).forEach(([field, value]) => {
-        if (value) {
-          query = query.ilike(field, `%${value}%`);
+        if (value && value !== '__all__') {
+          const filterConfig = currentDataset.filters?.find(f => f.field === field);
+          
+          if (filterConfig?.type === 'select') {
+            query = query.eq(field, value);
+          } else if (filterConfig?.type === 'date') {
+            query = query.gte(field, value);
+          } else if (field === 'tax_year') {
+            const yearValue = parseInt(value);
+            if (!isNaN(yearValue)) {
+              query = query.eq(field, yearValue);
+            }
+          } else {
+            query = query.ilike(field, `%${value}%`);
+          }
         }
       });
 
@@ -127,9 +178,18 @@ export default function AdminReporting() {
       
       if (error) throw error;
 
+      if (!data || data.length === 0) {
+        toast({
+          title: "No Data to Export",
+          description: "No records found matching the current filters.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Create workbook and worksheet
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data || []);
+      const ws = XLSX.utils.json_to_sheet(data);
       
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(wb, ws, currentDataset.name);
@@ -143,12 +203,12 @@ export default function AdminReporting() {
       
       toast({
         title: "Export Complete",
-        description: `${data?.length || 0} records exported to ${filename}`,
+        description: `${data.length} records exported to ${filename}`,
       });
     } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: error.message,
+        description: `Export failed: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -166,7 +226,8 @@ export default function AdminReporting() {
   };
 
   return (
-    <div className="space-y-6">
+    <ErrorBoundary>
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Reporting</h1>
         <p className="text-slate-600 mt-2">
@@ -232,7 +293,7 @@ export default function AdminReporting() {
                           <SelectValue placeholder={`Filter by ${filter.label}`} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All</SelectItem>
+                          <SelectItem value="__all__">All</SelectItem>
                           {filter.options?.map(option => (
                             <SelectItem key={option} value={option}>{option}</SelectItem>
                           ))}
@@ -259,7 +320,7 @@ export default function AdminReporting() {
               <Button onClick={fetchPreview} disabled={loading}>
                 Preview Data
               </Button>
-              <Button onClick={exportToExcel} disabled={loading || previewData.length === 0}>
+              <Button onClick={exportToExcel} disabled={loading || totalRecords === 0}>
                 <Download className="h-4 w-4 mr-2" />
                 Export to Excel
               </Button>
@@ -308,6 +369,7 @@ export default function AdminReporting() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

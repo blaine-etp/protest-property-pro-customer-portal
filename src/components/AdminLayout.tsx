@@ -67,8 +67,8 @@ const navigationItems = [
     icon: Upload,
   },
   {
-    title: "Analytics",
-    url: "/admin/analytics",
+    title: "Reporting",
+    url: "/admin/reporting",
     icon: BarChart3,
   },
   {

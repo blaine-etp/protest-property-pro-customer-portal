@@ -27,7 +27,7 @@ import AdminBlog from "./pages/AdminBlog";
 import AdminSiteContent from "./pages/AdminSiteContent";
 import AdminEvidence from "./pages/AdminEvidence";
 import AdminBulkUpload from "./pages/AdminBulkUpload";
-import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminReporting from "./pages/AdminReporting";
 import AdminSettings from "./pages/AdminSettings";
 import AdminCRM from "./pages/AdminCRM";
 import AdminContactDetail from "./pages/AdminContactDetail";
@@ -80,7 +80,7 @@ const App = () => (
             <Route path="site-content" element={<AdminSiteContent />} />
             <Route path="evidence" element={<AdminEvidence />} />
             <Route path="bulk-upload" element={<AdminBulkUpload />} />
-            <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="reporting" element={<AdminReporting />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
           {/* County Template Preview */}

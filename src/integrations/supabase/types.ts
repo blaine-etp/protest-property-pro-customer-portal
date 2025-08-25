@@ -1213,6 +1213,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_protests_document"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "document_reports"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_protests_property_id"
             columns: ["property_id"]
             isOneToOne: false
@@ -1321,7 +1328,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      document_reports: {
+        Row: {
+          county: string | null
+          document_type: string | null
+          file_path: string | null
+          generated_at: string | null
+          generation_date: string | null
+          id: string | null
+          property_id: string | null
+          situs_address: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_customer_documents_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_access_owner: {

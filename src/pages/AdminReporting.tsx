@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, FileSpreadsheet, Filter } from "lucide-react";
+import { Download, FileSpreadsheet, Filter, Archive } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from 'xlsx';
@@ -63,6 +64,18 @@ const datasets: DatasetConfig[] = [
       { field: 'status', label: 'Status', type: 'select', options: ['draft', 'pending', 'paid'] },
       { field: 'tax_year', label: 'Tax Year', type: 'text' },
     ]
+  },
+  {
+    id: 'documents',
+    name: 'Documents (50-162)',
+    description: 'Form 50-162 documents by county',
+    table: 'document_reports',
+    fields: ['id', 'county', 'situs_address', 'generation_date', 'status', 'file_path'],
+    filters: [
+      { field: 'county', label: 'County', type: 'select', options: [] }, // Will be populated dynamically
+      { field: 'generated_at', label: 'Generated After', type: 'date' },
+      { field: 'status', label: 'Status', type: 'select', options: ['generated'] },
+    ]
   }
 ];
 
@@ -71,7 +84,9 @@ export default function AdminReporting() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [zipLoading, setZipLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [countyOptions, setCountyOptions] = useState<string[]>([]);
   const { toast } = useToast();
 
   const currentDataset = datasets.find(d => d.id === selectedDataset);
@@ -82,8 +97,39 @@ export default function AdminReporting() {
       setFilters({});
       setPreviewData([]);
       setTotalRecords(0);
+      
+      // Load county options for documents dataset
+      if (selectedDataset === 'documents') {
+        loadCountyOptions();
+      }
     }
   }, [selectedDataset]);
+
+  const loadCountyOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('document_reports')
+        .select('county')
+        .not('county', 'is', null)
+        .order('county');
+      
+      if (error) throw error;
+      
+      const uniqueCounties = Array.from(new Set(data?.map(row => row.county) || []));
+      setCountyOptions(uniqueCounties);
+      
+      // Update the dataset config with the loaded options
+      const docDataset = datasets.find(d => d.id === 'documents');
+      if (docDataset) {
+        const countyFilter = docDataset.filters?.find(f => f.field === 'county');
+        if (countyFilter) {
+          countyFilter.options = uniqueCounties;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading county options:', error);
+    }
+  };
 
   const fetchPreview = async () => {
     if (!currentDataset) return;
@@ -215,6 +261,42 @@ export default function AdminReporting() {
     setLoading(false);
   };
 
+  const downloadDocumentsZip = async () => {
+    if (!currentDataset || currentDataset.id !== 'documents') return;
+
+    setZipLoading(true);
+    try {
+      // Call the zip-documents edge function with current filters
+      const { data, error } = await supabase.functions.invoke('zip-documents', {
+        body: { filters }
+      });
+
+      if (error) throw error;
+
+      if (data?.downloadUrl) {
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = data.downloadUrl;
+        link.download = `documents_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        toast({
+          title: "ZIP Download Started",
+          description: `Downloading ${data.fileCount} documents as ZIP file.`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "ZIP Export Failed",
+        description: `Failed to create ZIP: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+    setZipLoading(false);
+  };
+
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
@@ -294,7 +376,7 @@ export default function AdminReporting() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__all__">All</SelectItem>
-                          {filter.options?.map(option => (
+                          {(filter.field === 'county' && selectedDataset === 'documents' ? countyOptions : filter.options || []).map(option => (
                             <SelectItem key={option} value={option}>{option}</SelectItem>
                           ))}
                         </SelectContent>
@@ -324,6 +406,16 @@ export default function AdminReporting() {
                 <Download className="h-4 w-4 mr-2" />
                 Export to Excel
               </Button>
+              {selectedDataset === 'documents' && (
+                <Button 
+                  onClick={downloadDocumentsZip} 
+                  disabled={zipLoading || totalRecords === 0}
+                  variant="outline"
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  {zipLoading ? 'Creating ZIP...' : 'Download ZIP'}
+                </Button>
+              )}
             </div>
           )}
 

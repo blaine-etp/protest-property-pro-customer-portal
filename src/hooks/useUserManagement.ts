@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { useDashboardStats } from './useDashboardStats';
 
 interface UserProfile {
@@ -16,10 +16,17 @@ interface UserProfile {
   referral_credit_balance: number;
 }
 
+interface UserDeleteResult {
+  userId: string;
+  success: boolean;
+  error?: string;
+  deletedCounts: Record<string, number>;
+}
+
 export const useUserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
   const { refetch: refetchDashboardStats } = useDashboardStats();
 
   useEffect(() => {
@@ -38,15 +45,70 @@ export const useUserManagement = () => {
       setUsers(data || []);
     } catch (error: any) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to fetch users');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch users"
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const deleteUsers = async (userIds: string[]) => {
+    setDeleting(true);
+    
+    try {
+      console.log(`Starting deletion for ${userIds.length} users`);
+      
+      const { data, error } = await supabase.functions.invoke('admin-delete-users', {
+        body: { userIds }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to delete users');
+      }
+
+      const { results, summary } = data;
+      
+      // Show results
+      if (summary.successful > 0) {
+        toast({
+          title: "Users deleted successfully",
+          description: `${summary.successful} of ${summary.total} users were permanently deleted.`,
+        });
+      }
+
+      if (summary.failed > 0) {
+        const failedResults = results.filter((r: UserDeleteResult) => !r.success);
+        console.error('Failed deletions:', failedResults);
+        
+        toast({
+          variant: "destructive",
+          title: "Some deletions failed",
+          description: `${summary.failed} users could not be deleted. Check console for details.`,
+        });
+      }
+
+      // Refresh the user list and dashboard stats
+      await fetchUsers();
+      await refetchDashboardStats();
+      
+    } catch (error) {
+      console.error('Error during user deletion:', error);
+      toast({
+        variant: "destructive",
+        title: "Error deleting users",
+        description: error instanceof Error ? error.message : 'An unexpected error occurred during deletion.',
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const deleteUser = async (userId: string, userName: string) => {
     try {
-      setDeleting(userId);
+      setDeleting(true);
       console.log(`🗑️ Starting deletion process for user: ${userName} (${userId})`);
       
       // First, find all user-related data with proper relationships
@@ -249,14 +311,21 @@ export const useUserManagement = () => {
         // This is expected and doesn't affect the cleanup
       }
 
-      toast.success(`User ${userName} and all associated data deleted successfully`);
+      toast({
+        title: "User deleted successfully",
+        description: `${userName} and all associated data have been permanently removed.`,
+      });
       await fetchUsers(); // Refresh the list
       refetchDashboardStats(); // Refresh dashboard stats
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      toast.error(`Failed to delete user: ${error.message}`);
+      toast({
+        variant: "destructive",
+        title: "Error deleting user",
+        description: error.message || 'An unexpected error occurred during deletion.',
+      });
     } finally {
-      setDeleting(null);
+      setDeleting(false);
     }
   };
 
@@ -264,6 +333,7 @@ export const useUserManagement = () => {
     users,
     loading,
     deleting,
+    deleteUsers,
     deleteUser,
     refetch: fetchUsers
   };

@@ -9,57 +9,42 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
-  const [mode, setMode] = useState<'signin' | 'reset' | 'signup' | 'magic-link'>('signin');
+  const [mode, setMode] = useState<'signin' | 'reset' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // In Auth.tsx handleSignIn function, add logging:
-const handleSignIn = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    console.log('🔍 Attempting sign in with:', { email, password: '***' });
-    
-    const { data, error } = await authService.signInWithPassword({
-      email,
-      password,
-    });
-
-    console.log('🔍 Sign in result:', { data, error });
-
-    if (error) {
-      console.error('🚫 Sign in error:', error);
-      throw error;
-    }
-
-    if (data.user) {
-      console.log('🔍 User signed in:', data.user.id);
+    try {
+      console.log('🔍 Attempting sign in with:', { email, password: '***' });
       
-      // Check user permissions to determine redirect
-      const { data: profile } = await authService.getProfile(data.user.id);
-      console.log('🔍 User profile:', profile);
-        
-      if (profile?.permissions === 'admin' || profile?.permissions === 'administrator') {
-        navigate('/admin');
-      } else {
+      const { data, error } = await authService.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        console.log('🔍 User signed in:', data.user.id);
         navigate('/customer-portal');
       }
+    } catch (error: any) {
+      console.error('🚫 Sign in failed:', error);
+      toast({
+        title: "Sign In Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    console.error('🚫 Sign in failed:', error);
-    toast({
-      title: "Sign In Failed",
-      description: error.message,
-      variant: "destructive",
-    });
-  } finally {
-    setIsLoading(true);
-  }
-};
+  };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,9 +55,7 @@ const handleSignIn = async (e: React.FormEvent) => {
         redirectTo: `${window.location.origin}/set-password`,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Password Reset Email Sent",
@@ -114,30 +97,7 @@ const handleSignIn = async (e: React.FormEvent) => {
     }
   };
 
-  const handleMagicLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabaseAuthService.signInWithMagicLink(email);
-      if (error) throw error;
-
-      toast({
-        title: 'Magic link sent!',
-        description: 'Check your email for a sign-in link.',
-      });
-      setMode('signin');
-    } catch (error: any) {
-      toast({
-        title: 'Magic Link Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -153,7 +113,6 @@ const handleSignIn = async (e: React.FormEvent) => {
             <CardTitle>
               {mode === 'signin' ? 'Sign In' 
                : mode === 'signup' ? 'Create Account' 
-               : mode === 'magic-link' ? 'Magic Link Sign In'
                : 'Reset Password'}
             </CardTitle>
             <CardDescription>
@@ -161,13 +120,11 @@ const handleSignIn = async (e: React.FormEvent) => {
                 ? 'Enter your email and password to access your account.'
                 : mode === 'signup'
                   ? 'Create your account with email and password.'
-                  : mode === 'magic-link'
-                    ? 'Enter your email to receive a magic sign-in link.'
-                    : 'Enter your email to receive password reset instructions.'}
+                  : 'Enter your email to receive password reset instructions.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={mode === 'signin' ? handleSignIn : mode === 'signup' ? handleSignUp : mode === 'magic-link' ? handleMagicLink : handlePasswordReset} className="space-y-4">
+            <form onSubmit={mode === 'signin' ? handleSignIn : mode === 'signup' ? handleSignUp : handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -180,7 +137,7 @@ const handleSignIn = async (e: React.FormEvent) => {
                 />
               </div>
 
-              {mode !== 'reset' && mode !== 'magic-link' && (
+              {mode !== 'reset' && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
@@ -202,9 +159,7 @@ const handleSignIn = async (e: React.FormEvent) => {
                     ? 'Sign In'
                     : mode === 'signup'
                       ? 'Create Account'
-                      : mode === 'magic-link'
-                        ? 'Send Magic Link'
-                        : 'Send Reset Email'}
+                      : 'Send Reset Email'}
               </Button>
             </form>
 
@@ -217,22 +172,11 @@ const handleSignIn = async (e: React.FormEvent) => {
                   >
                     Forgot your password?
                   </button>
-                  <button
-                    onClick={() => setMode('magic-link')}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors block w-full"
-                  >
-                    Sign in with magic link
-                  </button>
                   <div className="text-sm text-muted-foreground">
                     Don't have an account?{' '}
                     <button onClick={() => setMode('signup')} className="text-primary hover:underline">
                       Create one
                     </button>
-                  </div>
-                  <div className="pt-4 border-t">
-                    <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                      Admin Portal
-                    </Link>
                   </div>
                 </>
               ) : mode === 'signup' ? (

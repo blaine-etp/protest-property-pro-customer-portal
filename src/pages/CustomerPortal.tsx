@@ -48,9 +48,24 @@ const CustomerPortal = () => {
   useEffect(() => {
     // Check if user is authenticated
     const checkAuth = async () => {
-      const session = await authService.getSession();
-      if (!session) {
-        navigate('/auth');
+      // If we have session tokens in URL, give App.tsx time to process them
+      const urlParams = new URLSearchParams(window.location.search);
+      const hasTokens = urlParams.get('access_token') && urlParams.get('refresh_token');
+      
+      if (hasTokens) {
+        // Wait a moment for App.tsx to process the tokens
+        setTimeout(async () => {
+          const session = await authService.getSession();
+          if (!session) {
+            navigate('/auth');
+          }
+        }, 500);
+      } else {
+        // No tokens, check immediately
+        const session = await authService.getSession();
+        if (!session) {
+          navigate('/auth');
+        }
       }
     };
     

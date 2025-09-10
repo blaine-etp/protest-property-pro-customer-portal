@@ -18,6 +18,8 @@ serve(async (req: Request) => {
 
   try {
     const { formData, origin }: SubmitApplicationRequest = await req.json();
+
+    // Basic validations
     if (!formData?.email || !formData?.firstName || !formData?.lastName || !formData?.address) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
@@ -27,10 +29,10 @@ serve(async (req: Request) => {
 
     // Validate Place ID and formatted address
     if (!formData?.placeId || !formData?.formattedAddress || formData.formattedAddress.length < 10) {
-      return new Response(JSON.stringify({ 
-        success: false, 
+      return new Response(JSON.stringify({
+        success: false,
         error: "Place ID is required to continue. Please contact support.",
-        code: "MISSING_PLACE_ID" 
+        code: "MISSING_PLACE_ID"
       }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -39,11 +41,19 @@ serve(async (req: Request) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
       throw new Error("Supabase environment not configured");
     }
 
+    // Admin client only for database operations (NOT user creation)
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    // Anonymous client for user signup
+    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
@@ -51,39 +61,58 @@ serve(async (req: Request) => {
     const firstName: string = formData.firstName;
     const lastName: string = formData.lastName;
 
-    // 1) Get or create auth user
+    // Set up redirect URL for email confirmation
+    const isDevelopment = origin?.includes('localhost');
+    const baseUrl = isDevelopment ? 'http://localhost:3002' : origin;
+    const redirectTo = `${baseUrl}/set-password?redirect=customer-portal`;
+
+    console.log(`Processing customer signup for:`, email);
+
+    // 1) PURE CLIENT-SIDE USER SIGNUP (No admin involvement)
     let userId: string | null = null;
 
-    // Try to resolve via existing profile first (fast path)
+    // Check if user already exists first
     const { data: existingProfile } = await admin
       .from("profiles")
       .select("user_id")
       .eq("email", email)
       .maybeSingle();
+    
     if (existingProfile?.user_id) {
       userId = existingProfile.user_id as string;
+      console.log("✅ User already exists:", userId);
+      
+      // For existing users, don't trigger email verification again
+      // Just create the new property and redirect appropriately
+      console.log("✅ Existing user - skipping email verification");
     } else {
-      // Create user (idempotent-ish): if already exists, we'll look it up via listUsers
-      const { data: createUserRes, error: createUserErr } = await admin.auth.admin.createUser({
+      // Use anonymous client for proper self-signup
+      const { data: signUpData, error: signUpError } = await anonClient.auth.signUp({
         email,
-        email_confirm: false, // Do not auto-confirm so invite email can be sent
-        user_metadata: { first_name: firstName, last_name: lastName },
+        password: `temp-${Date.now()}-${Math.random()}`, // Temporary password - user will set their own
+        options: {
+          emailRedirectTo: redirectTo,
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          }
+        }
       });
-      if (createUserRes?.user?.id) {
-        userId = createUserRes.user.id;
+
+      if (signUpError) {
+        // If signup fails for any reason, throw error - no admin fallback
+        throw new Error(`Signup failed: ${signUpError.message}. Please contact support if you believe this is an error.`);
       } else {
-        // If user exists, fallback to listing and finding by email
-        const { data: usersList, error: listErr } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        if (listErr) throw new Error(createUserErr?.message || listErr.message || "Failed to resolve user");
-        const found = usersList.users?.find((u: any) => (u.email || "").toLowerCase() === email.toLowerCase());
-        if (!found) throw new Error(createUserErr?.message || "User exists but could not be retrieved");
-        userId = found.id;
+        userId = signUpData.user?.id;
+        console.log("✅ New user created via client signup:", userId);
       }
     }
 
     if (!userId) throw new Error("User id not found");
 
-    // 2) Upsert profile
+    // 2) Create all database records using admin client (for permissions only)
+    
+    // Upsert profile
     const { error: profileErr } = await admin
       .from("profiles")
       .upsert(
@@ -96,13 +125,13 @@ serve(async (req: Request) => {
           is_trust_entity: !!formData.isTrustEntity,
           role: formData.role ?? "homeowner",
           agree_to_updates: !!formData.agreeToUpdates,
-          is_authenticated: true,
+          is_authenticated: false, // Will be set to true after password setup
         },
         { onConflict: "user_id" }
       );
     if (profileErr) throw new Error(`Profile upsert failed: ${profileErr.message}`);
 
-    // 3) Create contact
+    // Create contact
     const { data: contact, error: contactErr } = await admin
       .from("contacts")
       .insert({
@@ -119,10 +148,11 @@ serve(async (req: Request) => {
       .single();
     if (contactErr) throw new Error(`Contact creation failed: ${contactErr.message}`);
 
-    // 4) Create owner
-    let ownerName = formData.isTrustEntity && formData.entityName
+    // Create owner
+    const ownerName = formData.isTrustEntity && formData.entityName
       ? formData.entityName
       : `${firstName} ${lastName}`;
+
     const ownerType = formData.isTrustEntity
       ? (formData.entityType?.toLowerCase() || "entity")
       : "individual";
@@ -146,7 +176,7 @@ serve(async (req: Request) => {
       .single();
     if (ownerErr) throw new Error(`Owner creation failed: ${ownerErr.message}`);
 
-    // 5) Create property
+    // Create property
     const { data: property, error: propertyErr } = await admin
       .from("properties")
       .insert({
@@ -168,7 +198,7 @@ serve(async (req: Request) => {
       .single();
     if (propertyErr) throw new Error(`Property creation failed: ${propertyErr.message}`);
 
-    // 6) Create application
+    // Create application
     const { error: applicationErr } = await admin
       .from("applications")
       .insert({
@@ -181,7 +211,7 @@ serve(async (req: Request) => {
       });
     if (applicationErr) throw new Error(`Application creation failed: ${applicationErr.message}`);
 
-    // 7) Create protest (optional but useful for portal)
+    // Create protest
     const { error: protestErr } = await admin
       .from("protests")
       .insert({
@@ -192,13 +222,10 @@ serve(async (req: Request) => {
       });
     if (protestErr) console.log("Protest creation warning:", protestErr.message);
 
-    // 8) Generate Form 50-162 document (non-blocking)
+    // Generate Form 50-162 (non-blocking)
     try {
-      const { data: documentData, error: documentError } = await admin.functions.invoke('generate-form-50-162', {
-        body: { 
-          propertyId: property.id, 
-          userId: userId 
-        }
+      const { error: documentError } = await admin.functions.invoke("generate-form-50-162", {
+        body: { propertyId: property.id, userId },
       });
       if (documentError) {
         console.log("Document generation warning:", documentError.message);
@@ -209,7 +236,7 @@ serve(async (req: Request) => {
       console.log("Document generation error:", e?.message || e);
     }
 
-    // 9) Handle referral code (non-blocking)
+    // Handle referral code (non-blocking)
     if (formData.referralCode) {
       try {
         const { data: referrerProfile } = await admin
@@ -217,6 +244,7 @@ serve(async (req: Request) => {
           .select("user_id, email, first_name, last_name")
           .eq("referral_code", formData.referralCode)
           .single();
+
         if (referrerProfile && referrerProfile.email !== email) {
           await admin.from("referral_relationships").insert({
             referrer_id: referrerProfile.user_id,
@@ -229,49 +257,42 @@ serve(async (req: Request) => {
           });
         }
       } catch (e) {
-        console.log("Referral handling warning:", e?.message || e);
+        console.log("Referral handling warning:", (e as any)?.message || e);
       }
     }
 
-    // 9) Send password setup email (non-blocking)
-    try {
-      if (origin) {
-        const setPasswordRedirect = `${origin}/set-password`;
-        // Prefer sending an invite for first-time users; fall back to password reset if invite fails
-        const inviteRes: any = await admin.auth.admin.inviteUserByEmail(email, { redirectTo: setPasswordRedirect } as any);
-        if (inviteRes?.error) {
-          console.log("Invite failed, trying password reset:", inviteRes.error?.message);
-          const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, { redirectTo: setPasswordRedirect } as any);
-          if (resetErr) {
-            console.log("Password email send failed:", resetErr.message);
-          } else {
-            console.log("Password reset email initiated for:", email);
-          }
-        } else {
-          console.log("Invite email initiated for:", email);
-        }
-      } else {
-        console.log("No origin provided; skipping password email send");
-      }
-    } catch (e: any) {
-      console.log("Password email attempt error:", e?.message || e);
+    // Determine response based on user type
+    const isNewUser = !existingProfile?.user_id;
+    
+    if (isNewUser) {
+      // New users need email confirmation
+      console.log("✅ New user - email confirmation required");
+      return new Response(
+        JSON.stringify({
+          success: true,
+          userId,
+          propertyId: property.id,
+          requiresEmailConfirmation: true,
+          message: "Account created! Please check your email and click the confirmation link to verify your email and set your password."
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    } else {
+      // Existing users go straight to portal
+      console.log("✅ Existing user - redirecting to portal");
+      return new Response(
+        JSON.stringify({
+          success: true,
+          userId,
+          propertyId: property.id,
+          requiresEmailConfirmation: false,
+          redirectTo: `${baseUrl}/customer-portal`,
+          message: "Property added successfully! Redirecting to your dashboard."
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
-
-    // 10) Generate magic link to sign the user in immediately
-    const redirectTo = `${origin || ""}/customer-portal`;
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: { redirectTo },
-    });
-    if (linkErr) throw new Error(`Failed to generate magic link: ${linkErr.message}`);
-
-    const magicLink = (linkData as any)?.action_link || (linkData as any)?.properties?.action_link || null;
-
-    return new Response(
-      JSON.stringify({ success: true, magicLink, userId, propertyId: property.id }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    
   } catch (error: any) {
     console.error("submit-application error:", error);
     return new Response(JSON.stringify({ success: false, error: error.message || "Unknown error" }), {

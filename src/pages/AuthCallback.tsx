@@ -13,91 +13,65 @@ function parseHashParams(hash: string) {
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [showFallback, setShowFallback] = useState(false);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
-    // Check if this is a password recovery link
+    // Check URL parameters for auth type
     const hashParams = parseHashParams(window.location.hash);
     const urlParams = new URLSearchParams(window.location.search);
     const authType = hashParams.get('type') || urlParams.get('type');
     
+    // Handle password recovery
     if (authType === 'recovery') {
-      setIsPasswordRecovery(true);
-    }
-
-    // 1) Listen for auth events first to avoid missing session init
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Route password recovery to set-password
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsPasswordRecovery(true);
-        // Clean hash and navigate
-        setTimeout(() => {
-          cleanUrlHash();
-          navigate('/set-password', { replace: true });
-        }, 0);
-        return;
-      }
-
-      // After magic link / email confirmation
-      if (event === 'SIGNED_IN' && session?.user && !isPasswordRecovery) {
-        // Defer any Supabase calls to avoid deadlocks
-        setTimeout(async () => {
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('permissions')
-              .eq('user_id', session.user!.id)
-              .single();
-
-            const isAdmin = profile?.permissions === 'administrator' || profile?.permissions === 'admin';
-            cleanUrlHash();
-            navigate(isAdmin ? '/admin' : '/customer-portal', { replace: true });
-          } catch {
-            cleanUrlHash();
-            navigate('/customer-portal', { replace: true });
-          }
-        }, 0);
-      }
-    });
-
-    // 2) Check for existing session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && !isPasswordRecovery) {
-        setTimeout(async () => {
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('permissions')
-              .eq('user_id', session.user!.id)
-              .single();
-
-            const isAdmin = profile?.permissions === 'administrator' || profile?.permissions === 'admin';
-            cleanUrlHash();
-            navigate(isAdmin ? '/admin' : '/customer-portal', { replace: true });
-          } catch {
-            cleanUrlHash();
-            navigate('/customer-portal', { replace: true });
-          }
-        }, 0);
-      }
-    });
-
-    // 3) Inspect URL hash for explicit recovery type (fallback)
-    const params = parseHashParams(window.location.hash);
-    const type = params.get('type');
-
-    if (type === 'recovery' || type === 'invite' || type === 'signup') {
-      // Let Supabase process tokens, then go to set-password
       setTimeout(() => {
         cleanUrlHash();
         navigate('/set-password', { replace: true });
-      }, 0);
+      }, 100);
+      return;
     }
 
-    // 4) Set timeout fallback
+    // Handle email confirmation
+    if (authType === 'signup') {
+      setTimeout(() => {
+        cleanUrlHash();
+        navigate('/set-password', { replace: true });
+      }, 100);
+      return;
+    }
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setTimeout(() => {
+          cleanUrlHash();
+          navigate('/set-password', { replace: true });
+        }, 100);
+        return;
+      }
+
+      // After successful email confirmation - customer portal only
+      if (event === 'SIGNED_IN' && session?.user) {
+        setTimeout(() => {
+          cleanUrlHash();
+          navigate('/customer-portal', { replace: true });
+        }, 100);
+        return;
+      }
+    });
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setTimeout(() => {
+          cleanUrlHash();
+          navigate('/customer-portal', { replace: true });
+        }, 100);
+      }
+    });
+
+    // Set timeout fallback
     const fallbackTimer = setTimeout(() => {
       setShowFallback(true);
-    }, 10000);
+    }, 5000);
 
     return () => {
       subscription.unsubscribe();
@@ -115,15 +89,15 @@ export default function AuthCallback() {
     const params = parseHashParams(window.location.hash);
     const type = params.get('type');
     
-    if (type === 'recovery' || type === 'invite' || type === 'signup') {
+    if (type === 'recovery' || type === 'signup') {
       navigate('/set-password', { replace: true });
     } else {
-      navigate('/auth', { replace: true });
+      navigate('/customer-portal', { replace: true });
     }
   };
 
   useEffect(() => {
-    document.title = 'Authenticate | Protest Property Pro';
+    document.title = 'Authenticating | Protest Property Pro';
   }, []);
 
   return (
@@ -134,7 +108,7 @@ export default function AuthCallback() {
           <CardDescription>
             {showFallback 
               ? "Taking longer than expected. You can try manual navigation." 
-              : "Processing your secure link."}
+              : "Processing your email verification link."}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10 space-y-4">
@@ -147,7 +121,7 @@ export default function AuthCallback() {
                 className="w-full"
                 variant="default"
               >
-                Continue Authentication
+                Continue to Portal
               </Button>
               <Button 
                 onClick={() => navigate('/auth', { replace: true })}

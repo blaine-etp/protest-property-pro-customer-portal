@@ -24,13 +24,13 @@ export default function SetPassword() {
   useEffect(() => {
     const init = async () => {
       try {
-        // 1) Try to establish a session from URL hash tokens (invite/recovery)
+        // Handle email verification and password recovery
         const hash = window.location.hash || '';
         const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
         const access_token = hashParams.get('access_token');
         const refresh_token = hashParams.get('refresh_token');
 
-        // 2) Or from "code" or "token" or "token_hash" query params (invite/recovery/magic link)
+        // Or from "code" or "token" or "token_hash" query params (signup/recovery)
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const token_hash = urlParams.get('token_hash');
@@ -49,7 +49,7 @@ export default function SetPassword() {
           return;
         }
 
-        // Handle OTP-based links (e.g., type=invite or type=recovery)
+        // Handle OTP-based links (e.g., type=signup or type=recovery)
         if ((token || token_hash) && type) {
           console.debug('[SetPassword] Verifying OTP via link', { type, using: token_hash ? 'token_hash' : 'token' });
           const { error } = await supabase.auth.verifyOtp({ type: type as any, token_hash: token_hash ?? token! });
@@ -69,7 +69,7 @@ export default function SetPassword() {
           return;
         }
 
-        // 3) Fallback: check existing session
+        // Fallback: check existing session
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Session error:', error);
@@ -151,25 +151,11 @@ export default function SetPassword() {
         description: "Your password has been set. Redirecting to your dashboard...",
       });
 
-      // Check user permissions to determine redirect
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('permissions')
-          .eq('user_id', user.id)
-          .single();
-          
-          setTimeout(() => {
-            // Check for redirect parameter first (from Edge Function)
-            if (redirectParam === 'customer-portal') {
-              navigate('/customer-portal');
-            } else if (profile?.permissions === 'administrator') {
-              navigate('/admin');
-            } else {
-              navigate('/customer-portal');
-            }
-          }, 1500);
-      }
+      // Always redirect to customer portal (no admin permissions check needed)
+      setTimeout(() => {
+        navigate('/customer-portal');
+      }, 1500);
+
     } catch (error: any) {
       toast({
         title: "Password Update Failed",

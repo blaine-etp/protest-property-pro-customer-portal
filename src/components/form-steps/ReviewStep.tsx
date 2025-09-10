@@ -149,23 +149,23 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       } else {
         // New simplified signup flow
         const result = await submitFormData(updatedFormData as any);
-        if ((result as any)?.didRedirect) {
-          // Redirect handled by submission hook via magic link
-          return;
-        }
+        
         if ((result as any)?.success) {
           toast({
             title: "Application Submitted!",
-            description: "You're being redirected...",
+            description: "Check your email for verification...",
           });
-          onComplete();
+          // Hook handles email verification redirect
+          return;
         }
+        
         // Check if we need to show support dialog for missing place ID
         if ((result as any)?.showSupport) {
           setShowSupportDialog(true);
         }
-
+        
       }
+
     }
   };
 

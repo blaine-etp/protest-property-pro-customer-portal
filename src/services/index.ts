@@ -5,7 +5,7 @@ import { DataService } from './dataService';
 import { MockDataService } from './mockDataService';
 import { SupabaseDataService } from './supabaseDataService';
 import { AWSDataService } from './awsDataService';
-//import { mockAuthService } from './mockAuthService';
+
 import { supabaseAuthService } from './supabaseAuthService';
 //import { mockFormService } from './mockFormService';
 //import { mockStorageService } from './mockStorageService';
@@ -41,14 +41,8 @@ export const dataService = createDataService();
 
 // Auth service factory
 function createAuthService() {
-  if (USE_SUPABASE_AUTH) {
-    console.log('🔗 Using Supabase Auth Service');
-    return supabaseAuthService;
-  } else {
-    console.log('🎭 Using Mock Auth Service');
-    // return mockAuthService; // Comment this out for now
-    throw new Error('Mock auth service temporarily disabled');
-  }
+  console.log('🔗 Using Supabase Auth Service');
+  return supabaseAuthService;
 }
 
 // Form service factory  

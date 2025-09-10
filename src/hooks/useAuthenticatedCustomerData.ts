@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseAuthService } from '@/services/supabaseAuthService';
@@ -51,6 +50,7 @@ export const useAuthenticatedCustomerData = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
   const ensureProfileExists = async (userId: string, email: string | undefined | null) => {
     // Try to load existing profile
     const { data: existing, error: getError } = await supabase
@@ -89,16 +89,40 @@ export const useAuthenticatedCustomerData = () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Real auth: read current session from Supabase
-      console.log('🔍 Checking authentication (Supabase)...');
-      const { data: { session } } = await supabaseAuthService.getSession();
-      console.log('🔍 Session result:', session);
-
+  
+      // Debug: Check what App.tsx is doing
+      console.log('🔍 Hook: fetchCustomerData called');
+      console.log('🔍 Hook: Current URL:', window.location.href);
+      console.log('🔍 Hook: URL params:', window.location.search);
+  
+      // Wait a bit to let App.tsx finish if needed
+      console.log('🔍 Hook: Waiting 2 seconds for App.tsx...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+  
+      // Check multiple ways to get session
+      console.log('🔍 Hook: Checking session multiple ways...');
+      
+      const directSession = await supabase.auth.getSession();
+      console.log('🔍 Hook: Direct supabase.auth.getSession():', directSession);
+      
+      const authServiceSession = await supabaseAuthService.getSession();
+      console.log('🔍 Hook: supabaseAuthService.getSession():', authServiceSession);
+  
+      const user = await supabase.auth.getUser();
+      console.log('🔍 Hook: supabase.auth.getUser():', user);
+  
+      // Try to use the session
+      const session = directSession.data.session;
+      console.log('🔍 Hook: Using session:', session);
+  
       if (!session?.user) {
+        console.log('❌ Hook: NO SESSION FOUND');
+        console.log('❌ Hook: Session is null or has no user');
         throw new Error('User not authenticated');
       }
-
+  
+      console.log('✅ Hook: Session found, proceeding...');
+  
       // Ensure profile exists (create if missing)
       const ensuredProfile = await ensureProfileExists(session.user.id, session.user.email);
       setProfile(ensuredProfile);

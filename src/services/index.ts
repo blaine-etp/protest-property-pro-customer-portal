@@ -5,10 +5,10 @@ import { DataService } from './dataService';
 import { MockDataService } from './mockDataService';
 import { SupabaseDataService } from './supabaseDataService';
 import { AWSDataService } from './awsDataService';
-import { mockAuthService } from './mockAuthService';
+//import { mockAuthService } from './mockAuthService';
 import { supabaseAuthService } from './supabaseAuthService';
-import { mockFormService } from './mockFormService';
-import { mockStorageService } from './mockStorageService';
+//import { mockFormService } from './mockFormService';
+//import { mockStorageService } from './mockStorageService';
 import { supabaseStorageService } from './supabaseStorageService';
 
 // Master configuration flags - set to true when real integrations are ready
@@ -46,19 +46,21 @@ function createAuthService() {
     return supabaseAuthService;
   } else {
     console.log('🎭 Using Mock Auth Service');
-    return mockAuthService;
+    // return mockAuthService; // Comment this out for now
+    throw new Error('Mock auth service temporarily disabled');
   }
 }
 
-// Form service factory
+// Form service factory  
 function createFormService() {
   if (USE_SUPABASE_FORMS) {
     console.log('🔗 Using Supabase Form Service');
-    // Return supabase form service when ready
+
     throw new Error('Supabase forms not yet configured');
   } else {
     console.log('🎭 Using Mock Form Service');
-    return mockFormService;
+    // return mockFormService; // Comment this out for now
+    throw new Error('Mock form service temporarily disabled');
   }
 }
 
@@ -69,23 +71,24 @@ function createStorageService() {
     return supabaseStorageService;
   } else {
     console.log('🎭 Using Mock Storage Service');
-    return mockStorageService;
+    // Create mock storage service locally instead of importing
+    throw new Error('Mock storage service temporarily disabled');
   }
 }
 
 export const authService = createAuthService();
-export const formService = createFormService();
+//export const formService = createFormService();
 export const storageService = createStorageService();
 
 // Export types and classes for advanced usage
 export { DataService } from './dataService';
-export { MockDataService } from './mockDataService';
+//export { MockDataService } from './mockDataService';
 export { SupabaseDataService } from './supabaseDataService';
 export { AWSDataService } from './awsDataService';
-export { mockAuthService } from './mockAuthService';
+//export { mockAuthService } from './mockAuthService';
 export { supabaseAuthService } from './supabaseAuthService';
-export { mockFormService } from './mockFormService';
-export { mockStorageService } from './mockStorageService';
+//export { mockFormService } from './mockFormService';
+//export { mockStorageService } from './mockStorageService';
 export { supabaseStorageService } from './supabaseStorageService';
 export * from './types';
 

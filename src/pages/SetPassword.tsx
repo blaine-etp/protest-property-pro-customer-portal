@@ -18,6 +18,9 @@ export default function SetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const userId = searchParams.get('userId');
+  const redirectParam = searchParams.get('redirect');
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -136,9 +139,11 @@ export default function SetPassword() {
           .update({ is_authenticated: true })
           .eq('user_id', user.id);
 
-        if (profileUpdateError) {
-          console.error('Error updating profile:', profileUpdateError);
-        }
+          if (profileUpdateError) {
+            console.error('❌ Profile update failed:', profileUpdateError);
+          } else {
+            console.log('✅ Profile updated to is_authenticated: true');
+          }
       }
 
       toast({
@@ -154,13 +159,16 @@ export default function SetPassword() {
           .eq('user_id', user.id)
           .single();
           
-        setTimeout(() => {
-          if (profile?.permissions === 'administrator') {
-            navigate('/admin');
-          } else {
-            navigate('/customer-portal');
-          }
-        }, 1500);
+          setTimeout(() => {
+            // Check for redirect parameter first (from Edge Function)
+            if (redirectParam === 'customer-portal') {
+              navigate('/customer-portal');
+            } else if (profile?.permissions === 'administrator') {
+              navigate('/admin');
+            } else {
+              navigate('/customer-portal');
+            }
+          }, 1500);
       }
     } catch (error: any) {
       toast({

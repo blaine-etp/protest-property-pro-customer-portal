@@ -16,45 +16,50 @@ export default function Auth() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // In Auth.tsx handleSignIn function, add logging:
+const handleSignIn = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const { data, error } = await authService.signInWithPassword({
-        email,
-        password,
-      });
+  try {
+    console.log('🔍 Attempting sign in with:', { email, password: '***' });
+    
+    const { data, error } = await authService.signInWithPassword({
+      email,
+      password,
+    });
 
-      if (error) {
-        throw error;
-      }
+    console.log('🔍 Sign in result:', { data, error });
 
-      if (data.user) {
-        toast({
-          title: "Welcome back!",
-          description: "You've been signed in successfully.",
-        });
-        
-        // Check user permissions to determine redirect
-        const { data: profile } = await authService.getProfile(data.user.id);
-          
-        if (profile?.permissions === 'admin' || profile?.permissions === 'administrator') {
-          navigate('/admin');
-        } else {
-          navigate('/customer-portal');
-        }
-      }
-    } catch (error: any) {
-      toast({
-        title: "Sign In Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      console.error('🚫 Sign in error:', error);
+      throw error;
     }
-  };
+
+    if (data.user) {
+      console.log('🔍 User signed in:', data.user.id);
+      
+      // Check user permissions to determine redirect
+      const { data: profile } = await authService.getProfile(data.user.id);
+      console.log('🔍 User profile:', profile);
+        
+      if (profile?.permissions === 'admin' || profile?.permissions === 'administrator') {
+        navigate('/admin');
+      } else {
+        navigate('/customer-portal');
+      }
+    }
+  } catch (error: any) {
+    console.error('🚫 Sign in failed:', error);
+    toast({
+      title: "Sign In Failed",
+      description: error.message,
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(true);
+  }
+};
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -36,7 +36,7 @@ export class SupabaseAuthService {
 
   async signUp({ email, password }: { email: string; password: string }): Promise<AuthResponse> {
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = `${window.location.origin}/set-password`; // Changed from /auth/callback
       
       const { data, error } = await supabase.auth.signUp({
         email,

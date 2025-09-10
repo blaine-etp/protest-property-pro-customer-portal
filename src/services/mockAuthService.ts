@@ -31,7 +31,7 @@ class MockAuthService {
   private readonly MOCK_PROFILES_KEY = 'mock_auth_profiles';
 
   constructor() {
-    this.initializeMockData();
+    //this.initializeMockData();
   }
 
   private initializeMockData() {

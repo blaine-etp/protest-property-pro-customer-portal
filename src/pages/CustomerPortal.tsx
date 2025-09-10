@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,11 +30,20 @@ import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services';
 import DocumentsSection from '@/components/DocumentsSection';
 import { EvidenceSection } from '@/components/evidence/EvidenceSection';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerPortal = () => {
+
+  //debug line
+  console.log('🔍 Auth service being used:', authService.constructor.name);
+  console.log('🔍 Auth service type:', typeof authService.getSession);
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { profile, properties, loading, error, toggleAutoAppeal } = useAuthenticatedCustomerData();
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -47,6 +56,22 @@ const CustomerPortal = () => {
     
     checkAuth();
   }, [navigate]);
+
+  useEffect(() => {
+    // Check if user needs to set password
+    const checkPasswordStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.user_metadata?.needs_password_setup) {
+          setShowPasswordPrompt(true);
+        }
+      } catch (error) {
+        console.log('Error checking password status:', error);
+      }
+    };
+    
+    checkPasswordStatus();
+  }, []);
 
   const handleAccountAction = async (action: string) => {
     if (action === "account") {
@@ -74,6 +99,17 @@ const CustomerPortal = () => {
     } else {
       console.log(`Account action: ${action}`);
     }
+  };
+
+  const handleSetPassword = () => {
+    navigate('/set-password');
+    setShowPasswordPrompt(false);
+  };
+
+  const handleDismissPasswordPrompt = () => {
+    setShowPasswordPrompt(false);
+    // Optionally set a flag to remind later
+    localStorage.setItem('password-prompt-dismissed', Date.now().toString());
   };
 
   const handleToggleAutoAppeal = async (propertyId: string) => {
@@ -189,6 +225,35 @@ const CustomerPortal = () => {
           </div>
         </div>
       </header>
+
+      {/* ADD PASSWORD PROMPT BANNER HERE (after header, before main content) */}
+      {showPasswordPrompt && (
+        <Alert className="mx-4 mt-4 border-yellow-200 bg-yellow-50">
+          <Shield className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-yellow-800">
+              🔒 <strong>Secure your account:</strong> Set a password to protect your property data.
+            </span>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                onClick={handleSetPassword}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                Set Password
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={handleDismissPasswordPrompt}
+                className="text-yellow-700 hover:bg-yellow-100"
+              >
+                Later
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

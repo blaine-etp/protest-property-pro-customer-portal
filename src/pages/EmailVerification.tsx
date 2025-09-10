@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, CheckCircle, Clock } from "lucide-react";
+import { Mail, CheckCircle, Clock, ArrowLeft } from "lucide-react";
 
 const EmailVerification = () => {
   const [searchParams] = useSearchParams();
@@ -30,10 +30,6 @@ const EmailVerification = () => {
     console.log('Resending verification email to:', email);
   };
 
-  const handleContinue = () => {
-    navigate(`/customer-portal?email=${encodeURIComponent(email)}`);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -57,20 +53,22 @@ const EmailVerification = () => {
               <span>Click the verification link in your email</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle className="h-4 w-4" />
+              <span>Set your password on the next page</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>The link expires in 24 hours</span>
             </div>
           </div>
 
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              <strong>Important:</strong> You must click the email link to verify your account and set your password before you can access the customer portal.
+            </p>
+          </div>
+
           <div className="space-y-3">
-            <Button 
-              onClick={handleContinue}
-              className="w-full"
-              size="lg"
-            >
-              Continue to Customer Portal
-            </Button>
-            
             <Button
               variant="outline"
               onClick={handleResendEmail}
@@ -78,6 +76,15 @@ const EmailVerification = () => {
               disabled={timeLeft > 0}
             >
               {timeLeft > 0 ? `Resend in ${timeLeft}s` : 'Resend Email'}
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="w-full"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
             </Button>
           </div>
 

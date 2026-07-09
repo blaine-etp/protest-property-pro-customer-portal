@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthenticatedCustomerData } from '@/hooks/useAuthenticatedCustomerData';
 import DocumentsSection from '@/components/DocumentsSection';
+import { HearingDocumentsSection } from '@/components/HearingDocumentsSection';
 import { EvidenceSection } from '@/components/evidence/EvidenceSection';
 import { useToast } from '@/hooks/use-toast';
 
@@ -233,6 +234,9 @@ const PropertyDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Hearing Documents (published exhibits & declaration) */}
+          <HearingDocumentsSection propertyId={property.id} />
 
           {/* Evidence */}
           <Card>

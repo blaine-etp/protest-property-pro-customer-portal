@@ -3,7 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const SUPABASE_URL = "https://phxgvegpibyjdxsqtdwb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBoeGd2ZWdwaWJ5amR4c3F0ZHdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxOTg1NzYsImV4cCI6MjA2Nzc3NDU3Nn0.ckmBimMD-UxtVD13zFOccK2_oHZWLiwq-OtpEFGD91Y";
+// Legacy JWT anon keys were disabled on this project — use the publishable key
+// (same fix as ETPnext: "Fix login: use new Supabase publishable key").
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_VninVHvsBNS6QqwnNdTq3w_u1A_W7tk";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
